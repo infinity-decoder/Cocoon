@@ -21,22 +21,19 @@ jobs:
       - name: Calculate Next Semantic Version
         id: semver
         run: |
-          # Fetch all remote tags so we know past releases
+          # Fetch all remote tags to compute next version
           git fetch --tags --force || true
 
-          # Find the latest release tag matching vX.Y.Z
           LATEST_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | head -n 1)
 
           if [ -z "$LATEST_TAG" ]; then
             NEW_VERSION="0.0.1"
           else
-            # Strip leading 'v'
             CLEAN_VERSION="${LATEST_TAG#v}"
             MAJOR=$(echo "$CLEAN_VERSION" | cut -d. -f1)
             MINOR=$(echo "$CLEAN_VERSION" | cut -d. -f2)
             PATCH=$(echo "$CLEAN_VERSION" | cut -d. -f3)
 
-            # Increment patch: 0.0.1 -> 0.0.2 ... 0.0.9 -> 0.1.0
             PATCH=$((PATCH + 1))
             if [ "$PATCH" -ge 10 ]; then
               PATCH=0
@@ -83,12 +80,52 @@ jobs:
           cd android
           ./gradlew assembleRelease --no-daemon
 
-      - name: Prepare Named APK File
+      - name: Sign and Align APK for Android Installation
+        id: sign_apk
         run: |
+          # Locate built APK
+          RAW_APK=$(ls android/app/build/outputs/apk/release/*.apk | head -n 1)
+          echo "Source APK: $RAW_APK"
+
+          # Find Android SDK Build Tools (zipalign & apksigner)
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+          echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
+
           VERSION="${{ steps.semver.outputs.version }}"
           mkdir -p release-output
-          cp android/app/build/outputs/apk/release/*.apk release-output/Cocoon-v${VERSION}.apk
-          echo "Prepared release-output/Cocoon-v${VERSION}.apk"
+          ALIGNED_APK="release-output/Cocoon-v${VERSION}-aligned.apk"
+          FINAL_APK="release-output/Cocoon-v${VERSION}.apk"
+
+          # 1. 4-byte Align APK
+          "$BUILD_TOOLS_DIR/zipalign" -v -p 4 "$RAW_APK" "$ALIGNED_APK"
+
+          # 2. Generate Release Keystore (valid for 10000 days, compatible with Android 11, 12, 13, 14+)
+          KEYSTORE_FILE="$RUNNER_TEMP/cocoon-release.keystore"
+          keytool -genkeypair -v \
+            -keystore "$KEYSTORE_FILE" \
+            -alias cocoonkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "cocoonpassword" \
+            -keypass "cocoonpassword" \
+            -dname "CN=Cocoon App, OU=Cocoon, O=Cocoon, L=City, S=State, C=US"
+
+          # 3. Sign APK with v1, v2, and v3 signature schemes (required by Android 11+ Package Manager)
+          "$BUILD_TOOLS_DIR/apksigner" sign \
+            --ks "$KEYSTORE_FILE" \
+            --ks-pass pass:cocoonpassword \
+            --ks-key-alias cocoonkey \
+            --key-pass pass:cocoonpassword \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out "$FINAL_APK" \
+            "$ALIGNED_APK"
+
+          # 4. Verify APK signature
+          "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$FINAL_APK"
+          echo "Verified signed APK successfully: $FINAL_APK"
 
       - name: Upload APK Workflow Artifact
         uses: actions/upload-artifact@v4
@@ -105,8 +142,12 @@ jobs:
           body: |
             ### Cocoon Android Release ${{ steps.semver.outputs.tag }}
             - **Version**: `${{ steps.semver.outputs.version }}`
+            - **Compatibility**: Android 7.0 (API 24) to Android 12, 13, 14, 15+ (API 36)
+            - **Signature**: Signed with APK Signature Scheme v2 & v3 (fully valid for package manager installation)
             - **Commit**: `${{ github.sha }}`
-            - **Download**: Directly download the APK asset below to install on your Android device.
+            
+            #### How to Install:
+            Download **Cocoon-v${{ steps.semver.outputs.version }}.apk** below directly on your Android device and tap to install.
           files: release-output/Cocoon-v${{ steps.semver.outputs.version }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
