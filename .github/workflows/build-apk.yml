@@ -1,17 +1,54 @@
-name: Build Android APK
+name: Build & Release Android APK
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository with full history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate Next Semantic Version
+        id: semver
+        run: |
+          # Fetch all remote tags so we know past releases
+          git fetch --tags --force || true
+
+          # Find the latest release tag matching vX.Y.Z
+          LATEST_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | head -n 1)
+
+          if [ -z "$LATEST_TAG" ]; then
+            NEW_VERSION="0.0.1"
+          else
+            # Strip leading 'v'
+            CLEAN_VERSION="${LATEST_TAG#v}"
+            MAJOR=$(echo "$CLEAN_VERSION" | cut -d. -f1)
+            MINOR=$(echo "$CLEAN_VERSION" | cut -d. -f2)
+            PATCH=$(echo "$CLEAN_VERSION" | cut -d. -f3)
+
+            # Increment patch: 0.0.1 -> 0.0.2 ... 0.0.9 -> 0.1.0
+            PATCH=$((PATCH + 1))
+            if [ "$PATCH" -ge 10 ]; then
+              PATCH=0
+              MINOR=$((MINOR + 1))
+            fi
+
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          echo "Calculated new version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
@@ -46,9 +83,30 @@ jobs:
           cd android
           ./gradlew assembleRelease --no-daemon
 
-      - name: Upload APK Artifact
+      - name: Prepare Named APK File
+        run: |
+          VERSION="${{ steps.semver.outputs.version }}"
+          mkdir -p release-output
+          cp android/app/build/outputs/apk/release/*.apk release-output/Cocoon-v${VERSION}.apk
+          echo "Prepared release-output/Cocoon-v${VERSION}.apk"
+
+      - name: Upload APK Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-unsigned
-          path: android/app/build/outputs/apk/release/*.apk
+          name: Cocoon-v${{ steps.semver.outputs.version }}
+          path: release-output/Cocoon-v${{ steps.semver.outputs.version }}.apk
           if-no-files-found: error
+
+      - name: Create GitHub Release & Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.semver.outputs.tag }}
+          name: Release ${{ steps.semver.outputs.tag }}
+          body: |
+            ### Cocoon Android Release ${{ steps.semver.outputs.tag }}
+            - **Version**: `${{ steps.semver.outputs.version }}`
+            - **Commit**: `${{ github.sha }}`
+            - **Download**: Directly download the APK asset below to install on your Android device.
+          files: release-output/Cocoon-v${{ steps.semver.outputs.version }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
