@@ -16,19 +16,9 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    signingConfigs {
-        release {
-            // Default to debug keystore if no custom keystore specified so APK is always signed and installable
-            storeFile file(System.getenv("KEYSTORE_PATH") ?: "${System.getProperty('user.home')}/.android/debug.keystore")
-            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "android"
-            keyAlias System.getenv("KEY_ALIAS") ?: "androiddebugkey"
-            keyPassword System.getenv("KEY_PASSWORD") ?: "android"
-        }
-    }
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
