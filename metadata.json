@@ -1,0 +1,6 @@
+{
+  "name": "Cocoon",
+  "description": "Premium local-first finance tracker by Infinity Decoder. Beautiful interactive cashflow analysis, automated budgets, secure vaults, and custom export tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
