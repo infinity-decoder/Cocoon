@@ -3,23 +3,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Plus, ArrowRightLeft, Award, ShieldAlert, 
-  ArrowUpRight, ArrowDownRight, Lock, Key, Delete 
+  ArrowUpRight, ArrowDownRight, Lock, Key, Delete,
+  X, Check, Pencil, Trash2, ShieldCheck, Wallet, Sparkles, HelpCircle,
+  ArrowLeft
 } from 'lucide-react';
-import { SavingsGoal, Wallet } from '../../../core/types';
+import { SavingsGoal, Wallet as WalletType } from '../../../core/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { AnimatedTicker } from '../../../shared/components';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
 
 interface SavingsTabProps {
   savingsGoals: SavingsGoal[];
-  wallets: Wallet[];
+  wallets: WalletType[];
   currencySymbol: string;
-  onTransferToSavings: (goalId: string, amount: number, fromWalletId: string) => void;
-  onWithdrawFromSavings: (goalId: string, amount: number, toWalletId: string) => void;
+  onTransferToSavings: (goalId: string, amount: number, fromWalletId?: string) => void;
+  onWithdrawFromSavings: (goalId: string, amount: number, toWalletId?: string) => void;
   onAddGoal: (goal: Omit<SavingsGoal, 'id' | 'currentAmount'>) => void;
+  onEditGoal?: (goalId: string, updatedData: Partial<SavingsGoal>) => void;
+  onDeleteGoal?: (goalId: string) => void;
+  onBack?: () => void;
   themeCardBg: string;
   themeBorder: string;
   themeRadius: string;
@@ -28,13 +33,26 @@ interface SavingsTabProps {
   onSetVaultPassword: (password: string) => void;
 }
 
+const HARMONIOUS_GOAL_COLORS = [
+  '#10B981', // Emerald
+  '#3B82F6', // Blue
+  '#8B5CF6', // Purple
+  '#F59E0B', // Amber
+  '#EC4899', // Pink
+  '#14B8A6', // Teal
+  '#EF4444', // Red
+  '#06B6D4'  // Cyan
+];
+
 export default function SavingsTab({
   savingsGoals,
-  wallets,
   currencySymbol,
   onTransferToSavings,
   onWithdrawFromSavings,
   onAddGoal,
+  onEditGoal,
+  onDeleteGoal,
+  onBack,
   themeCardBg,
   themeBorder,
   vaultPassword,
@@ -48,37 +66,106 @@ export default function SavingsTab({
   const [setupStep, setSetupStep] = useState<'create' | 'confirm'>('create');
   const [errMessage, setErrMessage] = useState('');
 
+  // Change PIN modal state
+  const [showChangePinModal, setShowChangePinModal] = useState(false);
+  const [changePinOld, setChangePinOld] = useState('');
+  const [changePinNew, setChangePinNew] = useState('');
+  const [changePinConfirm, setChangePinConfirm] = useState('');
+  const [changePinError, setChangePinError] = useState('');
+  const [changePinSuccess, setChangePinSuccess] = useState('');
+
+  // Transfer Modal (Deposit / Withdraw)
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferType, setTransferType] = useState<'deposit' | 'withdraw'>('deposit');
-  const [selectedGoalId, setSelectedGoalId] = useState(savingsGoals[0]?.id || '');
+  const [selectedGoalId, setSelectedGoalId] = useState('savings');
   const [transferAmount, setTransferAmount] = useState('');
-  const [fromWalletId, setFromWalletId] = useState(wallets[0]?.id || '');
+  const [transferError, setTransferError] = useState('');
 
   // Add goal sheet state
   const [showAddGoalSheet, setShowAddGoalSheet] = useState(false);
   const [goalName, setGoalName] = useState('');
   const [goalTarget, setGoalTarget] = useState('');
-  const [goalColor, setGoalColor] = useState('#8B5CF6');
+  const [goalColor, setGoalColor] = useState(HARMONIOUS_GOAL_COLORS[2]);
   const [goalDeadline, setGoalDeadline] = useState('');
+  const [addGoalError, setAddGoalError] = useState('');
 
-  // Spinning vault state
+  // Edit goal modal state
+  const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editTarget, setEditTarget] = useState('');
+  const [editColor, setEditColor] = useState('');
+  const [editDeadline, setEditDeadline] = useState('');
+  const [editGoalError, setEditGoalError] = useState('');
+
+  // Delete goal confirmation modal state
+  const [deletingGoal, setDeletingGoal] = useState<SavingsGoal | null>(null);
+
+  // Spinning vault animation state
   const [isVaultSpinning, setIsVaultSpinning] = useState(false);
 
   // Confetti trigger goal ID
   const [completedGoalName, setCompletedGoalName] = useState<string | null>(null);
 
-  // Total saved
+  // Separation: General Savings (vault holding fund) and targeted user goals
+  const generalSavings = savingsGoals.find(g => g.id === 'savings' || g.name.toLowerCase() === 'savings') || {
+    id: 'savings',
+    name: 'Savings',
+    targetAmount: 0,
+    currentAmount: 0,
+    color: '#10B981'
+  };
+
+  const targetGoals = savingsGoals.filter(g => g.id !== 'savings' && g.name.toLowerCase() !== 'savings');
+
+  // Total saved across the entire vault (general savings + all active goals)
   const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0);
 
+  // Quick Open Transfer Helpers
+  const openDepositModal = (preselectedGoalId?: string) => {
+    triggerHapticFeedback();
+    setTransferType('deposit');
+    setSelectedGoalId(preselectedGoalId || 'savings');
+    setTransferAmount('');
+    setTransferError('');
+    setShowTransferModal(true);
+  };
+
+  const openWithdrawModal = (preselectedGoalId?: string) => {
+    triggerHapticFeedback();
+    setTransferType('withdraw');
+    // Preselect general savings if it has funds, or the requested goal, or first goal with funds
+    if (preselectedGoalId) {
+      setSelectedGoalId(preselectedGoalId);
+    } else if (generalSavings.currentAmount > 0) {
+      setSelectedGoalId('savings');
+    } else {
+      const firstWithFunds = targetGoals.find(g => g.currentAmount > 0);
+      setSelectedGoalId(firstWithFunds ? firstWithFunds.id : 'savings');
+    }
+    setTransferAmount('');
+    setTransferError('');
+    setShowTransferModal(true);
+  };
+
+  // Submit Deposit or Withdraw
   const handleTransferSubmit = () => {
     triggerHapticFeedback();
+    setTransferError('');
     const amt = parseFloat(transferAmount);
     if (isNaN(amt) || amt <= 0) {
-      alert('Please enter a valid amount.');
+      setTransferError('Please enter a valid transfer amount greater than 0.');
       return;
     }
 
-    // Trigger visual vault spin
+    if (transferType === 'withdraw') {
+      const sourceGoal = savingsGoals.find(g => g.id === selectedGoalId) || (selectedGoalId === 'savings' ? generalSavings : null);
+      if (!sourceGoal || sourceGoal.currentAmount < amt) {
+        setTransferError(`Insufficient funds. Maximum available in ${sourceGoal?.name || 'Vault'} is ${currencySymbol}${(sourceGoal?.currentAmount || 0).toLocaleString()}.`);
+        return;
+      }
+    }
+
+    // Trigger visual vault door spin
     setIsVaultSpinning(true);
     setTimeout(() => {
       setIsVaultSpinning(false);
@@ -87,26 +174,30 @@ export default function SavingsTab({
     const goalBefore = savingsGoals.find(g => g.id === selectedGoalId);
 
     if (transferType === 'deposit') {
-      onTransferToSavings(selectedGoalId, amt, fromWalletId);
+      onTransferToSavings(selectedGoalId, amt);
       
-      // Check if newly 100% saved to trigger confetti celebration!
-      if (goalBefore && (goalBefore.currentAmount + amt >= goalBefore.targetAmount) && (goalBefore.currentAmount < goalBefore.targetAmount)) {
+      // Check if newly 100% saved on a target goal to trigger confetti celebration!
+      if (goalBefore && goalBefore.targetAmount > 0 && 
+          (goalBefore.currentAmount + amt >= goalBefore.targetAmount) && 
+          (goalBefore.currentAmount < goalBefore.targetAmount)) {
         setCompletedGoalName(goalBefore.name);
         setTimeout(() => setCompletedGoalName(null), 5000);
       }
     } else {
-      onWithdrawFromSavings(selectedGoalId, amt, fromWalletId);
+      onWithdrawFromSavings(selectedGoalId, amt);
     }
 
     setTransferAmount('');
     setShowTransferModal(false);
   };
 
+  // Submit New Goal
   const handleAddGoalSubmit = () => {
     triggerHapticFeedback();
+    setAddGoalError('');
     const target = parseFloat(goalTarget);
     if (!goalName.trim() || isNaN(target) || target <= 0) {
-      alert('Please fill out all fields with valid values.');
+      setAddGoalError('Please enter a valid goal name and target amount greater than 0.');
       return;
     }
 
@@ -120,9 +211,85 @@ export default function SavingsTab({
     setGoalName('');
     setGoalTarget('');
     setGoalDeadline('');
+    setAddGoalError('');
     setShowAddGoalSheet(false);
   };
 
+  // Open Edit Goal Modal
+  const handleOpenEditGoal = (goal: SavingsGoal) => {
+    triggerHapticFeedback();
+    setEditingGoal(goal);
+    setEditName(goal.name);
+    setEditTarget(goal.targetAmount.toString());
+    setEditColor(goal.color || HARMONIOUS_GOAL_COLORS[0]);
+    setEditDeadline(goal.deadline || '');
+    setEditGoalError('');
+  };
+
+  // Save Goal Edits
+  const handleSaveGoalEdit = () => {
+    if (!editingGoal || !onEditGoal) return;
+    triggerHapticFeedback();
+    setEditGoalError('');
+
+    const target = parseFloat(editTarget);
+    if (!editName.trim() || isNaN(target) || target <= 0) {
+      setEditGoalError('Please enter a valid goal name and target amount greater than 0.');
+      return;
+    }
+
+    onEditGoal(editingGoal.id, {
+      name: editName.trim(),
+      targetAmount: target,
+      color: editColor,
+      deadline: editDeadline || undefined
+    });
+
+    setEditingGoal(null);
+    setEditGoalError('');
+  };
+
+  // Confirm and Execute Goal Deletion
+  const handleConfirmDeleteGoal = () => {
+    if (!deletingGoal || !onDeleteGoal) return;
+    triggerHapticFeedback();
+
+    onDeleteGoal(deletingGoal.id);
+    setDeletingGoal(null);
+  };
+
+  // Submit Changed Vault PIN
+  const handleChangePinSubmit = () => {
+    triggerHapticFeedback();
+    setChangePinError('');
+
+    if (changePinOld !== vaultPassword) {
+      setChangePinError('Current PIN is incorrect.');
+      return;
+    }
+
+    if (changePinNew.length !== 4 || !/^\d{4}$/.test(changePinNew)) {
+      setChangePinError('New PIN must be exactly 4 numeric digits.');
+      return;
+    }
+
+    if (changePinNew !== changePinConfirm) {
+      setChangePinError('New PIN and confirmation do not match.');
+      return;
+    }
+
+    onSetVaultPassword(changePinNew);
+    setChangePinSuccess('Vault PIN successfully updated!');
+    setTimeout(() => {
+      setChangePinSuccess('');
+      setShowChangePinModal(false);
+      setChangePinOld('');
+      setChangePinNew('');
+      setChangePinConfirm('');
+    }, 1200);
+  };
+
+  // PIN Keypad Handlers
   const handleSetupPinPress = (digit: string) => {
     triggerHapticFeedback();
     setErrMessage('');
@@ -192,16 +359,29 @@ export default function SavingsTab({
     return (
       <div className="w-full flex flex-col items-center justify-center py-8 select-none">
         <div 
-          className="w-full max-w-sm p-6 rounded-[28px] border text-center flex flex-col items-center gap-5"
+          className="w-full max-w-sm p-6 rounded-[28px] border text-center flex flex-col items-center gap-5 shadow-2xl relative"
           style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
         >
+          {onBack && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                onBack();
+              }}
+              className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-xs font-bold text-neutral-300 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <ArrowLeft size={14} className="text-emerald-400" /> Back to Home
+            </button>
+          )}
+
           <div className="p-4 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20">
             <Lock size={36} />
           </div>
           <div className="flex flex-col gap-1.5">
             <h3 className="text-lg font-extrabold text-white tracking-tight">Vault Isolated</h3>
             <p className="text-xs text-neutral-400 max-w-[240px] leading-relaxed mx-auto">
-              Please enter your secure Vault passcode to access your savings goals.
+              Please enter your secure 4-digit Vault passcode to access your savings.
             </p>
           </div>
 
@@ -264,15 +444,28 @@ export default function SavingsTab({
     );
   }
 
-  // If password NOT set:
+  // If password NOT set yet:
   if (!vaultPassword) {
     const currentLen = setupStep === 'create' ? setupPin.length : confirmPin.length;
     return (
       <div className="w-full flex flex-col items-center justify-center py-8 select-none">
         <div 
-          className="w-full max-w-sm p-6 rounded-[28px] border text-center flex flex-col items-center gap-5"
+          className="w-full max-w-sm p-6 rounded-[28px] border text-center flex flex-col items-center gap-5 shadow-2xl relative"
           style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
         >
+          {onBack && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                onBack();
+              }}
+              className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-xs font-bold text-neutral-300 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <ArrowLeft size={14} className="text-emerald-400" /> Back to Home
+            </button>
+          )}
+
           <div className="p-4 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">
             <Key size={36} />
           </div>
@@ -348,6 +541,58 @@ export default function SavingsTab({
 
   return (
     <div className="w-full flex flex-col gap-5 select-none relative">
+      {/* Top Vault Navigation & Control Header */}
+      <div className="flex justify-between items-center pb-2 border-b border-white/5">
+        <button
+          type="button"
+          onClick={() => {
+            triggerHapticFeedback();
+            if (onBack) onBack();
+          }}
+          className="flex items-center gap-2 px-3.5 py-2 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+        >
+          <ArrowLeft size={15} className="text-emerald-400" />
+          <span>Back to Home</span>
+        </button>
+
+        <div className="flex items-center gap-2">
+          {vaultPassword && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                setVaultSessionUnlocked(false);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-300 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+              title="Lock Vault"
+            >
+              <Lock size={13} className="text-amber-400" />
+              <span>Lock</span>
+            </button>
+          )}
+
+          {vaultPassword && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                setChangePinOld('');
+                setChangePinNew('');
+                setChangePinConfirm('');
+                setChangePinError('');
+                setChangePinSuccess('');
+                setShowChangePinModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500/20 active:bg-purple-500/25 border border-purple-500/25 rounded-2xl text-xs font-bold text-purple-300 hover:text-purple-200 cursor-pointer transition-all active:scale-95 shadow-sm"
+              title="Change Vault PIN"
+            >
+              <Key size={13} className="text-purple-400" />
+              <span>Change PIN</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Visual Celebration Confetti Overlay */}
       <AnimatePresence>
         {completedGoalName && (
@@ -369,18 +614,21 @@ export default function SavingsTab({
             </span>
             <button
               onClick={() => setCompletedGoalName(null)}
-              className="mt-6 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 font-bold text-xs rounded-full cursor-pointer text-white"
+              className="mt-6 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 font-bold text-xs rounded-full cursor-pointer text-white flex items-center gap-1.5 shadow-lg shadow-emerald-500/30"
             >
-              Close Celebration
+              <Check size={14} /> Close Celebration
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* 3D-Like Isometric Animated Vault Door Centerpiece */}
-      <div className={`w-full p-5 rounded-[28px] border bg-gradient-to-b from-neutral-900 to-neutral-950 flex flex-col items-center gap-4 relative overflow-hidden`} style={{ borderColor: themeBorder }}>
-        <div className="absolute top-2.5 left-3 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-mono tracking-widest uppercase">
-          Vault Protection Active
+      <div 
+        className="w-full p-5 rounded-[28px] border bg-gradient-to-b from-neutral-900 to-neutral-950 flex flex-col items-center gap-4 relative overflow-hidden shadow-xl" 
+        style={{ borderColor: themeBorder }}
+      >
+        <div className="absolute top-2.5 left-3 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-mono tracking-widest uppercase text-emerald-400 flex items-center gap-1">
+          <ShieldCheck size={11} /> Vault Protection Active
         </div>
 
         {/* Isometric SVG Vault Door */}
@@ -412,18 +660,15 @@ export default function SavingsTab({
               return <circle key={idx} cx={x} cy={y} r="2" fill="#94A3B8" />;
             })}
 
-            {/* The primary rotating wheel door handle */}
+            {/* Rotating wheel door handle */}
             <g className={isVaultSpinning ? 'animate-vault-spin' : ''} style={{ transformOrigin: '60px 60px' }}>
               <circle cx="60" cy="60" r="32" fill="url(#vault-metallic)" stroke="#1E293B" strokeWidth="2.5" />
-              
               <line x1="60" y1="20" x2="60" y2="100" stroke="#334155" strokeWidth="5" strokeLinecap="round" />
               <line x1="20" y1="60" x2="100" y2="60" stroke="#334155" strokeWidth="5" strokeLinecap="round" />
-              
               <circle cx="60" cy="20" r="5" fill="#64748B" stroke="#94A3B8" />
               <circle cx="60" cy="100" r="5" fill="#64748B" stroke="#94A3B8" />
               <circle cx="20" cy="60" r="5" fill="#64748B" stroke="#94A3B8" />
               <circle cx="100" cy="60" r="5" fill="#64748B" stroke="#94A3B8" />
-
               <circle cx="60" cy="60" r="12" fill="#0F172A" stroke="#94A3B8" strokeWidth="2" />
               <circle cx="60" cy="60" r="6" fill="#10B981" />
             </g>
@@ -431,7 +676,9 @@ export default function SavingsTab({
         </div>
 
         <div className="flex flex-col items-center">
-          <span className="text-[10px] text-neutral-400 tracking-wider font-mono">Isolated Vault Assets</span>
+          <span className="text-[10px] text-neutral-400 tracking-wider font-mono uppercase">
+            Total Vault Assets
+          </span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <AnimatedTicker
               value={totalSaved}
@@ -444,45 +691,97 @@ export default function SavingsTab({
         {/* TRANSFER OPERATIONS ACTION ROW */}
         <div className="grid grid-cols-2 gap-3 w-full border-t border-white/5 pt-4 mt-1">
           <button
-            onClick={() => {
-              setTransferType('deposit');
-              setShowTransferModal(true);
-              triggerHapticFeedback();
-            }}
-            className="py-2.5 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/25 rounded-2xl text-emerald-400 text-xs font-bold tracking-wide flex items-center justify-center gap-1 cursor-pointer"
+            type="button"
+            onClick={() => openDepositModal('savings')}
+            className="py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 rounded-2xl text-emerald-400 text-xs font-bold tracking-wide flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm"
           >
-            <ArrowUpRight size={14} /> Deposit to Vault
+            <ArrowUpRight size={15} /> Deposit to Vault
           </button>
           
           <button
-            onClick={() => {
-              setTransferType('withdraw');
-              setShowTransferModal(true);
-              triggerHapticFeedback();
-            }}
-            className="py-2.5 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/25 rounded-2xl text-rose-400 text-xs font-bold tracking-wide flex items-center justify-center gap-1 cursor-pointer"
+            type="button"
+            onClick={() => openWithdrawModal()}
+            className="py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 rounded-2xl text-rose-400 text-xs font-bold tracking-wide flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm"
           >
-            <ArrowDownRight size={14} /> Withdraw/Fund
+            <ArrowDownRight size={15} /> Withdraw / Fund
           </button>
         </div>
       </div>
 
-      {/* SAVINGS GOALS */}
+      {/* --- MASTER VAULT HOLDING FUND: SAVINGS --- */}
+      <div 
+        className="p-4 rounded-2xl border flex flex-col gap-3 relative overflow-hidden shadow-md"
+        style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+      >
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <ShieldCheck size={20} />
+            </div>
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-bold text-white tracking-tight">Savings</span>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  Primary Reserve
+                </span>
+              </div>
+              <span className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
+                General vault reserve & preserved money from deleted goals
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-baseline pt-1 border-t border-white/5">
+          <span className="text-xs text-neutral-400 font-medium">Unallocated Savings:</span>
+          <span className="text-lg font-extrabold font-mono text-emerald-400">
+            {currencySymbol}{generalSavings.currentAmount.toLocaleString()}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => openDepositModal('savings')}
+            className="py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl text-emerald-400 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95"
+          >
+            <ArrowUpRight size={13} /> Deposit to Savings
+          </button>
+          <button
+            type="button"
+            disabled={generalSavings.currentAmount <= 0}
+            onClick={() => openWithdrawModal('savings')}
+            className={`py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 ${
+              generalSavings.currentAmount > 0
+                ? 'bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 cursor-pointer'
+                : 'bg-white/5 border border-white/5 text-neutral-500 cursor-not-allowed opacity-50'
+            }`}
+          >
+            <ArrowDownRight size={13} /> Withdraw from Savings
+          </button>
+        </div>
+      </div>
+
+      {/* --- TARGET SAVINGS GOALS SECTION --- */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center px-1">
-          <span className="text-xs font-semibold tracking-wider opacity-60 uppercase">
-            Active Vault Goals
+          <span className="text-xs font-semibold tracking-wider text-neutral-400 uppercase font-mono">
+            Target Goals ({targetGoals.length})
           </span>
           <button
-            onClick={() => setShowAddGoalSheet(true)}
-            className="text-xs text-emerald-400 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+            type="button"
+            onClick={() => {
+              triggerHapticFeedback();
+              setShowAddGoalSheet(true);
+            }}
+            className="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 cursor-pointer transition-colors"
           >
             <Plus size={14} /> New Goal
           </button>
         </div>
 
         <div className="flex flex-col gap-3.5">
-          {savingsGoals.map(goal => {
+          {targetGoals.map(goal => {
             const ratio = goal.targetAmount > 0 ? Math.min(goal.currentAmount / goal.targetAmount, 1) : 0;
             const percentage = Math.round(ratio * 100);
             
@@ -506,36 +805,66 @@ export default function SavingsTab({
             return (
               <div 
                 key={goal.id}
-                className="p-4 rounded-2xl border border-white/5 flex flex-col gap-3 relative overflow-hidden"
+                className="p-4 rounded-2xl border border-white/5 flex flex-col gap-3 relative overflow-hidden shadow-md"
                 style={{ backgroundColor: themeCardBg }}
               >
-                <div className="flex justify-between items-center">
+                {/* Header with Title and Action Buttons (Edit & Delete) */}
+                <div className="flex justify-between items-start">
                   <div className="flex flex-col text-left">
                     <span className="text-sm font-bold tracking-tight text-white">{goal.name}</span>
                     {goal.deadline && (
-                      <span className="text-[9px] text-neutral-400 font-mono mt-0.5">Target deadline: {goal.deadline}</span>
+                      <span className="text-[10px] text-neutral-400 font-mono mt-0.5">
+                        Target deadline: {goal.deadline}
+                      </span>
                     )}
                   </div>
                   
-                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-wide ${badgeColor}`}>
-                    {badgeText}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-wide ${badgeColor}`}>
+                      {badgeText}
+                    </span>
+
+                    {/* Edit Goal Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditGoal(goal)}
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                      title="Edit Goal"
+                    >
+                      <Pencil size={13} />
+                    </button>
+
+                    {/* Delete Goal Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHapticFeedback();
+                        setDeletingGoal(goal);
+                      }}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer border border-rose-500/20"
+                      title="Delete Goal"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
 
+                {/* Amount details */}
                 <div className="flex justify-between items-baseline text-xs font-mono">
                   <span className="text-neutral-400">
                     Saved: <span className="font-bold text-white">{currencySymbol}{goal.currentAmount.toLocaleString()}</span>
                   </span>
                   <span className="text-neutral-500">
-                    Goal: {currencySymbol}{goal.targetAmount.toLocaleString()}
+                    Target: {currencySymbol}{goal.targetAmount.toLocaleString()} ({percentage}%)
                   </span>
                 </div>
 
+                {/* Progress bar */}
                 <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden relative border border-white/5">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percentage}%` }}
-                    transition={{ duration: 1, ease: 'easeOut' }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
                     className="h-full rounded-full"
                     style={{ backgroundColor: goal.color }}
                   />
@@ -543,99 +872,221 @@ export default function SavingsTab({
                   <div className="absolute inset-y-0 left-[50%] border-r border-white/10" />
                   <div className="absolute inset-y-0 left-[75%] border-r border-white/10" />
                 </div>
+
+                {/* Quick Goal Action Buttons */}
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => openDepositModal(goal.id)}
+                    className="py-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-400 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <ArrowUpRight size={12} /> Add to Goal
+                  </button>
+                  <button
+                    type="button"
+                    disabled={goal.currentAmount <= 0}
+                    onClick={() => openWithdrawModal(goal.id)}
+                    className={`py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-colors ${
+                      goal.currentAmount > 0
+                        ? 'bg-rose-500/10 hover:bg-rose-500/15 text-rose-400 cursor-pointer'
+                        : 'bg-white/5 text-neutral-500 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <ArrowDownRight size={12} /> Withdraw
+                  </button>
+                </div>
               </div>
             );
           })}
 
-          {savingsGoals.length === 0 && (
-            <div className="text-center py-8 text-neutral-500">
-              No active goals in your vault yet.
+          {targetGoals.length === 0 && (
+            <div className="text-center py-8 text-neutral-400 bg-white/3 border border-dashed border-white/10 rounded-2xl flex flex-col items-center gap-2">
+              <Sparkles size={24} className="text-emerald-400/60" />
+              <span className="text-sm font-medium text-neutral-300">No specific target goals created yet.</span>
+              <span className="text-xs text-neutral-500 max-w-xs">
+                You can deposit directly to general "Savings", or create dedicated targets for cars, gadgets, travel, and more.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticFeedback();
+                  setShowAddGoalSheet(true);
+                }}
+                className="mt-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer shadow-md"
+              >
+                <Plus size={14} /> Create First Goal
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* --- VAULT TRANSFER POPUP DIALOG --- */}
+      {/* ========================================================================= */}
+      {/* --- VAULT TRANSFER MODAL (DEPOSIT / WITHDRAW) --- */}
+      {/* ========================================================================= */}
       <AnimatePresence>
         {showTransferModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-[24px] flex flex-col gap-4 text-white"
+              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
             >
+              {/* Header */}
               <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-base font-bold capitalize flex items-center gap-1">
-                  <ArrowRightLeft size={16} className="text-emerald-400" />
-                  Vault {transferType}
+                <span className="text-base font-bold capitalize flex items-center gap-2">
+                  {transferType === 'deposit' ? (
+                    <ArrowUpRight size={18} className="text-emerald-400" />
+                  ) : (
+                    <ArrowDownRight size={18} className="text-rose-400" />
+                  )}
+                  Vault {transferType === 'deposit' ? 'Deposit' : 'Withdrawal'}
                 </span>
-                <button onClick={() => setShowTransferModal(false)} className="text-neutral-400 hover:text-white">
-                  Close
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setShowTransferModal(false);
+                    setTransferError('');
+                  }} 
+                  className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
+                  title="Cancel"
+                >
+                  <X size={15} />
                 </button>
               </div>
 
-              {/* Goal Selector */}
-              <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Select Target Goal</span>
-                <select
-                  value={selectedGoalId}
-                  onChange={(e) => setSelectedGoalId(e.target.value)}
-                  className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
-                >
-                  {savingsGoals.map(g => (
-                    <option key={g.id} value={g.id}>{g.name} ({currencySymbol}{g.currentAmount})</option>
-                  ))}
-                </select>
-              </div>
+              {transferError && (
+                <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <ShieldAlert size={16} className="shrink-0 text-rose-400" />
+                  <span>{transferError}</span>
+                </div>
+              )}
+
+              {/* Source/Origin Information */}
+              {transferType === 'deposit' ? (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-400 font-medium">Source of Funds</span>
+                  <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-neutral-200">
+                    <Wallet size={16} className="text-emerald-400 shrink-0" />
+                    <span className="font-semibold text-white">Main App Income / Balance</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-400 font-medium">Withdraw From (Vault Source)</span>
+                  <select
+                    value={selectedGoalId}
+                    onChange={(e) => setSelectedGoalId(e.target.value)}
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    {/* General Savings option */}
+                    <option value="savings">
+                      Savings (General Vault) - {currencySymbol}{generalSavings.currentAmount.toLocaleString()} available
+                    </option>
+                    {/* Active target goals */}
+                    {targetGoals.map(g => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} - {currencySymbol}{g.currentAmount.toLocaleString()} available
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Destination Information */}
+              {transferType === 'deposit' ? (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-400 font-medium">Deposit Into (Vault Destination)</span>
+                  <select
+                    value={selectedGoalId}
+                    onChange={(e) => setSelectedGoalId(e.target.value)}
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    <option value="savings">Savings (General Vault Reserve)</option>
+                    {targetGoals.map(g => (
+                      <option key={g.id} value={g.id}>
+                        Goal: {g.name} ({currencySymbol}{g.currentAmount.toLocaleString()} saved)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-400 font-medium">Destination</span>
+                  <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-neutral-200">
+                    <Wallet size={16} className="text-emerald-400 shrink-0" />
+                    <span className="font-semibold text-white">Main App Income / Balance</span>
+                  </div>
+                </div>
+              )}
 
               {/* Amount Entry */}
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Amount to Transfer ({currencySymbol})</span>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  value={transferAmount}
-                  onChange={(e) => setTransferAmount(e.target.value)}
-                  className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono"
-                />
-              </div>
-
-              {/* Wallet Origin/Destination */}
-              <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">
-                  {transferType === 'deposit' ? 'Deduct from Wallet' : 'Credit back to Wallet'}
-                </span>
-                <select
-                  value={fromWalletId}
-                  onChange={(e) => setFromWalletId(e.target.value)}
-                  className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
-                >
-                  {wallets.filter(w => w.type !== 'savings').map(w => (
-                    <option key={w.id} value={w.id}>{w.name} (Bal: {currencySymbol}{w.balance})</option>
-                  ))}
-                </select>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-neutral-400 font-medium">Amount to Transfer</span>
+                  {transferType === 'withdraw' && (() => {
+                    const currentSelected = savingsGoals.find(g => g.id === selectedGoalId) || (selectedGoalId === 'savings' ? generalSavings : null);
+                    return currentSelected ? (
+                      <button
+                        type="button"
+                        onClick={() => setTransferAmount(currentSelected.currentAmount.toString())}
+                        className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 cursor-pointer"
+                      >
+                        Max: {currencySymbol}{currentSelected.currentAmount.toLocaleString()}
+                      </button>
+                    ) : null;
+                  })()}
+                </div>
+                <div className="flex items-center gap-2 bg-neutral-800 border border-white/15 rounded-xl px-3.5 py-2.5">
+                  <span className="text-neutral-400 font-mono font-bold">{currencySymbol}</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="any"
+                    placeholder="0.00"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                    className="bg-transparent flex-1 text-sm text-white font-mono outline-none"
+                    autoFocus
+                  />
+                </div>
               </div>
 
               {transferType === 'withdraw' && (
                 <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-[10px] leading-relaxed flex gap-2">
-                  <ShieldAlert size={16} className="flex-shrink-0" />
-                  <span>Withdrawals from Savings to fund Checkings will be clearly logged in logs to maintain dual-integrity records.</span>
+                  <ShieldAlert size={16} className="shrink-0 text-amber-400" />
+                  <span>Withdrawn funds will be immediately credited back to your Main App Income / Balance.</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3 mt-2">
+              {/* Buttons: Cancel (reddish) and Action */}
+              <div className="grid grid-cols-2 gap-3 mt-1 pt-2 border-t border-white/5">
                 <button
+                  type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold cursor-pointer"
+                  className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
                 >
-                  Cancel
+                  <X size={14} className="text-rose-400" /> Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={handleTransferSubmit}
-                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer"
+                  className={`py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md ${
+                    transferType === 'deposit'
+                      ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/25'
+                      : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/25'
+                  }`}
                 >
-                  Complete Transfer
+                  {transferType === 'deposit' ? (
+                    <>
+                      <ArrowUpRight size={15} /> Complete Deposit
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDownRight size={15} /> Complete Withdrawal
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -643,64 +1094,76 @@ export default function SavingsTab({
         )}
       </AnimatePresence>
 
-      {/* --- ADD NEW SAVINGS GOAL CABINET --- */}
+      {/* ========================================================================= */}
+      {/* --- ADD NEW SAVINGS GOAL MODAL --- */}
+      {/* ========================================================================= */}
       <AnimatePresence>
         {showAddGoalSheet && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-[24px] flex flex-col gap-4 text-white"
+              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
             >
               <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-sm font-bold">New Vault Goal</span>
-                <button onClick={() => setShowAddGoalSheet(false)} className="text-neutral-400 hover:text-white">
-                  <Plus className="rotate-45" size={18} />
+                <span className="text-sm font-bold flex items-center gap-1.5">
+                  <Plus size={16} className="text-emerald-400" /> New Vault Goal
+                </span>
+                <button 
+                  type="button"
+                  onClick={() => setShowAddGoalSheet(false)} 
+                  className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
+                  title="Cancel"
+                >
+                  <X size={15} />
                 </button>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Goal Name / Fund Target</span>
+                <span className="text-xs text-neutral-400 font-medium">Goal Name</span>
                 <input
                   type="text"
                   placeholder="e.g. Dream Electric Car, Laptop..."
                   value={goalName}
                   onChange={(e) => setGoalName(e.target.value)}
-                  className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
+                  className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400">Target amount ({currencySymbol})</span>
+                  <span className="text-xs text-neutral-400 font-medium">Target Amount ({currencySymbol})</span>
                   <input
                     type="number"
+                    inputMode="decimal"
                     placeholder="2500"
                     value={goalTarget}
                     onChange={(e) => setGoalTarget(e.target.value)}
-                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-mono"
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
                   />
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400">Deadline (Optional)</span>
+                  <span className="text-xs text-neutral-400 font-medium">Deadline (Optional)</span>
                   <input
                     type="date"
                     value={goalDeadline}
                     onChange={(e) => setGoalDeadline(e.target.value)}
-                    className="bg-neutral-800 border border-white/10 rounded-xl px-2 py-2 text-xs text-white"
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
                   />
                 </div>
               </div>
 
-              {/* Theme Color selector for goal progress bar */}
+              {/* Theme Color selector */}
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Theme bar color</span>
-                <div className="flex gap-2.5 flex-wrap">
-                  {['#8B5CF6', '#10B981', '#3B82F6', '#EC4899', '#EF4444', '#14B8A6'].map(color => (
+                <span className="text-xs text-neutral-400 font-medium">Theme Progress Color</span>
+                <div className="flex gap-2.5 flex-wrap pt-1">
+                  {HARMONIOUS_GOAL_COLORS.map(color => (
                     <button
                       key={color}
+                      type="button"
                       onClick={() => setGoalColor(color)}
                       className={`w-7 h-7 rounded-full border border-white/20 transition-transform ${goalColor === color ? 'scale-125 ring-2 ring-white' : ''}`}
                       style={{ backgroundColor: color }}
@@ -709,12 +1172,280 @@ export default function SavingsTab({
                 </div>
               </div>
 
-              <button
-                onClick={handleAddGoalSubmit}
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-bold text-sm text-white mt-2 cursor-pointer"
-              >
-                Create Vault Goal
-              </button>
+              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setShowAddGoalSheet(false)}
+                  className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                >
+                  <X size={14} className="text-rose-400" /> Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddGoalSubmit}
+                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                >
+                  <Check size={14} strokeWidth={3} /> Create Goal
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* --- EDIT SAVINGS GOAL MODAL --- */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {editingGoal && (
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                <span className="text-sm font-bold flex items-center gap-1.5">
+                  <Pencil size={15} className="text-emerald-400" /> Edit Goal Details
+                </span>
+                <button 
+                  type="button"
+                  onClick={() => setEditingGoal(null)} 
+                  className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
+                  title="Cancel"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-400 font-medium">Goal Name</span>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-400 font-medium">Target ({currencySymbol})</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={editTarget}
+                    onChange={(e) => setEditTarget(e.target.value)}
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-400 font-medium">Deadline (Optional)</span>
+                  <input
+                    type="date"
+                    value={editDeadline}
+                    onChange={(e) => setEditDeadline(e.target.value)}
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Theme Color selector */}
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-400 font-medium">Theme Progress Color</span>
+                <div className="flex gap-2.5 flex-wrap pt-1">
+                  {HARMONIOUS_GOAL_COLORS.map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setEditColor(color)}
+                      className={`w-7 h-7 rounded-full border border-white/20 transition-transform ${editColor === color ? 'scale-125 ring-2 ring-white' : ''}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setEditingGoal(null)}
+                  className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                >
+                  <X size={14} className="text-rose-400" /> Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveGoalEdit}
+                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                >
+                  <Check size={14} strokeWidth={3} /> Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* --- DELETE GOAL CONFIRMATION DIALOG --- */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {deletingGoal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-60 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-rose-500/15 text-rose-400 rounded-2xl border border-rose-500/30 shrink-0">
+                  <Trash2 size={24} />
+                </div>
+                <div className="flex flex-col">
+                  <h4 className="text-base font-bold text-white">Delete Vault Goal</h4>
+                  <span className="text-xs text-neutral-400">"{deletingGoal.name}"</span>
+                </div>
+              </div>
+
+              {/* Crucial Guarantee Note */}
+              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex flex-col gap-1 text-xs text-emerald-300 leading-relaxed">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-400 text-xs">
+                  <ShieldCheck size={15} /> Safe Assets Guarantee
+                </div>
+                <span>
+                  Deleting this goal will <strong>NOT</strong> delete or remove your money. Any saved funds (
+                  <strong className="text-white">{currencySymbol}{deletingGoal.currentAmount.toLocaleString()}</strong>
+                  ) will automatically be preserved in your vault under <strong>'Savings'</strong>.
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeletingGoal(null)}
+                  className="py-2.5 bg-white/10 hover:bg-white/15 border border-white/15 rounded-xl text-xs font-bold text-neutral-300 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                >
+                  <X size={14} /> Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteGoal}
+                  className="py-2.5 bg-rose-500 hover:bg-rose-600 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-rose-500/25 transition-all active:scale-95"
+                >
+                  <Trash2 size={14} /> Delete & Keep Funds
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* --- CHANGE VAULT PIN MODAL --- */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {showChangePinModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-60 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400">
+                    <Key size={18} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-white">Change Vault Passcode</span>
+                    <span className="text-[10px] text-neutral-400">Update your 4-digit security PIN</span>
+                  </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setShowChangePinModal(false)} 
+                  className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
+                  title="Cancel"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {changePinSuccess && (
+                <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <Check size={16} /> {changePinSuccess}
+                </div>
+              )}
+
+              {changePinError && (
+                <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <ShieldAlert size={16} className="shrink-0 text-rose-400" /> {changePinError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-neutral-400 font-medium">Current 4-Digit Passcode</label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    inputMode="numeric"
+                    placeholder="••••"
+                    value={changePinOld}
+                    onChange={(e) => setChangePinOld(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest text-white focus:outline-none focus:border-purple-500"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-neutral-400 font-medium">New 4-Digit Passcode</label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    inputMode="numeric"
+                    placeholder="••••"
+                    value={changePinNew}
+                    onChange={(e) => setChangePinNew(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-neutral-400 font-medium">Confirm New Passcode</label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    inputMode="numeric"
+                    placeholder="••••"
+                    value={changePinConfirm}
+                    onChange={(e) => setChangePinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    className="bg-neutral-800 border border-white/15 rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setShowChangePinModal(false)}
+                  className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                >
+                  <X size={14} className="text-rose-400" /> Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleChangePinSubmit}
+                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                >
+                  <Check size={14} strokeWidth={3} /> Update PIN
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

@@ -454,24 +454,34 @@ export function useAppState() {
     }));
   }, []);
 
-  const handleTransferToSavings = useCallback((goalId: string, amount: number, fromWalletId: string) => {
+  const handleTransferToSavings = useCallback((goalId: string, amount: number, fromWalletId?: string) => {
     triggerHapticFeedback();
+    const effectiveWalletId = fromWalletId || state.wallets[0]?.id || 'wallet-bank';
 
     const updatedWallets = state.wallets.map(w => {
-      if (w.id === fromWalletId) {
+      if (w.id === effectiveWalletId) {
         return { ...w, balance: w.balance - amount };
       }
       return w;
     });
 
-    const updatedGoals = state.savingsGoals.map(g => {
-      if (g.id === goalId) {
+    let goalFound = false;
+    let updatedGoals = state.savingsGoals.map(g => {
+      if (g.id === goalId || (goalId === 'savings' && g.id === 'savings')) {
+        goalFound = true;
         return { ...g, currentAmount: g.currentAmount + amount };
       }
       return g;
     });
 
-    const goal = state.savingsGoals.find(g => g.id === goalId);
+    if (!goalFound && goalId === 'savings') {
+      updatedGoals = [
+        { id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: amount, color: '#10B981' },
+        ...updatedGoals
+      ];
+    }
+
+    const targetGoal = updatedGoals.find(g => g.id === goalId || (goalId === 'savings' && g.id === 'savings'));
 
     const depositTx: Transaction = {
       id: `tx-dep-${Date.now()}`,
@@ -479,10 +489,10 @@ export function useAppState() {
       amount,
       currency: state.settings.currencySymbol,
       date: new Date().toISOString(),
-      note: `Vault goal transfer: "${goal?.name || 'Goal Fund'}"`,
+      note: `Vault deposit: "${targetGoal?.name || 'Savings'}"`,
       category: 'Savings Deposit',
-      walletId: fromWalletId,
-      paymentMethod: 'Bank Transfer',
+      walletId: effectiveWalletId,
+      paymentMethod: 'Vault Deposit',
       isRecurring: false
     };
 
@@ -494,25 +504,26 @@ export function useAppState() {
     }));
   }, [state.wallets, state.savingsGoals, state.settings.currencySymbol]);
 
-  const handleWithdrawFromSavings = useCallback((goalId: string, amount: number, toWalletId: string) => {
+  const handleWithdrawFromSavings = useCallback((goalId: string, amount: number, toWalletId?: string) => {
     triggerHapticFeedback();
+    const effectiveWalletId = toWalletId || state.wallets[0]?.id || 'wallet-bank';
 
-    const goal = state.savingsGoals.find(g => g.id === goalId);
+    const goal = state.savingsGoals.find(g => g.id === goalId || (goalId === 'savings' && g.id === 'savings'));
     if (goal && goal.currentAmount < amount) {
-      alert('Insufficient funds inside this vault goal.');
+      alert(`Insufficient funds inside ${goal.name}. Maximum available is ${state.settings.currencySymbol}${goal.currentAmount.toLocaleString()}.`);
       return;
     }
 
     const updatedWallets = state.wallets.map(w => {
-      if (w.id === toWalletId) {
+      if (w.id === effectiveWalletId) {
         return { ...w, balance: w.balance + amount };
       }
       return w;
     });
 
     const updatedGoals = state.savingsGoals.map(g => {
-      if (g.id === goalId) {
-        return { ...g, currentAmount: g.currentAmount - amount };
+      if (g.id === goalId || (goalId === 'savings' && g.id === 'savings')) {
+        return { ...g, currentAmount: Math.max(0, g.currentAmount - amount) };
       }
       return g;
     });
@@ -523,10 +534,10 @@ export function useAppState() {
       amount,
       currency: state.settings.currencySymbol,
       date: new Date().toISOString(),
-      note: `Vault withdrawal to checking: "${goal?.name || 'Goal Fund'}"`,
+      note: `Vault withdrawal to main income: "${goal?.name || 'Savings'}"`,
       category: 'Savings Withdrawal',
-      walletId: toWalletId,
-      paymentMethod: 'Bank Transfer',
+      walletId: effectiveWalletId,
+      paymentMethod: 'Vault Withdrawal',
       isRecurring: false
     };
 
@@ -553,6 +564,52 @@ export function useAppState() {
     }));
   }, []);
 
+  const handleEditSavingsGoal = useCallback((goalId: string, updatedData: Partial<SavingsGoal>) => {
+    triggerHapticFeedback();
+    setState(prev => ({
+      ...prev,
+      savingsGoals: prev.savingsGoals.map(g => {
+        if (g.id === goalId) {
+          return { ...g, ...updatedData };
+        }
+        return g;
+      })
+    }));
+  }, []);
+
+  const handleDeleteSavingsGoal = useCallback((goalId: string) => {
+    triggerHapticFeedback();
+    setState(prev => {
+      const goalToDelete = prev.savingsGoals.find(g => g.id === goalId);
+      if (!goalToDelete || goalId === 'savings') return prev;
+
+      const salvagedAmount = goalToDelete.currentAmount || 0;
+      let savingsFound = false;
+
+      let nextGoals = prev.savingsGoals
+        .filter(g => g.id !== goalId)
+        .map(g => {
+          if (g.id === 'savings') {
+            savingsFound = true;
+            return { ...g, currentAmount: g.currentAmount + salvagedAmount };
+          }
+          return g;
+        });
+
+      if (!savingsFound) {
+        nextGoals = [
+          { id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: salvagedAmount, color: '#10B981' },
+          ...nextGoals
+        ];
+      }
+
+      return {
+        ...prev,
+        savingsGoals: nextGoals
+      };
+    });
+  }, []);
+
   const handleAddCategory = useCallback((catData: Omit<Category, 'id' | 'isCustom' | 'isEnabled'>) => {
     triggerHapticFeedback();
     const newCat: Category = {
@@ -571,7 +628,31 @@ export function useAppState() {
     triggerHapticFeedback();
     setState(prev => ({
       ...prev,
-      categories: prev.categories.filter(c => c.id !== id)
+      categories: prev.categories.filter(c => c.id !== id),
+      subCategories: prev.subCategories.filter(sc => sc.parentId !== id)
+    }));
+  }, []);
+
+  const handleAddSubCategory = useCallback((subCatData: Omit<Category, 'id' | 'isCustom' | 'isEnabled'>) => {
+    triggerHapticFeedback();
+    const newSubCat: Category = {
+      id: `sub-custom-${Date.now()}`,
+      isCustom: true,
+      isEnabled: true,
+      ...subCatData
+    };
+    setState(prev => ({
+      ...prev,
+      subCategories: [...prev.subCategories, newSubCat]
+    }));
+    return newSubCat;
+  }, []);
+
+  const handleDeleteSubCategory = useCallback((id: string) => {
+    triggerHapticFeedback();
+    setState(prev => ({
+      ...prev,
+      subCategories: prev.subCategories.filter(sc => sc.id !== id)
     }));
   }, []);
 
@@ -721,8 +802,12 @@ export function useAppState() {
     handleTransferToSavings,
     handleWithdrawFromSavings,
     handleAddSavingsGoal,
+    handleEditSavingsGoal,
+    handleDeleteSavingsGoal,
     handleAddCategory,
     handleDeleteCategory,
+    handleAddSubCategory,
+    handleDeleteSubCategory,
     handleFactoryReset,
     handleExportBackup,
     handleImportBackup,

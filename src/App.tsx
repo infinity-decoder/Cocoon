@@ -153,6 +153,12 @@ export default function App() {
                   onTransferToSavings={app.handleTransferToSavings}
                   onWithdrawFromSavings={app.handleWithdrawFromSavings}
                   onAddGoal={app.handleAddSavingsGoal}
+                  onEditGoal={app.handleEditSavingsGoal}
+                  onDeleteGoal={app.handleDeleteSavingsGoal}
+                  onBack={() => {
+                    triggerHapticFeedback();
+                    app.setActiveTab(0);
+                  }}
                   themeCardBg={app.activeTheme.cardBg}
                   themeBorder={app.activeTheme.border}
                   themeRadius={app.activeTheme.radius}
@@ -257,6 +263,8 @@ export default function App() {
                   }}
                   categories={app.state.categories}
                   subCategories={app.state.subCategories}
+                  onAddCategory={app.handleAddCategory}
+                  onAddSubCategory={app.handleAddSubCategory}
                   wallets={app.state.wallets}
                   paymentMethods={[...PAYMENT_METHODS]}
                   currencySymbol={app.state.settings.currencySymbol}
@@ -289,6 +297,8 @@ export default function App() {
                   }}
                   categories={app.state.categories}
                   subCategories={app.state.subCategories}
+                  onAddCategory={app.handleAddCategory}
+                  onAddSubCategory={app.handleAddSubCategory}
                   wallets={app.state.wallets}
                   paymentMethods={[...PAYMENT_METHODS]}
                   currencySymbol={app.state.settings.currencySymbol}
@@ -327,6 +337,8 @@ export default function App() {
           onSave={app.handleAddTransaction}
           categories={app.state.categories}
           subCategories={app.state.subCategories}
+          onAddCategory={app.handleAddCategory}
+          onAddSubCategory={app.handleAddSubCategory}
           wallets={app.state.wallets}
           paymentMethods={[...PAYMENT_METHODS]}
           currencySymbol={app.state.settings.currencySymbol}
@@ -378,8 +390,11 @@ export default function App() {
           isOpen={app.isCategoryManagerOpen}
           onClose={() => app.setIsCategoryManagerOpen(false)}
           categories={app.state.categories}
+          subCategories={app.state.subCategories}
           onAddCategory={app.handleAddCategory}
           onDeleteCategory={app.handleDeleteCategory}
+          onAddSubCategory={app.handleAddSubCategory}
+          onDeleteSubCategory={app.handleDeleteSubCategory}
           currencySymbol={app.state.settings.currencySymbol}
           themeCardBg={app.activeTheme.cardBg}
           themeBorder={app.activeTheme.border}

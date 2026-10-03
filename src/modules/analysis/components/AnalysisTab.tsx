@@ -15,7 +15,9 @@ import {
   CalendarDays, 
   HelpCircle,
   Trash2,
-  Edit
+  Edit,
+  Pencil,
+  ArrowLeft
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -40,6 +42,7 @@ interface AnalysisTabProps {
   themePrimary: string;
   onDeleteTransaction: (id: string) => void;
   onEditTransaction: (id: string, updatedData: Partial<Transaction>) => void;
+  onBack?: () => void;
 }
 
 interface ChartNodeItem {
@@ -60,7 +63,8 @@ export default function AnalysisTab({
   themeBorder,
   themeRadius,
   onDeleteTransaction,
-  onEditTransaction
+  onEditTransaction,
+  onBack
 }: AnalysisTabProps) {
   // Time scope: 'month' | 'yearly' | 'all'
   const [timeScope, setTimeScope] = useState<'month' | 'yearly' | 'all'>('month');
@@ -81,6 +85,10 @@ export default function AnalysisTab({
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [editNote, setEditNote] = useState('');
   const [editAmount, setEditAmount] = useState('');
+  const [editError, setEditError] = useState('');
+
+  // Active swiped item state: { id: string; action: 'edit' | 'delete' } | null
+  const [swipedTx, setSwipedTx] = useState<{ id: string; action: 'edit' | 'delete' } | null>(null);
 
   // Reset chart filter whenever time scope, month, or year changes
   const handleTimeScopeChange = (scope: 'month' | 'yearly' | 'all') => {
@@ -331,6 +339,29 @@ export default function AnalysisTab({
 
   return (
     <div className="flex flex-col gap-5 w-full max-w-xl mx-auto pb-24 text-white">
+      {/* Top Header with Back to Home button */}
+      {onBack && (
+        <div className="flex items-center justify-between pb-1 border-b border-white/5">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticFeedback();
+              onBack();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+          >
+            <ArrowLeft size={14} className="text-emerald-400" />
+            <span>Back to Home</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Reports & Analysis</span>
+            <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20 font-bold capitalize">
+              {timeScope} view
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* 1. GLASSY SCOPE CONTROL PANEL AT THE TOP */}
       <div 
         className="p-4 border rounded-[24px] flex flex-col gap-4 text-left shadow-lg backdrop-blur-md relative"
@@ -588,37 +619,74 @@ export default function AnalysisTab({
                     const IconComponent = CATEGORY_ICONS_MAP[iconName] || HelpCircle;
                     const catColor = matchedCategory ? matchedCategory.color : '#64748B';
 
+                    const isSwipedDelete = swipedTx?.id === tx.id && swipedTx.action === 'delete';
+                    const isSwipedEdit = swipedTx?.id === tx.id && swipedTx.action === 'edit';
+
                     return (
                       <div key={tx.id} className="relative overflow-hidden w-full rounded-2xl h-[72px]">
-                        {/* Swipe backdrop tracks */}
-                        <div className="absolute inset-0 bg-blue-600 flex items-center pl-6 text-white justify-start pointer-events-none rounded-2xl">
-                          <div className="flex items-center gap-1.5 font-bold text-xs">
-                            <Edit size={16} /> Edit Snap
-                          </div>
-                        </div>
-                        <div className="absolute inset-0 bg-rose-600 flex items-center pr-6 text-white justify-end pointer-events-none rounded-2xl">
-                          <div className="flex items-center gap-1.5 font-bold text-xs">
-                            Delete <Trash2 size={16} />
-                          </div>
-                        </div>
+                    {/* Left track: Uncovered on Left-to-Right slide -> Actionable EDIT button (Blue with Pencil) */}
+                    <button
+                      type="button"
+                      aria-label="Edit transaction"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHapticFeedback();
+                        setSwipedTx(null);
+                        setEditingTx(tx);
+                        setEditNote(tx.note);
+                        setEditAmount(tx.amount.toString());
+                        setEditError('');
+                      }}
+                      className="absolute inset-y-0 left-0 w-32 bg-blue-600 hover:bg-blue-500 rounded-2xl flex items-center justify-start pl-4 z-0 font-bold text-xs text-white cursor-pointer active:scale-95 transition-all select-none"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Pencil size={16} /> Edit
+                      </span>
+                    </button>
+
+                    {/* Right track: Uncovered on Right-to-Left slide -> Actionable DELETE button (Red/Rose with Trash2) */}
+                    <button
+                      type="button"
+                      aria-label="Delete transaction"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHapticFeedback();
+                        setSwipedTx(null);
+                        onDeleteTransaction(tx.id);
+                      }}
+                      className="absolute inset-y-0 right-0 w-32 bg-rose-600 hover:bg-rose-500 rounded-2xl flex items-center justify-end pr-4 z-0 font-bold text-xs text-white cursor-pointer active:scale-95 transition-all select-none"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        Delete <Trash2 size={16} />
+                      </span>
+                    </button>
 
                         {/* Draggable container matching Ledger tab */}
                         <motion.div
                           drag="x"
-                          dragConstraints={{ left: -140, right: 140 }}
-                          dragElastic={0.4}
+                          dragConstraints={{ left: -100, right: 100 }}
+                          dragElastic={0.2}
+                          animate={{
+                            x: isSwipedDelete ? -95 : isSwipedEdit ? 95 : 0
+                          }}
+                          transition={{ type: 'spring', damping: 26, stiffness: 280 }}
                           onDragEnd={(_event, info) => {
-                            if (info.offset.x < -80) {
+                            if (info.offset.x < -35) {
                               triggerHapticFeedback();
-                              onDeleteTransaction(tx.id);
-                            } else if (info.offset.x > 80) {
+                              setSwipedTx({ id: tx.id, action: 'delete' });
+                            } else if (info.offset.x > 35) {
                               triggerHapticFeedback();
-                              setEditingTx(tx);
-                              setEditNote(tx.note);
-                              setEditAmount(tx.amount.toString());
+                              setSwipedTx({ id: tx.id, action: 'edit' });
+                            } else {
+                              setSwipedTx(null);
                             }
                           }}
-                          className="absolute inset-0 w-full h-full flex items-center justify-between p-3.5 bg-neutral-900 border border-white/5 cursor-grab active:cursor-grabbing rounded-2xl z-10 hover:border-white/10 transition-colors"
+                          onClick={() => {
+                            if (swipedTx?.id === tx.id) {
+                              setSwipedTx(null);
+                            }
+                          }}
+                          className="absolute inset-0 w-full h-full flex items-center justify-between p-3.5 bg-neutral-900 border border-white/5 cursor-grab active:cursor-grabbing rounded-2xl z-10 hover:border-white/10 transition-colors select-none"
                         >
                           <div className="flex items-center gap-3 truncate">
                             <div 
@@ -676,10 +744,22 @@ export default function AnalysisTab({
             >
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/5">
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-400">Edit Log Entry</span>
-                <button onClick={() => setEditingTx(null)} className="text-neutral-500 hover:text-white cursor-pointer">
+                <button 
+                  onClick={() => {
+                    setEditingTx(null);
+                    setEditError('');
+                  }} 
+                  className="text-neutral-500 hover:text-white cursor-pointer"
+                >
                   <X size={16} />
                 </button>
               </div>
+
+              {editError && (
+                <div className="p-2.5 mb-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-medium">
+                  {editError}
+                </div>
+              )}
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-1">
@@ -687,7 +767,10 @@ export default function AnalysisTab({
                   <input
                     type="text"
                     value={editNote}
-                    onChange={(e) => setEditNote(e.target.value)}
+                    onChange={(e) => {
+                      setEditNote(e.target.value);
+                      setEditError('');
+                    }}
                     className="bg-neutral-950 border border-white/10 rounded-xl p-2.5 text-xs outline-none text-white font-semibold"
                   />
                 </div>
@@ -697,7 +780,10 @@ export default function AnalysisTab({
                   <input
                     type="number"
                     value={editAmount}
-                    onChange={(e) => setEditAmount(e.target.value)}
+                    onChange={(e) => {
+                      setEditAmount(e.target.value);
+                      setEditError('');
+                    }}
                     className="bg-neutral-950 border border-white/10 rounded-xl p-2.5 text-xs outline-none text-white font-mono font-black"
                   />
                 </div>
@@ -706,17 +792,20 @@ export default function AnalysisTab({
                   onClick={() => {
                     if (editingTx) {
                       const parsedAmount = parseFloat(editAmount);
-                      if (!isNaN(parsedAmount) && parsedAmount > 0) {
-                        onEditTransaction(editingTx.id, {
-                          note: editNote,
-                          amount: parsedAmount
-                        });
-                        triggerHapticFeedback();
-                        setEditingTx(null);
+                      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+                        setEditError('Please enter a valid amount greater than 0');
+                        return;
                       }
+                      onEditTransaction(editingTx.id, {
+                        note: editNote.trim(),
+                        amount: parsedAmount
+                      });
+                      triggerHapticFeedback();
+                      setEditingTx(null);
+                      setEditError('');
                     }
                   }}
-                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-bold text-xs tracking-wide transition-all text-white mt-2 cursor-pointer"
+                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-bold text-xs tracking-wide transition-all text-white mt-2 cursor-pointer active:scale-95"
                 >
                   Save Modifications
                 </button>

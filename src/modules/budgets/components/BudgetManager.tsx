@@ -39,6 +39,7 @@ export default function BudgetManager({
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [budgetAmount, setBudgetAmount] = useState('');
   const [rollover, setRollover] = useState(false);
+  const [formError, setFormError] = useState('');
 
   // Get only expense categories
   const expenseCategories = categories.filter(c => c.type === 'expense' && c.isEnabled);
@@ -47,12 +48,13 @@ export default function BudgetManager({
     const amt = parseFloat(budgetAmount);
     const catId = selectedCategoryId || expenseCategories[0]?.id;
     if (!catId || isNaN(amt) || amt <= 0) {
-      alert('Please fill out all fields with valid values.');
+      setFormError('Please select a category and enter a valid positive cap amount.');
       return;
     }
 
     onSetBudget(catId, amt, rollover);
     setBudgetAmount('');
+    setFormError('');
     setShowAddBudget(false);
   };
 
@@ -99,7 +101,25 @@ export default function BudgetManager({
               exit={{ opacity: 0, y: -10 }}
               className="p-4 bg-white/3 border border-white/5 rounded-2xl flex flex-col gap-3"
             >
-              <span className="text-xs font-bold">Set Category Cap</span>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold">Set Category Cap</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddBudget(false);
+                    setFormError('');
+                  }}
+                  className="text-xs text-neutral-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              {formError && (
+                <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-medium">
+                  {formError}
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-2.5">
                 {/* Select category */}
@@ -277,9 +297,10 @@ export default function BudgetManager({
 
       <button
         onClick={onClose}
-        className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-bold text-sm text-neutral-200 mt-2 cursor-pointer transition-all active:scale-95 flex items-center justify-center"
+        className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-bold text-sm text-neutral-200 mt-2 cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2"
       >
-        {isInline ? 'Back to Dashboard' : 'Close Dashboard'}
+        <ChevronLeft size={16} className="text-emerald-400" />
+        <span>Back to Home</span>
       </button>
     </div>
   );

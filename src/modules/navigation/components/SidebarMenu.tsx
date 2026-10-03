@@ -6,13 +6,14 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Tag, ShieldCheck, Landmark, BarChart2, HelpCircle, 
-  ChevronRight, ClipboardList, Vault
+  ChevronRight, ClipboardList, Vault, Home
 } from 'lucide-react';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
 
 interface SidebarMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenHome?: () => void;
   onOpenCategories: () => void;
   onOpenLedger: () => void;
   onOpenSavings: () => void;
@@ -27,6 +28,7 @@ interface SidebarMenuProps {
 export default function SidebarMenu({
   isOpen,
   onClose,
+  onOpenHome,
   onOpenCategories,
   onOpenLedger,
   onOpenSavings,
@@ -81,6 +83,28 @@ export default function SidebarMenu({
                 <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-500 font-bold px-3 py-1 block">
                   Accounting & Records
                 </span>
+
+                {onOpenHome && (
+                  <button
+                    onClick={() => {
+                      triggerHapticFeedback();
+                      onClose();
+                      onOpenHome();
+                    }}
+                    className="w-full flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-white transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
+                        <Home size={16} />
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="text-xs font-bold text-emerald-300">Home Dashboard</span>
+                        <span className="text-[9px] text-neutral-400">Net balance, overview & analytics</span>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                )}
 
                 <button
                   onClick={() => {

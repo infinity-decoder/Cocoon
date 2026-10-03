@@ -59,7 +59,13 @@ export function loadAppState(): AppState {
       subCategories: Array.isArray(parsed.subCategories) ? parsed.subCategories : DEFAULT_SUBCATEGORIES,
       wallets: Array.isArray(parsed.wallets) && parsed.wallets.length > 0 ? parsed.wallets : DEFAULT_WALLETS,
       budgets: Array.isArray(parsed.budgets) ? parsed.budgets : [],
-      savingsGoals: Array.isArray(parsed.savingsGoals) ? parsed.savingsGoals : [],
+      savingsGoals: (() => {
+        const rawGoals = Array.isArray(parsed.savingsGoals) && parsed.savingsGoals.length > 0 ? parsed.savingsGoals : DEFAULT_SAVINGS_GOALS;
+        if (!rawGoals.some((g: any) => g.id === 'savings')) {
+          return [{ id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: 0, color: '#10B981' }, ...rawGoals];
+        }
+        return rawGoals;
+      })(),
       reminders: Array.isArray(parsed.reminders) ? parsed.reminders : [],
       settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) }
     };

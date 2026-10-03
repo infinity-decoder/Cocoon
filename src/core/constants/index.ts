@@ -37,6 +37,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export const DEFAULT_SUBCATEGORIES: Category[] = [
+  // --- EXPENSE SUBCATEGORIES ---
   // Food subcategories
   { id: 'sub-groceries', name: 'Groceries', type: 'expense', icon: 'ShoppingCart', color: '#EF4444', parentId: 'exp-food', isCustom: false, isEnabled: true },
   { id: 'sub-snacks', name: 'Snacks & Cafes', type: 'expense', icon: 'Coffee', color: '#EF4444', parentId: 'exp-food', isCustom: false, isEnabled: true },
@@ -48,7 +49,24 @@ export const DEFAULT_SUBCATEGORIES: Category[] = [
   // Utilities subcategories
   { id: 'sub-electricity', name: 'KElectricity', type: 'expense', icon: 'Zap', color: '#F59E0B', parentId: 'exp-utilities', isCustom: false, isEnabled: true },
   { id: 'sub-water', name: 'Water Tanker', type: 'expense', icon: 'Droplet', color: '#F59E0B', parentId: 'exp-utilities', isCustom: false, isEnabled: true },
-  { id: 'sub-wifi', name: 'PTCL Fiber / Internet', type: 'expense', icon: 'Wifi', color: '#F59E0B', parentId: 'exp-utilities', isCustom: false, isEnabled: true }
+  { id: 'sub-wifi', name: 'PTCL Fiber / Internet', type: 'expense', icon: 'Wifi', color: '#F59E0B', parentId: 'exp-utilities', isCustom: false, isEnabled: true },
+
+  // --- INCOME SUBCATEGORIES ---
+  // Salary subcategories
+  { id: 'sub-salary-fulltime', name: 'Full-time Job', type: 'income', icon: 'Briefcase', color: '#10B981', parentId: 'inc-salary', isCustom: false, isEnabled: true },
+  { id: 'sub-salary-bonus', name: 'Bonus & Overtime', type: 'income', icon: 'Award', color: '#10B981', parentId: 'inc-salary', isCustom: false, isEnabled: true },
+
+  // Freelance subcategories
+  { id: 'sub-freelance-client', name: 'Direct Clients', type: 'income', icon: 'Laptop', color: '#3B82F6', parentId: 'inc-freelance', isCustom: false, isEnabled: true },
+  { id: 'sub-freelance-market', name: 'Upwork / Fiverr', type: 'income', icon: 'Globe', color: '#3B82F6', parentId: 'inc-freelance', isCustom: false, isEnabled: true },
+
+  // Investment Returns subcategories
+  { id: 'sub-invest-stocks', name: 'Stock Portfolio', type: 'income', icon: 'TrendingUp', color: '#8B5CF6', parentId: 'inc-investment', isCustom: false, isEnabled: true },
+  { id: 'sub-invest-crypto', name: 'Crypto Yield', type: 'income', icon: 'Percent', color: '#8B5CF6', parentId: 'inc-investment', isCustom: false, isEnabled: true },
+
+  // Business Revenue subcategories
+  { id: 'sub-biz-sales', name: 'Product Sales', type: 'income', icon: 'DollarSign', color: '#059669', parentId: 'inc-business', isCustom: false, isEnabled: true },
+  { id: 'sub-biz-services', name: 'Consulting Services', type: 'income', icon: 'Compass', color: '#059669', parentId: 'inc-business', isCustom: false, isEnabled: true }
 ];
 
 export const DEFAULT_WALLETS: Wallet[] = [
@@ -70,6 +88,7 @@ export const PAYMENT_METHODS = [
 ] as const;
 
 export const DEFAULT_SAVINGS_GOALS: SavingsGoal[] = [
+  { id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: 0, color: '#10B981' },
   { id: 'goal-vacation', name: 'Northern Areas Trip', targetAmount: 85000, currentAmount: 45000, color: '#3B82F6', deadline: '2026-10-15' },
   { id: 'goal-emergency', name: 'Emergency Fund', targetAmount: 200000, currentAmount: 150000, color: '#10B981' },
   { id: 'goal-laptop', name: 'New M3 Macbook Pro', targetAmount: 450000, currentAmount: 180000, color: '#F59E0B' }

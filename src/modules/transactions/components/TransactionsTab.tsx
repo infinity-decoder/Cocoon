@@ -4,7 +4,10 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Search, Filter, Calendar, CreditCard, ChevronDown, Trash2, Edit, FileSpreadsheet, Printer, ShieldCheck, X, ChevronRight } from 'lucide-react';
+import { 
+  Search, Filter, Calendar, CreditCard, ChevronDown, Trash2, Edit, 
+  FileSpreadsheet, Printer, ShieldCheck, X, ChevronRight, Pencil, ChevronLeft, ArrowLeft 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Transaction, Category, NotificationType } from '../../../core/types';
 import { CATEGORY_ICONS_MAP } from '../../categories';
@@ -18,6 +21,7 @@ interface TransactionsTabProps {
   onDeleteTransaction: (id: string) => void;
   onEditTransaction: (id: string, updatedData: Partial<Transaction>) => void;
   onAddNotification?: (title: string, message: string, type: NotificationType) => void;
+  onBack?: () => void;
   themeCardBg: string;
   themeBorder: string;
   themeRadius: string;
@@ -32,8 +36,12 @@ export default function TransactionsTab({
   onDeleteTransaction,
   onEditTransaction,
   onAddNotification,
+  onBack,
   themeCardBg
 }: TransactionsTabProps) {
+  // Active swiped item state: { id: string; action: 'edit' | 'delete' } | null
+  const [swipedTx, setSwipedTx] = useState<{ id: string; action: 'edit' | 'delete' } | null>(null);
+
   // Filters & search state
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -56,6 +64,7 @@ export default function TransactionsTab({
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [editNote, setEditNote] = useState('');
   const [editAmount, setEditAmount] = useState('');
+  const [editError, setEditError] = useState('');
 
   // Core Filtered Transactions
   const filteredTransactions = useMemo(() => {
@@ -284,6 +293,29 @@ export default function TransactionsTab({
 
   return (
     <div className="w-full flex flex-col gap-4 select-none">
+      {/* Top Header with Back to Home button */}
+      {onBack && (
+        <div className="flex items-center justify-between pb-1 border-b border-white/5">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticFeedback();
+              onBack();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+          >
+            <ArrowLeft size={14} className="text-emerald-400" />
+            <span>Back to Home</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Ledger Book</span>
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">
+              {filteredTransactions.length} entries
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Search Bar & Primary Filters Button */}
       <div className="flex gap-2">
         <div className="flex-1 flex items-center gap-2 bg-white/4 border border-white/5 rounded-2xl px-3.5 py-3">
@@ -562,37 +594,74 @@ export default function TransactionsTab({
                 const IconComponent = CATEGORY_ICONS_MAP[iconName] || CATEGORY_ICONS_MAP['Home'];
                 const catColor = matchedCategory ? matchedCategory.color : '#64748B';
 
+                const isSwipedDelete = swipedTx?.id === tx.id && swipedTx.action === 'delete';
+                const isSwipedEdit = swipedTx?.id === tx.id && swipedTx.action === 'edit';
+
                 return (
                   <div key={tx.id} className="relative overflow-hidden w-full rounded-2xl h-[72px]">
-                    {/* Swipe Actions Tracks */}
-                    <div className="absolute inset-0 bg-blue-600 flex items-center pl-6 text-white justify-start pointer-events-none rounded-2xl">
-                      <div className="flex items-center gap-1.5 font-bold text-xs">
-                        <Edit size={16} /> Edit
-                      </div>
-                    </div>
-                    <div className="absolute inset-0 bg-rose-600 flex items-center pr-6 text-white justify-end pointer-events-none rounded-2xl">
-                      <div className="flex items-center gap-1.5 font-bold text-xs">
+                    {/* Left track: Uncovered on Left-to-Right slide -> Actionable EDIT button (Blue/Indigo with Pencil) */}
+                    <button
+                      type="button"
+                      aria-label="Edit transaction"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHapticFeedback();
+                        setSwipedTx(null);
+                        setEditingTx(tx);
+                        setEditNote(tx.note);
+                        setEditAmount(tx.amount.toString());
+                        setEditError('');
+                      }}
+                      className="absolute inset-y-0 left-0 w-32 bg-blue-600 hover:bg-blue-500 rounded-2xl flex items-center justify-start pl-4 z-0 font-bold text-xs text-white cursor-pointer active:scale-95 transition-all select-none"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Pencil size={16} /> Edit
+                      </span>
+                    </button>
+
+                    {/* Right track: Uncovered on Right-to-Left slide -> Actionable DELETE button (Red/Rose with Trash2) */}
+                    <button
+                      type="button"
+                      aria-label="Delete transaction"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHapticFeedback();
+                        setSwipedTx(null);
+                        onDeleteTransaction(tx.id);
+                      }}
+                      className="absolute inset-y-0 right-0 w-32 bg-rose-600 hover:bg-rose-500 rounded-2xl flex items-center justify-end pr-4 z-0 font-bold text-xs text-white cursor-pointer active:scale-95 transition-all select-none"
+                    >
+                      <span className="flex items-center gap-1.5">
                         Delete <Trash2 size={16} />
-                      </div>
-                    </div>
+                      </span>
+                    </button>
 
                     {/* Draggable Foreground Card */}
                     <motion.div
                       drag="x"
-                      dragConstraints={{ left: -140, right: 140 }}
-                      dragElastic={0.4}
+                      dragConstraints={{ left: -100, right: 100 }}
+                      dragElastic={0.2}
+                      animate={{
+                        x: isSwipedDelete ? -95 : isSwipedEdit ? 95 : 0
+                      }}
+                      transition={{ type: 'spring', damping: 26, stiffness: 280 }}
                       onDragEnd={(_event, info) => {
-                        if (info.offset.x < -80) {
+                        if (info.offset.x < -35) {
                           triggerHapticFeedback();
-                          onDeleteTransaction(tx.id);
-                        } else if (info.offset.x > 80) {
+                          setSwipedTx({ id: tx.id, action: 'delete' });
+                        } else if (info.offset.x > 35) {
                           triggerHapticFeedback();
-                          setEditingTx(tx);
-                          setEditNote(tx.note);
-                          setEditAmount(tx.amount.toString());
+                          setSwipedTx({ id: tx.id, action: 'edit' });
+                        } else {
+                          setSwipedTx(null);
                         }
                       }}
-                      className="absolute inset-0 w-full h-full flex items-center justify-between p-3.5 bg-neutral-900 border border-white/5 cursor-grab active:cursor-grabbing rounded-2xl z-10 hover:border-white/10 transition-colors"
+                      onClick={() => {
+                        if (swipedTx?.id === tx.id) {
+                          setSwipedTx(null);
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full flex items-center justify-between p-3.5 bg-neutral-900 border border-white/5 cursor-grab active:cursor-grabbing rounded-2xl z-10 hover:border-white/10 transition-colors select-none"
                       style={{ backgroundColor: themeCardBg }}
                     >
                       <div className="flex items-center gap-3 truncate">
@@ -662,12 +731,21 @@ export default function TransactionsTab({
             >
               <span className="text-base font-bold">Edit Transaction</span>
 
+              {editError && (
+                <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-medium">
+                  {editError}
+                </div>
+              )}
+
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-neutral-400">Description / Note</span>
                 <input
                   type="text"
                   value={editNote}
-                  onChange={(e) => setEditNote(e.target.value)}
+                  onChange={(e) => {
+                    setEditNote(e.target.value);
+                    setEditError('');
+                  }}
                   className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
                 />
               </div>
@@ -677,14 +755,20 @@ export default function TransactionsTab({
                 <input
                   type="number"
                   value={editAmount}
-                  onChange={(e) => setEditAmount(e.target.value)}
+                  onChange={(e) => {
+                    setEditAmount(e.target.value);
+                    setEditError('');
+                  }}
                   className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
                 />
               </div>
 
               <div className="flex justify-end gap-2.5 mt-2">
                 <button
-                  onClick={() => setEditingTx(null)}
+                  onClick={() => {
+                    setEditingTx(null);
+                    setEditError('');
+                  }}
                   className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold cursor-pointer"
                 >
                   Cancel
@@ -693,7 +777,7 @@ export default function TransactionsTab({
                   onClick={() => {
                     const amt = parseFloat(editAmount);
                     if (isNaN(amt) || amt <= 0) {
-                      alert('Please enter a valid amount');
+                      setEditError('Please enter a valid amount greater than 0');
                       return;
                     }
                     onEditTransaction(editingTx.id, {
@@ -701,6 +785,7 @@ export default function TransactionsTab({
                       amount: amt
                     });
                     setEditingTx(null);
+                    setEditError('');
                     triggerHapticFeedback();
                   }}
                   className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-xs font-bold text-white cursor-pointer"
