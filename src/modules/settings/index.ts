@@ -4,3 +4,4 @@
  */
 
 export { default as ProfileTab } from './components/ProfileTab';
+export { default as SettingsModal } from './components/SettingsModal';

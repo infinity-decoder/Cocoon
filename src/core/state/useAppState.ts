@@ -67,7 +67,7 @@ export function useAppState() {
         } else {
           setTimeout(() => {
             setEnteredPin('');
-            alert('Incorrect PIN Code. Please try again.');
+            triggerHapticFeedback();
           }, 300);
         }
       }
@@ -140,6 +140,7 @@ export function useAppState() {
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [categoryTypeToManage, setCategoryTypeToManage] = useState<'expense' | 'income'>('expense');
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRadialOpen, setIsRadialOpen] = useState(false);
 
   // 9. In-app alerts & toast banner
@@ -510,7 +511,6 @@ export function useAppState() {
 
     const goal = state.savingsGoals.find(g => g.id === goalId || (goalId === 'savings' && g.id === 'savings'));
     if (goal && goal.currentAmount < amount) {
-      alert(`Insufficient funds inside ${goal.name}. Maximum available is ${state.settings.currencySymbol}${goal.currentAmount.toLocaleString()}.`);
       return;
     }
 
@@ -700,7 +700,11 @@ export function useAppState() {
         'backup_import'
       );
     } catch (err: any) {
-      alert(err.message || 'Restoration failed. Please check file formatting.');
+      addNotification(
+        'Restoration Failed',
+        err?.message || 'Restoration failed. Please check file formatting.',
+        'system'
+      );
     }
   }, [addNotification]);
 
@@ -769,6 +773,8 @@ export function useAppState() {
     setCategoryTypeToManage,
     isHelpOpen,
     setIsHelpOpen,
+    isSettingsOpen,
+    setIsSettingsOpen,
     isRadialOpen,
     setIsRadialOpen,
     activeAlert,

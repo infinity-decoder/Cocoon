@@ -5,20 +5,18 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  X, Tag, ShieldCheck, Landmark, BarChart2, HelpCircle, 
-  ChevronRight, ClipboardList, Vault, Home
+  X, Tag, ShieldCheck, HelpCircle, 
+  ChevronRight, ClipboardList, Vault, Settings
 } from 'lucide-react';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
 
 interface SidebarMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenHome?: () => void;
   onOpenCategories: () => void;
   onOpenLedger: () => void;
   onOpenSavings: () => void;
-  onOpenBudgets: () => void;
-  onOpenReports: () => void;
+  onOpenSettings: () => void;
   onOpenHelp: () => void;
   activeThemeId: string;
   themeCardBg: string;
@@ -28,12 +26,10 @@ interface SidebarMenuProps {
 export default function SidebarMenu({
   isOpen,
   onClose,
-  onOpenHome,
   onOpenCategories,
   onOpenLedger,
   onOpenSavings,
-  onOpenBudgets,
-  onOpenReports,
+  onOpenSettings,
   onOpenHelp,
   themeCardBg,
   themeBorder
@@ -80,32 +76,6 @@ export default function SidebarMenu({
 
               {/* Navigation Items List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-none">
-                <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-500 font-bold px-3 py-1 block">
-                  Accounting & Records
-                </span>
-
-                {onOpenHome && (
-                  <button
-                    onClick={() => {
-                      triggerHapticFeedback();
-                      onClose();
-                      onOpenHome();
-                    }}
-                    className="w-full flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-white transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 group-hover:scale-105 transition-transform">
-                        <Home size={16} />
-                      </div>
-                      <div className="flex flex-col text-left">
-                        <span className="text-xs font-bold text-emerald-300">Home Dashboard</span>
-                        <span className="text-[9px] text-neutral-400">Net balance, overview & analytics</span>
-                      </div>
-                    </div>
-                    <ChevronRight size={14} className="text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                )}
-
                 <button
                   onClick={() => {
                     triggerHapticFeedback();
@@ -121,26 +91,6 @@ export default function SidebarMenu({
                     <div className="flex flex-col text-left">
                       <span className="text-xs font-bold">Ledger Book</span>
                       <span className="text-[9px] text-neutral-400">View transactions & filters</span>
-                    </div>
-                  </div>
-                  <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-
-                <button
-                  onClick={() => {
-                    triggerHapticFeedback();
-                    onClose();
-                    onOpenBudgets();
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-white/5 text-neutral-200 hover:text-white transition-all cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-transform">
-                      <Landmark size={16} />
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold">Make Budget</span>
-                      <span className="text-[9px] text-neutral-400">Monthly category limit caps</span>
                     </div>
                   </div>
                   <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
@@ -170,30 +120,6 @@ export default function SidebarMenu({
                   onClick={() => {
                     triggerHapticFeedback();
                     onClose();
-                    onOpenReports();
-                  }}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-white/5 text-neutral-200 hover:text-white transition-all cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 group-hover:scale-105 transition-transform">
-                      <BarChart2 size={16} />
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold">Analysis & Trends</span>
-                      <span className="text-[9px] text-neutral-400">Interactive charts & timeline</span>
-                    </div>
-                  </div>
-                  <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-
-                <span className="text-[9px] font-mono uppercase tracking-wider text-neutral-500 font-bold px-3 pt-3 pb-1 block">
-                  Configuration
-                </span>
-
-                <button
-                  onClick={() => {
-                    triggerHapticFeedback();
-                    onClose();
                     onOpenCategories();
                   }}
                   className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-white/5 text-neutral-200 hover:text-white transition-all cursor-pointer group"
@@ -205,6 +131,26 @@ export default function SidebarMenu({
                     <div className="flex flex-col text-left">
                       <span className="text-xs font-bold">Custom Categories</span>
                       <span className="text-[9px] text-neutral-400">Icons, tags & palette colors</span>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    onClose();
+                    onOpenSettings();
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-white/5 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-transform">
+                      <Settings size={16} />
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <span className="text-xs font-bold">Settings</span>
+                      <span className="text-[9px] text-neutral-400">Security, backups & system</span>
                     </div>
                   </div>
                   <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />

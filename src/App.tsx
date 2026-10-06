@@ -15,7 +15,7 @@ import { triggerHapticFeedback } from './core/utils/haptics';
 import { DashboardTab } from './modules/dashboard';
 import { TransactionsTab, TransactionFormModal } from './modules/transactions';
 import { SavingsTab } from './modules/savings';
-import { ProfileTab } from './modules/settings';
+import { ProfileTab, SettingsModal } from './modules/settings';
 import { AnalysisTab } from './modules/analysis';
 import { BudgetManager } from './modules/budgets';
 import { CategoryManager } from './modules/categories';
@@ -131,6 +131,10 @@ export default function App() {
                   onDeleteTransaction={app.handleDeleteTransaction}
                   onEditTransaction={app.handleEditTransaction}
                   onAddNotification={app.addNotification}
+                  onBack={() => {
+                    triggerHapticFeedback();
+                    app.setActiveTab(0);
+                  }}
                   themeCardBg={app.activeTheme.cardBg}
                   themeBorder={app.activeTheme.border}
                   themeRadius={app.activeTheme.radius}
@@ -186,6 +190,10 @@ export default function App() {
                   onImportBackup={app.handleImportBackup}
                   activeThemeId={app.activeThemeId}
                   onSelectTheme={app.selectTheme}
+                  onBack={() => {
+                    triggerHapticFeedback();
+                    app.setActiveTab(0);
+                  }}
                   themeCardBg={app.activeTheme.cardBg}
                   themeBorder={app.activeTheme.border}
                   themeRadius={app.activeTheme.radius}
@@ -211,6 +219,10 @@ export default function App() {
                   themePrimary={app.activeTheme.primary}
                   onDeleteTransaction={app.handleDeleteTransaction}
                   onEditTransaction={app.handleEditTransaction}
+                  onBack={() => {
+                    triggerHapticFeedback();
+                    app.setActiveTab(0);
+                  }}
                 />
               </motion.div>
             )}
@@ -370,19 +382,25 @@ export default function App() {
           onOpenCategories={() => app.setIsCategoryManagerOpen(true)}
           onOpenLedger={() => app.setActiveTab(1)}
           onOpenSavings={() => app.setActiveTab(2)}
-          onOpenBudgets={() => {
-            triggerHapticFeedback();
-            app.setActiveTab(5);
-            app.setIsSidebarOpen(false);
-          }}
-          onOpenReports={() => {
-            triggerHapticFeedback();
-            app.setActiveTab(4);
-          }}
+          onOpenSettings={() => app.setIsSettingsOpen(true)}
           onOpenHelp={() => app.setIsHelpOpen(true)}
           activeThemeId={app.activeThemeId}
           themeCardBg={app.activeTheme.cardBg}
           themeBorder={app.activeTheme.border}
+        />
+
+        {/* --- SYSTEM SETTINGS MODAL (App Lock, Backups, Factory Reset) --- */}
+        <SettingsModal
+          isOpen={app.isSettingsOpen}
+          onClose={() => app.setIsSettingsOpen(false)}
+          settings={app.state.settings}
+          onChangeSettings={app.handleUpdateSettings}
+          onFactoryReset={app.handleFactoryReset}
+          onExportBackup={app.handleExportBackup}
+          onImportBackup={app.handleImportBackup}
+          themeCardBg={app.activeTheme.cardBg}
+          themeBorder={app.activeTheme.border}
+          themeRadius={app.activeTheme.radius}
         />
 
         {/* --- CUSTOM CATEGORY MANAGER MODAL --- */}

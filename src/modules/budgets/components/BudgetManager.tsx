@@ -4,10 +4,11 @@
  */
 
 import { useState } from 'react';
-import { Plus, HelpCircle, ShieldAlert, ChevronLeft, Trash2 } from 'lucide-react';
+import { Plus, HelpCircle, ShieldAlert, ChevronLeft, Trash2, Pencil, Check, X } from 'lucide-react';
 import { Budget, Category, Transaction } from '../../../core/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORY_ICONS_MAP } from '../../categories';
+import { triggerHapticFeedback } from '../../../core/utils/haptics';
 
 interface BudgetManagerProps {
   isOpen: boolean;
@@ -41,6 +42,12 @@ export default function BudgetManager({
   const [rollover, setRollover] = useState(false);
   const [formError, setFormError] = useState('');
 
+  // Editing state for existing budget caps
+  const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null);
+  const [editCapAmount, setEditCapAmount] = useState<string>('');
+  const [editRollover, setEditRollover] = useState<boolean>(false);
+  const [editError, setEditError] = useState<string>('');
+
   // Get only expense categories
   const expenseCategories = categories.filter(c => c.type === 'expense' && c.isEnabled);
 
@@ -56,6 +63,33 @@ export default function BudgetManager({
     setBudgetAmount('');
     setFormError('');
     setShowAddBudget(false);
+  };
+
+  const handleStartEdit = (b: Budget) => {
+    triggerHapticFeedback();
+    setEditingBudgetId(b.id);
+    setEditCapAmount(b.amount.toString());
+    setEditRollover(!!b.rollover);
+    setEditError('');
+    setShowAddBudget(false);
+  };
+
+  const handleSaveEdit = (b: Budget) => {
+    const amt = parseFloat(editCapAmount);
+    if (isNaN(amt) || amt <= 0) {
+      setEditError('Please enter a valid positive cap amount.');
+      return;
+    }
+    triggerHapticFeedback();
+    onSetBudget(b.categoryId, amt, editRollover);
+    setEditingBudgetId(null);
+    setEditError('');
+  };
+
+  const handleCancelEdit = () => {
+    triggerHapticFeedback();
+    setEditingBudgetId(null);
+    setEditError('');
   };
 
   if (!isInline && !isOpen) return null;
@@ -217,6 +251,90 @@ export default function BudgetManager({
               bgColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
             }
 
+            const isEditing = editingBudgetId === b.id;
+
+            if (isEditing) {
+              return (
+                <div
+                  key={b.id}
+                  className="p-4 bg-white/5 border border-emerald-500/30 rounded-2xl flex flex-col gap-3 relative text-left shadow-lg ring-1 ring-emerald-500/20 transition-all"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="p-1.5 rounded-lg text-white"
+                        style={{ backgroundColor: cat.color }}
+                      >
+                        <IconComp size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white">{cat.name}</span>
+                        <span className="text-[10px] text-emerald-400 font-mono">Editing Budget Cap</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="p-1 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                      title="Cancel"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  {editError && (
+                    <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-medium">
+                      {editError}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-neutral-400 font-mono">
+                      Max Cap ({currencySymbol})
+                    </span>
+                    <input
+                      type="number"
+                      placeholder="e.g. 500"
+                      value={editCapAmount}
+                      onChange={(e) => setEditCapAmount(e.target.value)}
+                      className="bg-neutral-800 border border-white/10 rounded-xl p-2.5 text-xs text-white outline-none focus:border-emerald-500"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`edit-rollover-${b.id}`}
+                      checked={editRollover}
+                      onChange={(e) => setEditRollover(e.target.checked)}
+                      className="accent-emerald-500 cursor-pointer"
+                    />
+                    <label htmlFor={`edit-rollover-${b.id}`} className="text-xs text-neutral-300 cursor-pointer select-none">
+                      Enable Roll-Over of unused limit to next month
+                    </label>
+                  </div>
+
+                  <div className="flex justify-end gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-semibold text-neutral-300 hover:text-white cursor-pointer transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEdit(b)}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-xs font-bold text-white cursor-pointer shadow-md shadow-emerald-500/20 transition-all active:scale-95"
+                    >
+                      <Check size={13} strokeWidth={3} /> Save Cap
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={b.id}
@@ -233,13 +351,26 @@ export default function BudgetManager({
                     <span className="text-sm font-bold text-white">{cat.name}</span>
                   </div>
 
-                  <button
-                    onClick={() => onDeleteBudget(b.id)}
-                    className="p-1 text-neutral-500 hover:text-rose-400 transition-colors cursor-pointer"
-                    title="Delete budget cap"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(b)}
+                      className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-neutral-200 hover:text-white rounded-lg transition-all cursor-pointer active:scale-95 shadow-sm"
+                      title="Edit budget cap"
+                    >
+                      <Pencil size={12} className="text-blue-400" />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onDeleteBudget(b.id)}
+                      className="p-1.5 text-neutral-400 hover:text-rose-400 bg-white/5 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 rounded-lg transition-colors cursor-pointer"
+                      title="Delete budget cap"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Progress details */}

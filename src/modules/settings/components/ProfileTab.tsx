@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { User, DollarSign, Calendar, Key, Shield, Trash2, Camera, Download, Upload, ShieldCheck, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { User, DollarSign, Calendar, Shield, Camera, ArrowLeft, Check } from 'lucide-react';
+import { motion } from 'motion/react';
 import { AppTheme, PREBUILT_THEMES } from '../../../core/theme';
 import { AppSettings } from '../../../core/types';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
@@ -15,11 +15,12 @@ interface ProfileTabProps {
   onChangeSettings: (updates: Partial<AppSettings>) => void;
   avatar: string; // base64
   onChangeAvatar: (base64: string) => void;
-  onFactoryReset: () => void;
-  onExportBackup: () => void;
-  onImportBackup: (jsonStr: string) => void;
+  onFactoryReset?: () => void;
+  onExportBackup?: () => void;
+  onImportBackup?: (jsonStr: string) => void;
   activeThemeId: string;
   onSelectTheme: (id: string) => void;
+  onBack?: () => void;
   themeCardBg: string;
   themeBorder: string;
   themeRadius: string;
@@ -31,19 +32,14 @@ export default function ProfileTab({
   onChangeSettings,
   avatar,
   onChangeAvatar,
-  onFactoryReset,
-  onExportBackup,
-  onImportBackup,
   activeThemeId,
   onSelectTheme,
+  onBack,
   themeCardBg,
   themeBorder,
   themeRadius
 }: ProfileTabProps) {
   const [userName, setUserName] = useState(localStorage.getItem('cocoon_username') || localStorage.getItem('finflow_username') || 'INFINITY DECODER');
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showPinDialog, setShowPinDialog] = useState(false);
-  const [pinInput, setPinInput] = useState('');
 
   // Currency listings
   const currencies = [
@@ -68,37 +64,25 @@ export default function ProfileTab({
     }
   };
 
-  const handleBackupUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        try {
-          onImportBackup(reader.result as string);
-          alert('Database backup restored successfully!');
-          triggerHapticFeedback();
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Restoration failed. Please check file formatting.';
-          alert(message);
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  const handleSavePin = () => {
-    if (pinInput.length !== 4 || isNaN(parseInt(pinInput))) {
-      alert('PIN must be exactly 4 numeric digits.');
-      return;
-    }
-    onChangeSettings({ pinCode: pinInput });
-    setPinInput('');
-    setShowPinDialog(false);
-    triggerHapticFeedback();
-  };
-
   return (
     <div className="w-full flex flex-col gap-5 select-none text-white">
+      {/* Top Header with Back to Home button */}
+      {onBack && (
+        <div className="flex items-center justify-between pb-1 border-b border-white/5">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticFeedback();
+              onBack();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+          >
+            <ArrowLeft size={14} className="text-emerald-400" />
+            <span>Back to Home</span>
+          </button>
+          <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Preferences & Profile</span>
+        </div>
+      )}
       {/* Visual Avatar Header card */}
       <div 
         className="w-full p-6 rounded-[28px] border bg-gradient-to-b from-neutral-900 to-neutral-950 flex flex-col items-center gap-3 relative overflow-hidden"
@@ -246,179 +230,25 @@ export default function ProfileTab({
           </select>
         </div>
 
-        {/* local PIN lock setting */}
-        <div className={`p-4 border flex flex-col gap-3 shadow-md ${themeRadius}`} style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400">
-                <Key size={16} />
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="text-sm font-bold text-white">App Lock Protection</span>
-                <span className="text-[10px] text-neutral-400">Lock financials on device loading</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                setShowPinDialog(true);
-                triggerHapticFeedback();
-              }}
-              className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/25 border border-purple-500/35 rounded-xl text-purple-400 text-xs font-bold cursor-pointer"
-            >
-              {settings.pinCode ? 'Reset PIN' : 'Set PIN'}
-            </button>
-          </div>
-
-          {settings.pinCode && (
-            <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-              <ShieldCheck size={14} className="text-emerald-400" />
-              <span className="text-[10px] text-emerald-400 font-bold">Local Pin Lock Security Enabled!</span>
-              <button
-                onClick={() => {
-                  onChangeSettings({ pinCode: undefined });
-                  triggerHapticFeedback();
-                }}
-                className="ml-auto text-[10px] text-rose-400 font-bold underline cursor-pointer"
-              >
-                Disable Lock
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* SQLite/JSON Offline Backups */}
-        <div className={`p-4 border flex flex-col gap-3.5 shadow-md ${themeRadius}`} style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
+        {/* Security & Database notice pointing to Sidebar Settings */}
+        <div 
+          className={`p-4 border flex items-center justify-between shadow-md ${themeRadius}`}
+          style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+        >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-teal-500/10 border border-teal-500/20 rounded-xl text-teal-400">
+            <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
               <Shield size={16} />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-sm font-bold text-white">Database Operations</span>
-              <span className="text-[10px] text-neutral-400">Export secure JSON database records</span>
+              <span className="text-sm font-bold text-white">App Lock & Data Management</span>
+              <span className="text-[10px] text-neutral-400">Passcode security, JSON backups & reset</span>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <button
-              onClick={onExportBackup}
-              className="py-2.5 bg-neutral-800 hover:bg-neutral-700/80 border border-white/5 text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer"
-            >
-              <Download size={14} /> Export Backup
-            </button>
-            <label className="py-2.5 bg-neutral-800 hover:bg-neutral-700/80 border border-white/5 text-xs font-bold rounded-xl flex items-center justify-center gap-1 cursor-pointer text-center">
-              <Upload size={14} /> Restore Backup
-              <input type="file" accept=".json" onChange={handleBackupUpload} className="hidden" />
-            </label>
-          </div>
-        </div>
-
-        {/* Secure Factory Reset */}
-        <div className={`p-4 border flex items-center justify-between shadow-md ${themeRadius}`} style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400">
-              <Trash2 size={16} />
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-sm font-bold text-white">Erase Workspace Data</span>
-              <span className="text-[10px] text-neutral-400">Factory reset all local storages</span>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              setShowResetConfirm(true);
-              triggerHapticFeedback();
-            }}
-            className="px-3.5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl text-xs cursor-pointer"
-          >
-            Factory Reset
-          </button>
+          <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 shrink-0">
+            Side Menu &gt; Settings
+          </span>
         </div>
       </div>
-
-      {/* FACTORY RESET CONFIRM OVERLAY */}
-      <AnimatePresence>
-        {showResetConfirm && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-2xl flex flex-col gap-4 text-center"
-            >
-              <Trash2 size={40} className="text-rose-500 mx-auto animate-bounce" />
-              <span className="text-lg font-bold">Erase Secure Database?</span>
-              <span className="text-xs text-neutral-400 leading-relaxed">
-                This action is irreversible. All local transactions, categories, wallets, and settings will be permanently destroyed.
-              </span>
-
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <button
-                  onClick={() => setShowResetConfirm(false)}
-                  className="py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    onFactoryReset();
-                    setShowResetConfirm(false);
-                    triggerHapticFeedback();
-                  }}
-                  className="py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl text-xs cursor-pointer"
-                >
-                  Confirm Reset
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* APP LOCK PIN SETTING DIALOG */}
-      <AnimatePresence>
-        {showPinDialog && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-2xl flex flex-col gap-4 text-center"
-            >
-              <Key size={30} className="text-purple-400 mx-auto" />
-              <span className="text-base font-bold">Configure App Lock PIN</span>
-              <span className="text-xs text-neutral-400">Enter a 4-digit security PIN passcode</span>
-
-              <input
-                type="text"
-                maxLength={4}
-                placeholder="e.g. 1234"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
-                className="bg-neutral-800 border border-white/10 rounded-xl px-4 py-3 text-center text-xl font-mono tracking-widest text-white mx-auto w-40 outline-none focus:border-purple-400"
-              />
-
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <button
-                  onClick={() => {
-                    setPinInput('');
-                    setShowPinDialog(false);
-                  }}
-                  className="py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSavePin}
-                  className="py-2 bg-purple-500 hover:bg-purple-600 font-bold text-white rounded-xl text-xs cursor-pointer"
-                >
-                  Set PIN Code
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

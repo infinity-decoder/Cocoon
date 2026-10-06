@@ -5,7 +5,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, HelpCircle, ChevronDown, BookOpen, Shield, MessageSquare } from 'lucide-react';
+import { X, HelpCircle, ChevronDown, BookOpen, Shield, MessageSquare, ArrowLeft } from 'lucide-react';
+import { triggerHapticFeedback } from '../../../core/utils/haptics';
 
 interface HelpSupportModalProps {
   isOpen: boolean;
@@ -60,21 +61,33 @@ export default function HelpSupportModal({
           style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center p-5 border-b" style={{ borderColor: themeBorder }}>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                <HelpCircle size={20} />
+          <div className="flex justify-between items-center p-4 border-b gap-3" style={{ borderColor: themeBorder }}>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                onClose();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+              title="Back to Home"
+            >
+              <ArrowLeft size={14} className="text-emerald-400" />
+              <span>Back to Home</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                <HelpCircle size={16} />
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] text-neutral-400 font-mono tracking-widest uppercase">Support & FAQs</span>
-                <h2 className="text-base font-bold text-white">How Cocoon Works</h2>
-              </div>
+              <span className="text-sm font-bold text-white">How Cocoon Works</span>
             </div>
             <button
-              onClick={onClose}
+              onClick={() => {
+                triggerHapticFeedback();
+                onClose();
+              }}
               className="p-1.5 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 

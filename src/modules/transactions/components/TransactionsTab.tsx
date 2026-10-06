@@ -181,7 +181,13 @@ export default function TransactionsTab({
     
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Pop-up blocked! Please allow popups to print/save report as PDF.');
+      if (onAddNotification) {
+        onAddNotification(
+          'Pop-up Blocked',
+          'Please allow popups to preview and print the report.',
+          'pdf_export'
+        );
+      }
       return;
     }
 
@@ -295,20 +301,20 @@ export default function TransactionsTab({
     <div className="w-full flex flex-col gap-4 select-none">
       {/* Top Header with Back to Home button */}
       {onBack && (
-        <div className="flex items-center justify-between pb-1 border-b border-white/5">
+        <div className="flex items-center justify-between pb-1 border-b border-white/5 gap-2">
           <button
             type="button"
             onClick={() => {
               triggerHapticFeedback();
               onBack();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
           >
             <ArrowLeft size={14} className="text-emerald-400" />
             <span>Back to Home</span>
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Ledger Book</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold hidden sm:inline">Ledger Book</span>
             <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">
               {filteredTransactions.length} entries
             </span>
@@ -317,35 +323,61 @@ export default function TransactionsTab({
       )}
 
       {/* Search Bar & Primary Filters Button */}
-      <div className="flex gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-white/4 border border-white/5 rounded-2xl px-3.5 py-3">
-          <Search size={16} className="text-neutral-400" />
+      <div className="flex items-center gap-2 w-full">
+        <div className="flex-1 min-w-0 flex items-center gap-2 bg-white/4 border border-white/5 rounded-2xl px-3 py-2.5 sm:px-3.5 sm:py-3 transition-colors focus-within:border-emerald-500/40">
+          <Search size={16} className="text-neutral-400 shrink-0" />
           <input
             type="text"
-            placeholder="Search notes, categories, amounts..."
+            placeholder="Search notes, amounts..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent flex-1 text-sm outline-none placeholder:text-neutral-500 text-white"
+            className="bg-transparent w-full min-w-0 text-xs sm:text-sm outline-none placeholder:text-neutral-500 text-white truncate"
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              className="text-neutral-500 hover:text-white p-0.5 shrink-0"
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
 
         <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`p-3.5 border rounded-2xl flex items-center justify-center transition-colors cursor-pointer ${
+          type="button"
+          onClick={() => {
+            triggerHapticFeedback();
+            setShowFilters(!showFilters);
+          }}
+          className={`w-11 h-11 shrink-0 border rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
             showFilters 
               ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' 
-              : 'bg-white/4 border-white/5 text-neutral-300 hover:bg-white/10'
+              : 'bg-white/4 border-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
           }`}
+          title="Toggle Filters"
+          aria-label="Filter transactions"
         >
-          <Filter size={18} />
+          <div className="relative flex items-center justify-center">
+            <Filter size={17} />
+            {(filterType !== 'all' || filterCategory || startDate || endDate || filterPayment !== 'all') && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-black" />
+            )}
+          </div>
         </button>
 
         <button
-          onClick={() => setShowExportPanel(true)}
-          className="p-3.5 bg-white/4 border border-white/5 hover:bg-white/10 rounded-2xl flex items-center justify-center text-neutral-300 transition-colors cursor-pointer"
-          title="Print PDF / Save CSV Report"
+          type="button"
+          onClick={() => {
+            triggerHapticFeedback();
+            setShowExportPanel(true);
+          }}
+          className="w-11 h-11 shrink-0 bg-blue-500/10 hover:bg-blue-500/20 active:bg-blue-500/25 border border-blue-500/25 rounded-2xl flex items-center justify-center text-blue-300 hover:text-blue-200 transition-all cursor-pointer active:scale-95 shadow-sm"
+          title="Save PDF / Export Ledger"
+          aria-label="Save PDF or Export Ledger"
         >
-          <FileSpreadsheet size={18} />
+          <FileSpreadsheet size={17} />
         </button>
       </div>
 

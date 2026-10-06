@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Calendar, Image, FileText, Check, ChevronRight, Landmark, HelpCircle, Tag, CreditCard } from 'lucide-react';
+import { X, Plus, Calendar, Image, FileText, Check, ChevronRight, Landmark, HelpCircle, Tag, CreditCard, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Category, Wallet, Transaction, TransactionType } from '../../../core/types';
 import { CATEGORY_ICONS_MAP } from '../../categories';
@@ -67,6 +67,9 @@ export default function TransactionFormModal({
 
   // Sub-Category Creation State
   const [newSubCatName, setNewSubCatName] = useState('');
+  const [formError, setFormError] = useState('');
+  const [subCatError, setSubCatError] = useState('');
+  const [customCatError, setCustomCatError] = useState('');
 
   // Strict separation: Filter categories and subcategories based on TransactionType (income vs expense)
   const categoryType = type === 'income' ? 'income' : 'expense';
@@ -89,15 +92,19 @@ export default function TransactionFormModal({
       setNote('');
       setSelectedSubCategoryName('');
       setAttachmentBase64('');
+      setFormError('');
+      setSubCatError('');
+      setCustomCatError('');
     }
   }, [isOpen, type]);
 
   const confirmSave = () => {
     triggerHapticFeedback();
+    setFormError('');
     
     const finalAmount = parseFloat(amountStr) || 0;
     if (finalAmount <= 0) {
-      alert('Please enter a valid amount.');
+      setFormError('Please enter a valid amount greater than 0.');
       return;
     }
 
@@ -135,7 +142,7 @@ export default function TransactionFormModal({
   // Quick Subcategory submission
   const handleAddSubCategorySubmit = () => {
     if (!newSubCatName.trim()) {
-      alert('Please enter a sub-category name.');
+      setSubCatError('Please enter a sub-category name.');
       return;
     }
 
@@ -155,13 +162,14 @@ export default function TransactionFormModal({
     // Auto-select the newly added subcategory
     setSelectedSubCategoryName(trimmedName);
     setNewSubCatName('');
+    setSubCatError('');
     setShowAddSubCatModal(false);
   };
 
   // Quick Category submission
   const handleAddCategorySubmit = () => {
     if (!customCatName.trim()) {
-      alert('Please enter a category name.');
+      setCustomCatError('Please enter a category name.');
       return;
     }
 
@@ -246,6 +254,7 @@ export default function TransactionFormModal({
               value={amountStr === '0' ? '' : amountStr}
               onChange={(e) => {
                 const val = e.target.value;
+                setFormError('');
                 if (val === '') {
                   setAmountStr('0');
                 } else {
@@ -261,6 +270,13 @@ export default function TransactionFormModal({
               autoFocus
             />
           </div>
+
+          {formError && (
+            <div className="mt-3 p-2.5 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+              <ShieldAlert size={15} className="shrink-0 text-rose-400" />
+              <span>{formError}</span>
+            </div>
+          )}
         </div>
 
         {/* DESCRIPTION/NOTE */}
@@ -604,6 +620,13 @@ export default function TransactionFormModal({
                 </button>
               </div>
 
+              {customCatError && (
+                <div className="p-2.5 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <ShieldAlert size={15} className="shrink-0 text-rose-400" />
+                  <span>{customCatError}</span>
+                </div>
+              )}
+
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-neutral-400">Category Name</span>
                 <input
@@ -707,6 +730,13 @@ export default function TransactionFormModal({
                   <X size={16} />
                 </button>
               </div>
+
+              {subCatError && (
+                <div className="p-2.5 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <ShieldAlert size={15} className="shrink-0 text-rose-400" />
+                  <span>{subCatError}</span>
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-neutral-400 font-medium">Sub-Category Name</label>

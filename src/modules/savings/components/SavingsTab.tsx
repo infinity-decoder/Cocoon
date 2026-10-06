@@ -542,20 +542,20 @@ export default function SavingsTab({
   return (
     <div className="w-full flex flex-col gap-5 select-none relative">
       {/* Top Vault Navigation & Control Header */}
-      <div className="flex justify-between items-center pb-2 border-b border-white/5">
+      <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2 pb-2.5 border-b border-white/5">
         <button
           type="button"
           onClick={() => {
             triggerHapticFeedback();
             if (onBack) onBack();
           }}
-          className="flex items-center gap-2 px-3.5 py-2 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-xl text-xs font-semibold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
         >
-          <ArrowLeft size={15} className="text-emerald-400" />
+          <ArrowLeft size={14} className="text-emerald-400" />
           <span>Back to Home</span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
           {vaultPassword && (
             <button
               type="button"
@@ -563,11 +563,11 @@ export default function SavingsTab({
                 triggerHapticFeedback();
                 setVaultSessionUnlocked(false);
               }}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-300 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 bg-amber-500/15 hover:bg-amber-500/25 active:bg-amber-500/30 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-300 hover:text-amber-200 cursor-pointer transition-all active:scale-95 shadow-sm"
               title="Lock Vault"
             >
               <Lock size={13} className="text-amber-400" />
-              <span>Lock</span>
+              <span>Lock Vault</span>
             </button>
           )}
 
@@ -583,7 +583,7 @@ export default function SavingsTab({
                 setChangePinSuccess('');
                 setShowChangePinModal(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-purple-500/10 hover:bg-purple-500/20 active:bg-purple-500/25 border border-purple-500/25 rounded-2xl text-xs font-bold text-purple-300 hover:text-purple-200 cursor-pointer transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 bg-purple-500/15 hover:bg-purple-500/25 active:bg-purple-500/30 border border-purple-500/30 rounded-xl text-xs font-bold text-purple-300 hover:text-purple-200 cursor-pointer transition-all active:scale-95 shadow-sm"
               title="Change Vault PIN"
             >
               <Key size={13} className="text-purple-400" />
@@ -1112,13 +1112,23 @@ export default function SavingsTab({
                 </span>
                 <button 
                   type="button"
-                  onClick={() => setShowAddGoalSheet(false)} 
+                  onClick={() => {
+                    setShowAddGoalSheet(false);
+                    setAddGoalError('');
+                  }} 
                   className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
                   title="Cancel"
                 >
                   <X size={15} />
                 </button>
               </div>
+
+              {addGoalError && (
+                <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <ShieldAlert size={16} className="shrink-0 text-rose-400" />
+                  <span>{addGoalError}</span>
+                </div>
+              )}
 
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-neutral-400 font-medium">Goal Name</span>
@@ -1211,13 +1221,23 @@ export default function SavingsTab({
                 </span>
                 <button 
                   type="button"
-                  onClick={() => setEditingGoal(null)} 
+                  onClick={() => {
+                    setEditingGoal(null);
+                    setEditGoalError('');
+                  }} 
                   className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
                   title="Cancel"
                 >
                   <X size={15} />
                 </button>
               </div>
+
+              {editGoalError && (
+                <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <ShieldAlert size={16} className="shrink-0 text-rose-400" />
+                  <span>{editGoalError}</span>
+                </div>
+              )}
 
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-neutral-400 font-medium">Goal Name</span>
@@ -1349,7 +1369,7 @@ export default function SavingsTab({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showChangePinModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-60 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[95] flex items-center justify-center p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -1368,7 +1388,10 @@ export default function SavingsTab({
                 </div>
                 <button 
                   type="button"
-                  onClick={() => setShowChangePinModal(false)} 
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    setShowChangePinModal(false);
+                  }} 
                   className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
                   title="Cancel"
                 >
@@ -1395,6 +1418,8 @@ export default function SavingsTab({
                     type="password"
                     maxLength={4}
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
                     placeholder="••••"
                     value={changePinOld}
                     onChange={(e) => setChangePinOld(e.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -1409,6 +1434,8 @@ export default function SavingsTab({
                     type="password"
                     maxLength={4}
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
                     placeholder="••••"
                     value={changePinNew}
                     onChange={(e) => setChangePinNew(e.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -1422,6 +1449,8 @@ export default function SavingsTab({
                     type="password"
                     maxLength={4}
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
                     placeholder="••••"
                     value={changePinConfirm}
                     onChange={(e) => setChangePinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
@@ -1433,7 +1462,10 @@ export default function SavingsTab({
               <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-white/5">
                 <button
                   type="button"
-                  onClick={() => setShowChangePinModal(false)}
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    setShowChangePinModal(false);
+                  }}
                   className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
                 >
                   <X size={14} className="text-rose-400" /> Cancel

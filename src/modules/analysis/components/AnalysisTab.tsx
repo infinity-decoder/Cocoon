@@ -341,20 +341,20 @@ export default function AnalysisTab({
     <div className="flex flex-col gap-5 w-full max-w-xl mx-auto pb-24 text-white">
       {/* Top Header with Back to Home button */}
       {onBack && (
-        <div className="flex items-center justify-between pb-1 border-b border-white/5">
+        <div className="flex items-center justify-between pb-1 border-b border-white/5 gap-2">
           <button
             type="button"
             onClick={() => {
               triggerHapticFeedback();
               onBack();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
           >
             <ArrowLeft size={14} className="text-emerald-400" />
             <span>Back to Home</span>
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Reports & Analysis</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold hidden sm:inline">Reports & Analysis</span>
             <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20 font-bold capitalize">
               {timeScope} view
             </span>

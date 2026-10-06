@@ -12,7 +12,8 @@ import {
   Tv, HeartHandshake, Activity, Baby, Scale, Dumbbell,
   Pizza, CupSoda, Cake, Soup, Shirt, Watch, Sparkles, Pill, Stethoscope, PartyPopper,
   Hammer, ShoppingBag, Pencil, Bus, Plane, Footprints, Shield, Film,
-  TrendingUp, Percent, RotateCcw, CreditCard, Droplet, Wifi, Fuel, Globe
+  TrendingUp, Percent, RotateCcw, CreditCard, Droplet, Wifi, Fuel, Globe,
+  ArrowLeft, ShieldAlert
 } from 'lucide-react';
 import { Category } from '../../../core/types';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
@@ -81,10 +82,12 @@ export default function CategoryManager({
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState(HARMONIOUS_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState('ShoppingCart');
+  const [catError, setCatError] = useState('');
 
   // New SubCategory Form state
   const [subCatName, setSubCatName] = useState('');
   const [selectedParentId, setSelectedParentId] = useState('');
+  const [subCatError, setSubCatError] = useState('');
 
   // Expanded category IDs for accordion view
   const [expandedCatIds, setExpandedCatIds] = useState<string[]>([]);
@@ -104,7 +107,7 @@ export default function CategoryManager({
 
   const handleSaveCategory = () => {
     if (!name.trim()) {
-      alert('Please enter a category name');
+      setCatError('Please enter a category name');
       return;
     }
     
@@ -118,6 +121,7 @@ export default function CategoryManager({
 
     // Reset Form
     setName('');
+    setCatError('');
     setSelectedColor(HARMONIOUS_COLORS[0]);
     setSelectedIcon('ShoppingCart');
     setIsAddingCategory(false);
@@ -125,13 +129,13 @@ export default function CategoryManager({
 
   const handleSaveSubCategory = () => {
     if (!subCatName.trim()) {
-      alert('Please enter a sub-category name');
+      setSubCatError('Please enter a sub-category name');
       return;
     }
 
     const parentCat = categories.find(c => c.id === selectedParentId) || currentCategories[0];
     if (!parentCat) {
-      alert('Please select a valid parent category');
+      setSubCatError('Please select a valid parent category');
       return;
     }
 
@@ -148,6 +152,7 @@ export default function CategoryManager({
 
     // Reset Form
     setSubCatName('');
+    setSubCatError('');
     setIsAddingSubCategory(false);
   };
 
@@ -168,12 +173,23 @@ export default function CategoryManager({
           style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center p-5 border-b" style={{ borderColor: themeBorder }}>
-            <div className="flex flex-col text-left">
-              <span className="text-xs text-neutral-400 font-mono tracking-widest uppercase">Customization</span>
-              <h2 className="text-base font-bold text-white">Manage Categories & Sub-Categories</h2>
+          <div className="flex justify-between items-center p-4 border-b gap-3" style={{ borderColor: themeBorder }}>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                onClose();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+              title="Back to Home"
+            >
+              <ArrowLeft size={14} className="text-emerald-400" />
+              <span>Back to Home</span>
+            </button>
+            <div className="flex flex-col text-right">
+              <span className="text-[10px] text-neutral-400 font-mono tracking-widest uppercase">Customization</span>
+              <h2 className="text-sm font-bold text-white">Categories</h2>
             </div>
-            {/* Friendly reddish Cancel / Close button */}
             <button
               type="button"
               onClick={() => {
@@ -183,7 +199,7 @@ export default function CategoryManager({
               className="p-1.5 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 transition-colors cursor-pointer"
               title="Close"
             >
-              <X size={18} className="text-rose-400" />
+              <X size={16} className="text-rose-400" />
             </button>
           </div>
 
@@ -264,6 +280,13 @@ export default function CategoryManager({
             {/* 1. ADD NEW CATEGORY VIEW */}
             {isAddingCategory ? (
               <div className="flex flex-col gap-5">
+                {catError && (
+                  <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                    <ShieldAlert size={16} className="shrink-0 text-rose-400" />
+                    <span>{catError}</span>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-4">
                   {/* Live Icon Preview */}
                   <div 
@@ -355,6 +378,13 @@ export default function CategoryManager({
             ) : isAddingSubCategory ? (
               /* 2. ADD NEW SUBCATEGORY VIEW */
               <div className="flex flex-col gap-4">
+                {subCatError && (
+                  <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                    <ShieldAlert size={16} className="shrink-0 text-rose-400" />
+                    <span>{subCatError}</span>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-neutral-400 font-medium">Select Parent Category</label>
                   <select
