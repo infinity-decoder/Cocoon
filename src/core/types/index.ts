@@ -84,6 +84,10 @@ export interface AppSettings {
   backupSchedule: BackupSchedule;
   isFirstTime: boolean;
   vaultPassword?: string; // Persistent passcode for savings vault
+  userName?: string;
+  userEmail?: string;
+  userPhone?: string;
+  userAddress?: string;
 }
 
 export type NotificationType = 'backup_export' | 'backup_import' | 'pdf_export' | 'excel_export' | 'system';

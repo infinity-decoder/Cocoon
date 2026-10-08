@@ -6,12 +6,16 @@
 import { useState, useMemo } from 'react';
 import { 
   Search, Filter, Calendar, CreditCard, ChevronDown, Trash2, Edit, 
-  FileSpreadsheet, Printer, ShieldCheck, X, ChevronRight, Pencil, ChevronLeft, ArrowLeft 
+  FileSpreadsheet, Printer, ShieldCheck, X, ChevronRight, Pencil, ChevronLeft, ArrowLeft,
+  Sparkles, Download, Check, User, Phone, Mail, MapPin, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import html2pdf from 'html2pdf.js';
 import { Transaction, Category, NotificationType } from '../../../core/types';
 import { CATEGORY_ICONS_MAP } from '../../categories';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
+import CocoonLogo from '../../../shared/components/CocoonLogo';
+import CocoonStatementSeal from '../../../shared/components/CocoonStatementSeal';
 
 interface TransactionsTabProps {
   transactions: Transaction[];
@@ -22,6 +26,18 @@ interface TransactionsTabProps {
   onEditTransaction: (id: string, updatedData: Partial<Transaction>) => void;
   onAddNotification?: (title: string, message: string, type: NotificationType) => void;
   onBack?: () => void;
+  userProfile?: {
+    userName?: string;
+    userEmail?: string;
+    userPhone?: string;
+    userAddress?: string;
+  };
+  onUpdateProfile?: (profile: {
+    userName?: string;
+    userEmail?: string;
+    userPhone?: string;
+    userAddress?: string;
+  }) => void;
   themeCardBg: string;
   themeBorder: string;
   themeRadius: string;
@@ -37,6 +53,8 @@ export default function TransactionsTab({
   onEditTransaction,
   onAddNotification,
   onBack,
+  userProfile,
+  onUpdateProfile,
   themeCardBg
 }: TransactionsTabProps) {
   // Active swiped item state: { id: string; action: 'edit' | 'delete' } | null
@@ -55,10 +73,26 @@ export default function TransactionsTab({
 
   // Export panel states
   const [showExportPanel, setShowExportPanel] = useState(false);
+  const [showPdfPreviewModal, setShowPdfPreviewModal] = useState(false);
   const [exportScope, setExportScope] = useState<'monthly' | 'yearly' | 'all'>('monthly');
   const [exportFilter, setExportFilter] = useState<'combined' | 'expense' | 'income'>('combined');
   const [pdfPassword, setPdfPassword] = useState('');
   const [encryptPdf, setEncryptPdf] = useState(false);
+
+  // Guide dismiss state
+  const [isGuideDismissed, setIsGuideDismissed] = useState<boolean>(() => {
+    return localStorage.getItem('cocoon_dismiss_swipe_guide') === 'true';
+  });
+
+  // Downloading PDF loading state
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  // User profile modal states for PDF Statement
+  const [showProfilePromptModal, setShowProfilePromptModal] = useState(false);
+  const [inputName, setInputName] = useState(userProfile?.userName || '');
+  const [inputEmail, setInputEmail] = useState(userProfile?.userEmail || '');
+  const [inputPhone, setInputPhone] = useState(userProfile?.userPhone || '');
+  const [inputAddress, setInputAddress] = useState(userProfile?.userAddress || '');
 
   // Edit form dialog states
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -175,24 +209,9 @@ export default function TransactionsTab({
     }
   };
 
-  // Printable Report Generation (Simulated PDF Print Layout)
-  const handlePrintPDF = () => {
-    triggerHapticFeedback();
-    
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      if (onAddNotification) {
-        onAddNotification(
-          'Pop-up Blocked',
-          'Please allow popups to preview and print the report.',
-          'pdf_export'
-        );
-      }
-      return;
-    }
-
-    const reportTitle = `Cocoon Premium Financial Report - ${exportScope.toUpperCase()}`;
-    const scopeFiltered = transactions.filter(t => {
+  // Filtered transactions specifically for PDF & Statement Exports
+  const scopeFilteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
       const tDate = new Date(t.date);
       const isCurrentMonth = tDate.getMonth() === new Date().getMonth() && tDate.getFullYear() === new Date().getFullYear();
       const isCurrentYear = tDate.getFullYear() === new Date().getFullYear();
@@ -205,95 +224,122 @@ export default function TransactionsTab({
 
       return true;
     });
+  }, [transactions, exportScope, exportFilter]);
 
-    const totalIn = scopeFiltered.filter(t => t.type === 'income' || t.type === 'savings_withdraw').reduce((sum, t) => sum + t.amount, 0);
-    const totalOut = scopeFiltered.filter(t => t.type === 'expense' || t.type === 'savings_deposit').reduce((sum, t) => sum + t.amount, 0);
+  // Aggregate stats for PDF/statement view
+  const exportTotals = useMemo(() => {
+    const totalIn = scopeFilteredTransactions
+      .filter(t => t.type === 'income' || t.type === 'savings_withdraw')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalOut = scopeFilteredTransactions
+      .filter(t => t.type === 'expense' || t.type === 'savings_deposit')
+      .reduce((sum, t) => sum + t.amount, 0);
     const surplus = totalIn - totalOut;
+    return { totalIn, totalOut, surplus };
+  }, [scopeFilteredTransactions]);
 
-    const tableRows = scopeFiltered.map(t => `
-      <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${new Date(t.date).toLocaleDateString()}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-transform: capitalize;">${t.type}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${t.category}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.note || '-'}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${t.paymentMethod}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd; font-family: monospace; font-weight: bold; text-align: right; color: ${t.type === 'income' ? '#10b981' : '#f43f5e'};">
-          ${t.type === 'income' ? '+' : '-'}${currencySymbol}${t.amount.toFixed(2)}
-        </td>
-      </tr>
-    `).join('');
+  // Helper to format date as 07JUN2026
+  const formatDateForStatement = (d: Date): string => {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+    const year = d.getFullYear();
+    return `${day}${month}${year}`;
+  };
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${reportTitle}</title>
-          <style>
-            body { font-family: 'Inter', sans-serif; color: #2d3748; padding: 40px; margin: 0; }
-            .header { display: flex; justify-between: space-between; align-items: center; border-bottom: 3px solid #3182ce; padding-bottom: 20px; margin-bottom: 30px; }
-            .brand { font-size: 26px; font-weight: 800; color: #1a365d; letter-spacing: -1px; }
-            .title { font-size: 16px; font-weight: 500; color: #718096; text-transform: uppercase; text-align: right; }
-            .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-            .stat-card { background: #f7fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; }
-            .stat-label { font-size: 11px; text-transform: uppercase; color: #718096; }
-            .stat-value { font-size: 20px; font-weight: 700; margin-top: 5px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { text-align: left; background: #edf2f7; padding: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-            footer { margin-top: 50px; text-align: center; font-size: 11px; color: #a0aec0; border-top: 1px solid #e2e8f0; padding-top: 15px; }
-          </style>
-        </head>
-        <body>
-          <div class="header" style="display: flex; justify-content: space-between;">
-            <div class="brand">Cocoon Finance Tracker</div>
-            <div class="title">${reportTitle}</div>
-          </div>
-          ${encryptPdf ? `<div style="padding: 8px; background: #fffaf0; border: 1px solid #feebc8; font-size: 11px; color: #c05621; margin-bottom: 15px; border-radius: 4px;">⚠️ Encrypted Report File - Password Protected Simulation active.</div>` : ''}
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-label">Total Cash Inflow</div>
-              <div class="stat-value" style="color: #10b981;">+${currencySymbol}${totalIn.toFixed(2)}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Total Outgoings</div>
-              <div class="stat-value" style="color: #f43f5e;">-${currencySymbol}${totalOut.toFixed(2)}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Net Net Balance</div>
-              <div class="stat-value" style="color: ${surplus >= 0 ? '#10b981' : '#f43f5e'}">${surplus >= 0 ? '+' : ''}${currencySymbol}${surplus.toFixed(2)}</div>
-            </div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Category</th>
-                <th>Description Note</th>
-                <th>Payment Method</th>
-                <th style="text-align: right;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
-          <footer>
-            Cocoon Financial Dashboard - Local Offline Secure Storage Database Report. Developed by INFINITY DECODER (<a href="https://infinitydecoder.com" target="_blank" style="color: #718096; text-decoration: none;">infinitydecoder.com</a>). Generated on ${new Date().toLocaleString()}.
-          </footer>
-          <script>
-            window.onload = function() { window.print(); window.close(); }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+  // Statement date range calculation for "07JUN2026 to 05JUL2026"
+  const statementDateRange = useMemo(() => {
+    const dates = scopeFilteredTransactions.map(t => new Date(t.date).getTime()).filter(t => !isNaN(t));
+    const now = new Date();
+    
+    if (exportScope === 'monthly') {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return `${formatDateForStatement(startOfMonth)} to ${formatDateForStatement(endOfMonth)}`;
+    }
+
+    if (exportScope === 'yearly') {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const endOfYear = new Date(now.getFullYear(), 11, 31);
+      return `${formatDateForStatement(startOfYear)} to ${formatDateForStatement(endOfYear)}`;
+    }
+
+    // All time
+    if (dates.length > 0) {
+      const minDate = new Date(Math.min(...dates));
+      const maxDate = new Date(Math.max(...dates));
+      return `${formatDateForStatement(minDate)} to ${formatDateForStatement(maxDate)}`;
+    }
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    return `${formatDateForStatement(startOfMonth)} to ${formatDateForStatement(now)}`;
+  }, [scopeFilteredTransactions, exportScope]);
+
+  // Safe In-App PDF / Statement Viewer with Cancel, Save, and Print controls
+  const handlePrintPDF = () => {
+    triggerHapticFeedback();
     setShowExportPanel(false);
+
+    // If user has not added their profile info, prompt before generating PDF
+    const hasProfile = Boolean(
+      userProfile?.userName?.trim() ||
+      userProfile?.userEmail?.trim() ||
+      userProfile?.userPhone?.trim() ||
+      userProfile?.userAddress?.trim()
+    );
+
+    if (!hasProfile) {
+      setInputName(userProfile?.userName || '');
+      setInputEmail(userProfile?.userEmail || '');
+      setInputPhone(userProfile?.userPhone || '');
+      setInputAddress(userProfile?.userAddress || '');
+      setShowProfilePromptModal(true);
+    } else {
+      setShowPdfPreviewModal(true);
+    }
 
     if (onAddNotification) {
       onAddNotification(
-        'PDF Exported Successfully',
-        `A printable financial PDF report (${exportScope}) was generated.`,
+        'Statement Preview Ready',
+        `A printable financial report (${exportScope}) is ready to preview, save, or print.`,
         'pdf_export'
       );
+    }
+  };
+
+  // Direct Save/Download PDF to device downloads
+  const handleDownloadPDF = async () => {
+    triggerHapticFeedback();
+    const element = document.getElementById('printable-ledger-report');
+    if (!element) {
+      window.print();
+      return;
+    }
+
+    try {
+      setIsDownloadingPdf(true);
+      const filename = `Cocoon-Transaction-Statement-${exportScope}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const opt = {
+        margin: [8, 8, 8, 8] as [number, number, number, number],
+        filename: filename,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+
+      if (onAddNotification) {
+        onAddNotification(
+          'PDF Saved',
+          `Transaction Statement downloaded successfully to your device downloads folder.`,
+          'pdf_export'
+        );
+      }
+    } catch {
+      // Fallback to native print/save if browser restricts direct html2canvas
+      window.print();
+    } finally {
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -600,16 +646,93 @@ export default function TransactionsTab({
 
                 <button
                   onClick={handlePrintPDF}
-                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/25 transition-all active:scale-95"
                 >
-                  <Printer size={15} />
-                  Print / Save PDF
+                  <Download size={15} />
+                  Save PDF
                 </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
+      {/* --- INTERACTIVE SWIPE GESTURE TUTORIAL / ANIMATION BANNER --- */}
+      {!isGuideDismissed && (
+        <div className="bg-gradient-to-r from-blue-950/40 via-neutral-900/60 to-rose-950/40 border border-white/10 rounded-2xl p-3.5 flex flex-col gap-2.5 shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Sparkles size={14} />
+              </div>
+              <span className="text-xs font-bold text-white tracking-wide">
+                Quick Action Gestures
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest hidden sm:inline">
+                Swipe cards to act
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticFeedback();
+                  setIsGuideDismissed(true);
+                  localStorage.setItem('cocoon_dismiss_swipe_guide', 'true');
+                }}
+                className="p-1 rounded-lg bg-white/5 hover:bg-white/10 active:bg-white/20 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                title="Dismiss guide"
+                aria-label="Dismiss guide"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Looping sliding gesture demo card */}
+          <div className="relative h-11 bg-black/40 rounded-xl overflow-hidden border border-white/5 flex items-center justify-between px-3 text-[10px]">
+            {/* Left track hint (Slide Right to Edit) */}
+            <div className="flex items-center gap-1.5 text-blue-400 font-bold z-0">
+              <Pencil size={12} />
+              <span>Slide Right to Edit</span>
+            </div>
+
+            {/* Right track hint (Slide Left to Delete) */}
+            <div className="flex items-center gap-1.5 text-rose-400 font-bold z-0">
+              <span>Slide Left to Delete</span>
+              <Trash2 size={12} />
+            </div>
+
+            {/* Animated gliding demo card showing user how to slide both directions */}
+            <motion.div
+              animate={{
+                x: [0, 70, 0, -70, 0]
+              }}
+              transition={{
+                duration: 4.8,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+              className="absolute inset-y-1 inset-x-10 bg-neutral-800/90 border border-white/15 rounded-lg flex items-center justify-center gap-2 shadow-lg z-10 pointer-events-none select-none text-neutral-200"
+            >
+              <ChevronLeft size={13} className="text-rose-400 animate-pulse" />
+              <span className="text-[10px] font-semibold text-white">👈 Drag Card 👉</span>
+              <ChevronRight size={13} className="text-blue-400 animate-pulse" />
+            </motion.div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-[10px] font-medium pt-0.5">
+            <div className="flex items-center gap-1.5 text-neutral-300 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2.5 py-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+              <span>Slide <strong>Right</strong> to Edit</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-neutral-300 bg-rose-500/10 border border-rose-500/20 rounded-lg px-2.5 py-1.5 justify-end text-right">
+              <span>Slide <strong>Left</strong> to Delete</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- TRANSACTIONS LOGS LIST --- */}
       <div className="flex flex-col gap-5">
@@ -826,6 +949,411 @@ export default function TransactionsTab({
                 </button>
               </div>
             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- USER STATEMENT PROFILE DETAILS PROMPT MODAL --- */}
+      <AnimatePresence>
+        {showProfilePromptModal && (
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <User size={16} />
+                  </div>
+                  <span className="text-sm font-bold text-white">Statement Details</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowProfilePromptModal(false)}
+                  className="text-neutral-400 hover:text-white cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <p className="text-xs text-neutral-300 leading-relaxed">
+                Add your personal or business details to generate a professional, bank-style Transaction Statement:
+              </p>
+
+              <div className="flex flex-col gap-2.5">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Account Holder Name</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. Mahboob Alam"
+                    value={inputName}
+                    onChange={(e) => setInputName(e.target.value)}
+                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Email Address</span>
+                  <input
+                    type="email"
+                    placeholder="e.g. mahboobalam.dev@gmail.com"
+                    value={inputEmail}
+                    onChange={(e) => setInputEmail(e.target.value)}
+                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Mobile Number</span>
+                  <input
+                    type="tel"
+                    placeholder="e.g. +92 300 1234567"
+                    value={inputPhone}
+                    onChange={(e) => setInputPhone(e.target.value)}
+                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Mailing / Business Address</span>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Suite 402, Financial Tower, City"
+                    value={inputAddress}
+                    onChange={(e) => setInputAddress(e.target.value)}
+                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50 resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfilePromptModal(false);
+                    setShowPdfPreviewModal(true);
+                  }}
+                  className="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-neutral-300 cursor-pointer transition-all active:scale-95"
+                >
+                  Skip for Now
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    if (onUpdateProfile) {
+                      onUpdateProfile({
+                        userName: inputName.trim(),
+                        userEmail: inputEmail.trim(),
+                        userPhone: inputPhone.trim(),
+                        userAddress: inputAddress.trim()
+                      });
+                    }
+                    localStorage.setItem('cocoon_username', inputName.trim());
+                    localStorage.setItem('cocoon_user_email', inputEmail.trim());
+                    localStorage.setItem('cocoon_user_phone', inputPhone.trim());
+                    localStorage.setItem('cocoon_user_address', inputAddress.trim());
+
+                    setShowProfilePromptModal(false);
+                    setShowPdfPreviewModal(true);
+                  }}
+                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                >
+                  Save & Generate
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- IN-APP PDF / PROFESSIONAL BANK-GRADE TRANSACTION STATEMENT MODAL --- */}
+      <AnimatePresence>
+        {showPdfPreviewModal && (
+          <div className="fixed inset-0 z-[100] bg-neutral-950/95 backdrop-blur-md flex flex-col overflow-hidden text-left">
+            {/* Top Navigation & Action Header */}
+            <div className="p-3 sm:p-4 bg-neutral-900 border-b border-white/10 flex items-center justify-between gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticFeedback();
+                  setShowPdfPreviewModal(false);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/15 active:bg-white/20 border border-white/10 rounded-xl text-xs font-bold text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+              >
+                <ArrowLeft size={15} className="text-emerald-400" />
+                <span>Back to Ledger</span>
+              </button>
+
+              <div className="flex flex-col text-center">
+                <span className="text-xs font-bold text-white tracking-tight">Transaction Statement</span>
+                <span className="text-[9px] text-neutral-400 font-mono uppercase tracking-widest">
+                  {exportScope} Scope • {scopeFilteredTransactions.length} Entries
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    handleExportCSV();
+                  }}
+                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-xl text-xs font-bold text-neutral-200 cursor-pointer transition-all active:scale-95"
+                  title="Export CSV spreadsheet"
+                >
+                  <FileSpreadsheet size={14} className="text-blue-400" />
+                  <span>CSV</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloadingPdf}
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 rounded-xl text-xs font-bold text-white cursor-pointer shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                  title="Save PDF to device"
+                >
+                  {isDownloadingPdf ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download size={14} />
+                      <span>Save PDF</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    setShowPdfPreviewModal(false);
+                  }}
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                  title="Close Preview"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Printable Document Viewport */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-6 flex flex-col items-center">
+              <style>{`
+                @media print {
+                  body * { visibility: hidden !important; }
+                  #printable-ledger-report, #printable-ledger-report * { visibility: visible !important; }
+                  #printable-ledger-report {
+                    position: absolute !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 24px !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    background: white !important;
+                    color: black !important;
+                  }
+                  .no-print { display: none !important; }
+                }
+              `}</style>
+
+              <div
+                id="printable-ledger-report"
+                className="w-full max-w-3xl bg-white text-neutral-900 rounded-2xl p-6 sm:p-10 shadow-2xl border border-neutral-300 flex flex-col gap-6"
+              >
+                {/* --- STATEMENT DOCUMENT HEADER --- */}
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-4 border-b border-neutral-300">
+                  {/* Top-Left: App Logo + App Name "Cocoon" (no finance tracker) + Account Title info */}
+                  <div className="flex flex-col max-w-md">
+                    <div className="flex items-center gap-3">
+                      <CocoonLogo size={38} />
+                      <h1 className="text-2xl font-black text-neutral-950 tracking-tight leading-none">
+                        Cocoon
+                      </h1>
+                    </div>
+
+                    {/* Account Title & Contact Information */}
+                    <div className="flex flex-col mt-3 text-xs text-neutral-700 space-y-0.5">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[11px] font-semibold text-neutral-500">
+                          Account Title:
+                        </span>
+                        <span className="text-sm font-bold text-neutral-900">
+                          {userProfile?.userName?.trim() || inputName?.trim() || 'Client Account'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-neutral-600 mt-0.5">
+                        {(userProfile?.userEmail?.trim() || inputEmail?.trim()) && (
+                          <span className="font-mono">
+                            {userProfile?.userEmail?.trim() || inputEmail?.trim()}
+                          </span>
+                        )}
+                        {(userProfile?.userPhone?.trim() || inputPhone?.trim()) && (
+                          <span className="font-mono">
+                            {userProfile?.userPhone?.trim() || inputPhone?.trim()}
+                          </span>
+                        )}
+                      </div>
+                      {(userProfile?.userAddress?.trim() || inputAddress?.trim()) && (
+                        <span className="text-[11px] text-neutral-600">
+                          {userProfile?.userAddress?.trim() || inputAddress?.trim()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Top-Right: Transaction Statement (gray with no background) + Date range (07JUN2026 to 05JUL2026) in single line */}
+                  <div className="flex flex-col items-start sm:items-end text-left sm:text-right">
+                    <span className="text-base font-bold text-neutral-500 tracking-tight">
+                      Transaction Statement
+                    </span>
+                    <div className="mt-1.5 text-xs font-mono text-neutral-600">
+                      <span>{statementDateRange}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* --- STATEMENT FINANCIAL SUMMARY CARDS --- */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex flex-col">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider font-mono">
+                      Total Inflow (Credit)
+                    </span>
+                    <span className="text-base sm:text-lg font-black text-emerald-700 font-mono mt-1">
+                      {currencySymbol}   {exportTotals.totalIn.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-xl flex flex-col">
+                    <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider font-mono">
+                      Total Outgoings (Debit)
+                    </span>
+                    <span className="text-base sm:text-lg font-black text-rose-700 font-mono mt-1">
+                      {currencySymbol}   {exportTotals.totalOut.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex flex-col">
+                    <span className="text-[10px] font-bold text-neutral-700 uppercase tracking-wider font-mono">
+                      Net Balance
+                    </span>
+                    <span className={`text-base sm:text-lg font-black font-mono mt-1 ${exportTotals.surplus >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {currencySymbol}   {exportTotals.surplus.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* --- STATEMENT LEDGER TABLE --- */}
+                <div className="overflow-x-auto w-full border border-neutral-200 rounded-xl">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-neutral-300 bg-neutral-100 text-neutral-700 font-bold uppercase text-[10px] font-mono">
+                        <th className="py-2.5 px-3">Date</th>
+                        <th className="py-2.5 px-2">Type</th>
+                        <th className="py-2.5 px-2">Category</th>
+                        <th className="py-2.5 px-2">Particulars / Note</th>
+                        <th className="py-2.5 px-2">Method</th>
+                        <th className="py-2.5 px-3 text-right">Amount ({currencySymbol})</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-200 font-sans">
+                      {scopeFilteredTransactions.map((tx, idx) => (
+                        <tr key={`${tx.id}-${idx}`} className="hover:bg-neutral-50">
+                          <td className="py-2 px-3 font-mono text-[11px] whitespace-nowrap text-neutral-700">
+                            {new Date(tx.date).toLocaleDateString()}
+                          </td>
+                          <td className="py-2 px-2 capitalize text-[11px] font-medium text-neutral-600">
+                            {tx.type}
+                          </td>
+                          <td className="py-2 px-2 font-medium text-[11px] text-neutral-800">
+                            {tx.category}
+                          </td>
+                          <td className="py-2 px-2 max-w-[180px] truncate text-neutral-600 text-[11px]">
+                            {tx.note || '-'}
+                          </td>
+                          <td className="py-2 px-2 text-neutral-500 text-[11px]">
+                            {tx.paymentMethod}
+                          </td>
+                          <td className={`py-2 px-3 text-right font-mono font-bold text-[11px] whitespace-nowrap ${
+                            tx.type === 'income' || tx.type === 'savings_withdraw' ? 'text-emerald-700' : 'text-rose-700'
+                          }`}>
+                            {tx.amount.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                      {scopeFilteredTransactions.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-neutral-400 font-mono text-xs">
+                            No records found for the selected scope.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* --- STATEMENT OFFICIAL FOOTER & CIRCULAR RED SEAL --- */}
+                <div className="pt-3 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  {/* Left Side: Computer generated statement text (small gray line, no extra line underneath) */}
+                  <div className="flex flex-col text-left max-w-xs">
+                    <span className="text-[11px] text-neutral-500 font-normal">
+                      Computer generated statement does not require signature.
+                    </span>
+                  </div>
+
+                  {/* Center: Beautiful yet Official Circular Red Seal Stamp */}
+                  <div className="flex items-center justify-center">
+                    <CocoonStatementSeal size={105} />
+                  </div>
+
+                  {/* Right Side: Timestamp without heading */}
+                  <div className="flex flex-col items-start sm:items-end text-left sm:text-right text-[11px] text-neutral-500 font-mono">
+                    <span>
+                      {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bottom In-Page Controls */}
+                <div className="no-print pt-3 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowPdfPreviewModal(false)}
+                    className="w-full sm:w-auto px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold rounded-xl text-xs cursor-pointer transition-colors"
+                  >
+                    Cancel & Return to Ledger
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadPDF}
+                    disabled={isDownloadingPdf}
+                    className="w-full sm:w-auto px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold rounded-xl text-xs cursor-pointer shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                  >
+                    {isDownloadingPdf ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>Downloading PDF...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={14} />
+                        <span>Save PDF</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </AnimatePresence>

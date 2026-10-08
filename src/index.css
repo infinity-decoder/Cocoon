@@ -100,3 +100,27 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+
+/* Print specific styles for PDF generation and paper printing */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-ledger-report, #printable-ledger-report * {
+    visibility: visible;
+  }
+  #printable-ledger-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

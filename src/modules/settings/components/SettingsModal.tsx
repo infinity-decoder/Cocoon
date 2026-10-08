@@ -15,6 +15,7 @@ import { triggerHapticFeedback } from '../../../core/utils/haptics';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isInline?: boolean;
   settings: AppSettings;
   onChangeSettings: (updates: Partial<AppSettings>) => void;
   onFactoryReset: () => void;
@@ -28,6 +29,7 @@ interface SettingsModalProps {
 export default function SettingsModal({
   isOpen,
   onClose,
+  isInline = false,
   settings,
   onChangeSettings,
   onFactoryReset,
@@ -76,60 +78,48 @@ export default function SettingsModal({
     triggerHapticFeedback();
   };
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
-        {/* Backdrop close */}
-        <div className="absolute inset-0" onClick={onClose} />
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 30 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 30 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-          className={`w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col shadow-2xl relative z-[91] border ${themeRadius}`}
-          style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+  const contentElement = (
+    <div className={`w-full flex flex-col gap-3 select-none text-left ${isInline ? 'pb-6' : ''}`}>
+      {/* Header */}
+      <div className="flex justify-between items-center pb-2.5 border-b gap-3" style={{ borderColor: themeBorder }}>
+        <button
+          type="button"
+          onClick={() => {
+            triggerHapticFeedback();
+            onClose();
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+          title="Back to Home"
         >
-          {/* Header */}
-          <div className="flex justify-between items-center p-4 border-b gap-3" style={{ borderColor: themeBorder }}>
-            <button
-              type="button"
-              onClick={() => {
-                triggerHapticFeedback();
-                onClose();
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
-              title="Back to Home"
-            >
-              <ArrowLeft size={14} className="text-emerald-400" />
-              <span>Back to Home</span>
-            </button>
+          <ArrowLeft size={14} className="text-emerald-400" />
+          <span>Back to Home</span>
+        </button>
 
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                <SlidersHorizontal size={16} />
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="text-sm font-bold text-white">System Settings</span>
-                <span className="text-[9px] text-neutral-400">Security, Backups & Maintenance</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                triggerHapticFeedback();
-                onClose();
-              }}
-              className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              title="Close"
-            >
-              <X size={16} />
-            </button>
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <SlidersHorizontal size={15} />
           </div>
+          <div className="flex flex-col text-left">
+            <span className="text-xs font-bold text-white">System Settings</span>
+            <span className="text-[9px] text-neutral-400">Security & Maintenance</span>
+          </div>
+        </div>
 
-          {/* Modal Body */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none text-left">
+        <button
+          type="button"
+          onClick={() => {
+            triggerHapticFeedback();
+            onClose();
+          }}
+          className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 text-rose-400 cursor-pointer transition-all active:scale-90 shadow-sm shrink-0"
+          title="Close"
+        >
+          <X size={15} />
+        </button>
+      </div>
+
+      {/* Settings Body */}
+      <div className="flex flex-col gap-4 text-left">
             {/* Status Message */}
             {statusMsg && (
               <div 
@@ -262,8 +252,6 @@ export default function SettingsModal({
               </button>
             </div>
           </div>
-        </motion.div>
-      </div>
 
       {/* FACTORY RESET CONFIRM OVERLAY */}
       <AnimatePresence>
@@ -374,6 +362,28 @@ export default function SettingsModal({
           </div>
         )}
       </AnimatePresence>
+    </div>
+  );
+
+  if (isInline) {
+    return contentElement;
+  }
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
+        <div className="absolute inset-0" onClick={onClose} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 30 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+          className={`w-full max-w-md max-h-[85vh] overflow-y-auto p-4 shadow-2xl relative z-[91] border ${themeRadius}`}
+          style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+        >
+          {contentElement}
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
 }

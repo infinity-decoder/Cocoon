@@ -135,6 +135,13 @@ export default function App() {
                     triggerHapticFeedback();
                     app.setActiveTab(0);
                   }}
+                  userProfile={{
+                    userName: app.state.settings.userName,
+                    userEmail: app.state.settings.userEmail,
+                    userPhone: app.state.settings.userPhone,
+                    userAddress: app.state.settings.userAddress
+                  }}
+                  onUpdateProfile={app.handleUpdateSettings}
                   themeCardBg={app.activeTheme.cardBg}
                   themeBorder={app.activeTheme.border}
                   themeRadius={app.activeTheme.radius}
@@ -321,6 +328,81 @@ export default function App() {
                 />
               </motion.div>
             )}
+
+            {app.activeTab === 8 && (
+              <motion.div
+                key="categories-tab"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+              >
+                <CategoryManager
+                  isOpen={true}
+                  isInline={true}
+                  onClose={() => {
+                    triggerHapticFeedback();
+                    app.setActiveTab(0);
+                  }}
+                  categories={app.state.categories}
+                  subCategories={app.state.subCategories}
+                  onAddCategory={app.handleAddCategory}
+                  onDeleteCategory={app.handleDeleteCategory}
+                  onAddSubCategory={app.handleAddSubCategory}
+                  onDeleteSubCategory={app.handleDeleteSubCategory}
+                  currencySymbol={app.state.settings.currencySymbol}
+                  themeCardBg={app.activeTheme.cardBg}
+                  themeBorder={app.activeTheme.border}
+                  themeRadius={app.activeTheme.radius}
+                />
+              </motion.div>
+            )}
+
+            {app.activeTab === 9 && (
+              <motion.div
+                key="settings-tab"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+              >
+                <SettingsModal
+                  isOpen={true}
+                  isInline={true}
+                  onClose={() => {
+                    triggerHapticFeedback();
+                    app.setActiveTab(0);
+                  }}
+                  settings={app.state.settings}
+                  onChangeSettings={app.handleUpdateSettings}
+                  onFactoryReset={app.handleFactoryReset}
+                  onExportBackup={app.handleExportBackup}
+                  onImportBackup={app.handleImportBackup}
+                  themeCardBg={app.activeTheme.cardBg}
+                  themeBorder={app.activeTheme.border}
+                  themeRadius={app.activeTheme.radius}
+                />
+              </motion.div>
+            )}
+
+            {app.activeTab === 10 && (
+              <motion.div
+                key="help-tab"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+              >
+                <HelpSupportModal
+                  isOpen={true}
+                  isInline={true}
+                  onClose={() => {
+                    triggerHapticFeedback();
+                    app.setActiveTab(0);
+                  }}
+                  themeCardBg={app.activeTheme.cardBg}
+                  themeBorder={app.activeTheme.border}
+                  themeRadius={app.activeTheme.radius}
+                />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
 
@@ -379,53 +461,14 @@ export default function App() {
         <SidebarMenu
           isOpen={app.isSidebarOpen}
           onClose={() => app.setIsSidebarOpen(false)}
-          onOpenCategories={() => app.setIsCategoryManagerOpen(true)}
+          onOpenCategories={() => app.setActiveTab(8)}
           onOpenLedger={() => app.setActiveTab(1)}
           onOpenSavings={() => app.setActiveTab(2)}
-          onOpenSettings={() => app.setIsSettingsOpen(true)}
-          onOpenHelp={() => app.setIsHelpOpen(true)}
+          onOpenSettings={() => app.setActiveTab(9)}
+          onOpenHelp={() => app.setActiveTab(10)}
           activeThemeId={app.activeThemeId}
           themeCardBg={app.activeTheme.cardBg}
           themeBorder={app.activeTheme.border}
-        />
-
-        {/* --- SYSTEM SETTINGS MODAL (App Lock, Backups, Factory Reset) --- */}
-        <SettingsModal
-          isOpen={app.isSettingsOpen}
-          onClose={() => app.setIsSettingsOpen(false)}
-          settings={app.state.settings}
-          onChangeSettings={app.handleUpdateSettings}
-          onFactoryReset={app.handleFactoryReset}
-          onExportBackup={app.handleExportBackup}
-          onImportBackup={app.handleImportBackup}
-          themeCardBg={app.activeTheme.cardBg}
-          themeBorder={app.activeTheme.border}
-          themeRadius={app.activeTheme.radius}
-        />
-
-        {/* --- CUSTOM CATEGORY MANAGER MODAL --- */}
-        <CategoryManager
-          isOpen={app.isCategoryManagerOpen}
-          onClose={() => app.setIsCategoryManagerOpen(false)}
-          categories={app.state.categories}
-          subCategories={app.state.subCategories}
-          onAddCategory={app.handleAddCategory}
-          onDeleteCategory={app.handleDeleteCategory}
-          onAddSubCategory={app.handleAddSubCategory}
-          onDeleteSubCategory={app.handleDeleteSubCategory}
-          currencySymbol={app.state.settings.currencySymbol}
-          themeCardBg={app.activeTheme.cardBg}
-          themeBorder={app.activeTheme.border}
-          themeRadius={app.activeTheme.radius}
-        />
-
-        {/* --- INTERACTIVE FAQS HELP MODAL --- */}
-        <HelpSupportModal
-          isOpen={app.isHelpOpen}
-          onClose={() => app.setIsHelpOpen(false)}
-          themeCardBg={app.activeTheme.cardBg}
-          themeBorder={app.activeTheme.border}
-          themeRadius={app.activeTheme.radius}
         />
 
         {/* --- BALANCES PIN AUTHORIZATION PROMPT --- */}

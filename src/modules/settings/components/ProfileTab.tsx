@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { User, DollarSign, Calendar, Shield, Camera, ArrowLeft, Check } from 'lucide-react';
+import { User, Mail, Phone, MapPin, DollarSign, Calendar, Camera, ArrowLeft, Check, Trash2, Save } from 'lucide-react';
 import { motion } from 'motion/react';
 import { AppTheme, PREBUILT_THEMES } from '../../../core/theme';
 import { AppSettings } from '../../../core/types';
@@ -39,7 +39,19 @@ export default function ProfileTab({
   themeBorder,
   themeRadius
 }: ProfileTabProps) {
-  const [userName, setUserName] = useState(localStorage.getItem('cocoon_username') || localStorage.getItem('finflow_username') || 'INFINITY DECODER');
+  const [userName, setUserName] = useState(
+    settings.userName || localStorage.getItem('cocoon_username') || localStorage.getItem('finflow_username') || 'INFINITY DECODER'
+  );
+  const [userEmail, setUserEmail] = useState(
+    settings.userEmail || localStorage.getItem('cocoon_user_email') || ''
+  );
+  const [userPhone, setUserPhone] = useState(
+    settings.userPhone || localStorage.getItem('cocoon_user_phone') || ''
+  );
+  const [userAddress, setUserAddress] = useState(
+    settings.userAddress || localStorage.getItem('cocoon_user_address') || ''
+  );
+  const [savedFeedback, setSavedFeedback] = useState(false);
 
   // Currency listings
   const currencies = [
@@ -57,11 +69,41 @@ export default function ProfileTab({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        onChangeAvatar(reader.result as string);
+        const base64 = reader.result as string;
+        onChangeAvatar(base64);
         triggerHapticFeedback();
+        setSavedFeedback(true);
+        setTimeout(() => setSavedFeedback(false), 2500);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemoveAvatar = () => {
+    triggerHapticFeedback();
+    onChangeAvatar('');
+    setSavedFeedback(true);
+    setTimeout(() => setSavedFeedback(false), 2500);
+  };
+
+  const handleSaveProfile = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    triggerHapticFeedback();
+    localStorage.setItem('cocoon_username', userName);
+    localStorage.setItem('finflow_username', userName);
+    localStorage.setItem('cocoon_user_email', userEmail);
+    localStorage.setItem('cocoon_user_phone', userPhone);
+    localStorage.setItem('cocoon_user_address', userAddress);
+
+    onChangeSettings({
+      userName,
+      userEmail,
+      userPhone,
+      userAddress
+    });
+
+    setSavedFeedback(true);
+    setTimeout(() => setSavedFeedback(false), 2500);
   };
 
   return (
@@ -83,52 +125,155 @@ export default function ProfileTab({
           <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Preferences & Profile</span>
         </div>
       )}
-      {/* Visual Avatar Header card */}
+
+      {/* Visual Avatar & Profile Photo Section */}
       <div 
-        className="w-full p-6 rounded-[28px] border bg-gradient-to-b from-neutral-900 to-neutral-950 flex flex-col items-center gap-3 relative overflow-hidden"
+        className="w-full p-6 rounded-[28px] border bg-gradient-to-b from-neutral-900 to-neutral-950 flex flex-col items-center gap-4 relative overflow-hidden shadow-lg"
         style={{ borderColor: themeBorder }}
       >
-        <div className="absolute right-[-20px] top-[-20px] w-28 h-28 bg-white/2 rounded-full blur-xl pointer-events-none" />
+        <div className="absolute right-[-20px] top-[-20px] w-28 h-28 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
 
         {/* Large Avatar container */}
-        <div className="relative group cursor-pointer w-28 h-28 rounded-full overflow-hidden border-2 border-dashed border-white/20 hover:border-emerald-400 transition-colors">
+        <div className="relative group w-28 h-28 rounded-full overflow-hidden border-2 border-dashed border-emerald-500/40 bg-neutral-900 shadow-xl flex items-center justify-center">
           {avatar ? (
             <img src={avatar} alt="Profile Avatar" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-neutral-800 flex items-center justify-center text-neutral-400">
-              <User size={40} />
+            <div className="w-full h-full bg-neutral-800/80 flex items-center justify-center text-neutral-400">
+              <User size={46} strokeWidth={1.5} />
             </div>
           )}
-          
-          {/* File Camera trigger input overlays */}
-          <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white text-[10px] font-bold">
-            <Camera size={18} className="mb-1 text-emerald-400" />
-            Set Photo
+
+          {/* Quick upload overlay */}
+          <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity cursor-pointer text-white text-[10px] font-bold">
+            <Camera size={20} className="mb-1 text-emerald-400" />
+            Change Photo
             <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
           </label>
         </div>
 
-        <div className="flex flex-col items-center gap-1.5 w-full max-w-[200px]">
-          <input
-            type="text"
-            value={userName}
-            onChange={(e) => {
-              setUserName(e.target.value);
-              localStorage.setItem('cocoon_username', e.target.value);
-              localStorage.setItem('finflow_username', e.target.value);
-            }}
-            placeholder="Your Name..."
-            className="bg-transparent border-b border-transparent focus:border-white/30 text-center text-base font-bold text-white outline-none w-full"
-          />
-          <span className="text-[10px] text-neutral-400 uppercase tracking-widest font-mono">
-            Offline secure account
+        {/* Avatar Action Controls */}
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 active:bg-emerald-500/40 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-300 cursor-pointer transition-all active:scale-95 shadow-sm">
+            <Camera size={14} className="text-emerald-400" />
+            <span>Update Photo</span>
+            <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+          </label>
+
+          {avatar && (
+            <button
+              type="button"
+              onClick={handleRemoveAvatar}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer transition-all active:scale-95 shadow-sm"
+              title="Remove profile picture"
+            >
+              <Trash2 size={13} />
+              <span>Remove</span>
+            </button>
+          )}
+        </div>
+
+        <div className="text-center">
+          <h2 className="text-base font-bold text-white tracking-tight">{userName || 'User Profile'}</h2>
+          <span className="text-[10px] text-neutral-400 font-mono uppercase tracking-widest mt-0.5 block">
+            Offline Encrypted Account
           </span>
         </div>
       </div>
 
+      {/* USER DETAILS EDITING FORM */}
+      <div 
+        className={`p-5 border flex flex-col gap-4 shadow-md ${themeRadius} text-left`} 
+        style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+      >
+        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+              <User size={16} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-white">Personal Information</span>
+              <span className="text-[10px] text-neutral-400">Username, contact & address details</span>
+            </div>
+          </div>
+
+          {savedFeedback && (
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1 animate-fade-in">
+              <Check size={12} strokeWidth={3} /> Saved
+            </span>
+          )}
+        </div>
+
+        <form onSubmit={handleSaveProfile} className="flex flex-col gap-3.5">
+          {/* Username Field */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-bold text-neutral-300 flex items-center gap-1.5">
+              <User size={12} className="text-emerald-400" /> Full Name / Username
+            </label>
+            <input
+              type="text"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="e.g. John Doe"
+              className="bg-neutral-900 border border-white/10 focus:border-emerald-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+            />
+          </div>
+
+          {/* Email Field */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-bold text-neutral-300 flex items-center gap-1.5">
+              <Mail size={12} className="text-blue-400" /> Email Address
+            </label>
+            <input
+              type="email"
+              value={userEmail}
+              onChange={(e) => setUserEmail(e.target.value)}
+              placeholder="e.g. user@example.com"
+              className="bg-neutral-900 border border-white/10 focus:border-blue-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+            />
+          </div>
+
+          {/* Mobile Number Field */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-bold text-neutral-300 flex items-center gap-1.5">
+              <Phone size={12} className="text-purple-400" /> Mobile Number
+            </label>
+            <input
+              type="tel"
+              value={userPhone}
+              onChange={(e) => setUserPhone(e.target.value)}
+              placeholder="e.g. +92 300 1234567"
+              className="bg-neutral-900 border border-white/10 focus:border-purple-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+            />
+          </div>
+
+          {/* Physical Address Field */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-bold text-neutral-300 flex items-center gap-1.5">
+              <MapPin size={12} className="text-amber-400" /> Residential / Postal Address
+            </label>
+            <input
+              type="text"
+              value={userAddress}
+              onChange={(e) => setUserAddress(e.target.value)}
+              placeholder="e.g. Apartment 4B, Central Avenue, City"
+              className="bg-neutral-900 border border-white/10 focus:border-amber-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+            />
+          </div>
+
+          {/* Save Profile Button */}
+          <button
+            type="submit"
+            className="mt-1 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20 transition-all active:scale-95"
+          >
+            <Save size={14} />
+            <span>Save Profile Details</span>
+          </button>
+        </form>
+      </div>
+
       {/* DYNAMIC ACCENT / PRE-BUILT MATERIAL 3 THEMING GRID */}
       <div className="flex flex-col gap-2.5">
-        <span className="text-xs font-semibold tracking-wider opacity-60 uppercase px-1">
+        <span className="text-xs font-semibold tracking-wider opacity-60 uppercase px-1 text-left">
           Material 3 Themes
         </span>
         <div className="grid grid-cols-5 gap-2.5">
@@ -170,7 +315,7 @@ export default function ProfileTab({
       </div>
 
       {/* TILE CARD SETTINGS SLIDES */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2.5 text-left">
         <span className="text-xs font-semibold tracking-wider opacity-60 uppercase px-1">
           App Customization
         </span>
@@ -228,25 +373,6 @@ export default function ProfileTab({
             <option value="monday">Monday</option>
             <option value="sunday">Sunday</option>
           </select>
-        </div>
-
-        {/* Security & Database notice pointing to Sidebar Settings */}
-        <div 
-          className={`p-4 border flex items-center justify-between shadow-md ${themeRadius}`}
-          style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
-              <Shield size={16} />
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-sm font-bold text-white">App Lock & Data Management</span>
-              <span className="text-[10px] text-neutral-400">Passcode security, JSON backups & reset</span>
-            </div>
-          </div>
-          <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 shrink-0">
-            Side Menu &gt; Settings
-          </span>
         </div>
       </div>
     </div>

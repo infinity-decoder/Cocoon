@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Tag, ShieldCheck, HelpCircle, 
   ChevronRight, ClipboardList, Vault, Settings
 } from 'lucide-react';
+import { App as CapacitorApp } from '@capacitor/app';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
 
 interface SidebarMenuProps {
@@ -34,6 +36,39 @@ export default function SidebarMenu({
   themeCardBg,
   themeBorder
 }: SidebarMenuProps) {
+  const [appVersion, setAppVersion] = useState<string>('v 0.0.5');
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchAppVersion() {
+      try {
+        const info = await CapacitorApp.getInfo();
+        if (info && info.version) {
+          const formatted = `v ${info.version}`;
+          if (isMounted) {
+            setAppVersion(formatted);
+          }
+          const el = document.getElementById('app-version');
+          if (el) {
+            el.innerText = formatted;
+          }
+        }
+      } catch {
+        // Fallback in web browser or preview mode
+        const el = document.getElementById('app-version');
+        if (el && !el.innerText) {
+          el.innerText = 'v 0.0.5';
+        }
+      }
+    }
+
+    fetchAppVersion();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -183,8 +218,8 @@ export default function SidebarMenu({
                   <ShieldCheck size={14} className="text-emerald-400" />
                   <span>100% Offline Encrypted</span>
                 </div>
-                <div className="text-[8px] text-neutral-500 font-mono">
-                  Cocoon v0.0.2 • INFINITY DECODER
+                <div id="app-version" className="text-[8px] text-neutral-500 font-mono">
+                  {appVersion}
                 </div>
               </div>
             </motion.div>
