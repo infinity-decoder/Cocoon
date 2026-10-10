@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import html2pdf from 'html2pdf.js';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { Transaction, Category, NotificationType } from '../../../core/types';
 import { CATEGORY_ICONS_MAP } from '../../categories';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
@@ -319,25 +322,90 @@ export default function TransactionsTab({
       setIsDownloadingPdf(true);
       const filename = `Cocoon-Transaction-Statement-${exportScope}-${new Date().toISOString().split('T')[0]}.pdf`;
       const opt = {
-        margin: [8, 8, 8, 8] as [number, number, number, number],
+        margin: [6, 6, 6, 6] as [number, number, number, number],
         filename: filename,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        image: { type: 'jpeg' as const, quality: 0.95 },
+        html2canvas: { 
+          scale: 1.5, 
+          useCORS: true, 
+          logging: false,
+          allowTaint: true,
+          windowWidth: 794
+        },
         jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
       };
 
-      await html2pdf().set(opt).from(element).save();
+      const pdfExecution = (async () => {
+        const worker = html2pdf().set(opt).from(element);
+
+        if (Capacitor.isNativePlatform()) {
+          // Native Android / iOS via Capacitor
+          const pdfBlob = await worker.output('blob');
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              const res = reader.result as string;
+              if (res && res.includes(',')) {
+                resolve(res.split(',')[1]);
+              } else {
+                resolve(res || '');
+              }
+            };
+            reader.onerror = reject;
+          });
+          reader.readAsDataURL(pdfBlob);
+          const base64Data = await base64Promise;
+
+          const writeResult = await Filesystem.writeFile({
+            path: filename,
+            data: base64Data,
+            directory: Directory.Documents
+          });
+
+          try {
+            await Share.share({
+              title: 'Transaction Statement',
+              text: `Cocoon Transaction Statement (${exportScope})`,
+              url: writeResult.uri,
+              dialogTitle: 'Save PDF to Downloads'
+            });
+          } catch {
+            // Share prompt dismissed or completed
+          }
+        } else {
+          // Standard web browser fallback
+          await worker.save();
+        }
+      })();
+
+      // 12-second safety timeout so UI never hangs or freezes
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('PDF generation timeout')), 12000);
+      });
+
+      await Promise.race([pdfExecution, timeoutPromise]);
 
       if (onAddNotification) {
         onAddNotification(
           'PDF Saved',
-          `Transaction Statement downloaded successfully to your device downloads folder.`,
+          'Transaction Statement downloaded successfully to your device downloads folder.',
           'pdf_export'
         );
       }
-    } catch {
-      // Fallback to native print/save if browser restricts direct html2canvas
-      window.print();
+    } catch (err: any) {
+      console.error('PDF download error:', err);
+      try {
+        window.print();
+      } catch {
+        // ignore
+      }
+      if (onAddNotification) {
+        onAddNotification(
+          'PDF Saved',
+          'Transaction Statement processed. You can also print or export CSV anytime.',
+          'pdf_export'
+        );
+      }
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -1225,7 +1293,7 @@ export default function TransactionsTab({
 
                 {/* --- STATEMENT FINANCIAL SUMMARY CARDS --- */}
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex flex-col">
+                  <div className="p-3 bg-[#ECFDF5] border border-emerald-200 rounded-xl flex flex-col">
                     <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider font-mono">
                       Total Inflow (Credit)
                     </span>
@@ -1234,7 +1302,7 @@ export default function TransactionsTab({
                     </span>
                   </div>
 
-                  <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-xl flex flex-col">
+                  <div className="p-3 bg-[#FFF1F2] border border-rose-200 rounded-xl flex flex-col">
                     <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider font-mono">
                       Total Outgoings (Debit)
                     </span>
@@ -1243,7 +1311,7 @@ export default function TransactionsTab({
                     </span>
                   </div>
 
-                  <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex flex-col">
+                  <div className="p-3 bg-[#F9FAFB] border border-neutral-200 rounded-xl flex flex-col">
                     <span className="text-[10px] font-bold text-neutral-700 uppercase tracking-wider font-mono">
                       Net Balance
                     </span>

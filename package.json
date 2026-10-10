@@ -14,6 +14,8 @@
     "@capacitor/android": "^8.5.1",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.1",
+    "@capacitor/filesystem": "^8.1.4",
+    "@capacitor/share": "^8.0.3",
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",

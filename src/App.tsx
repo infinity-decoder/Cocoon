@@ -95,7 +95,7 @@ export default function App() {
         />
 
         {/* APP MAIN VIEW BODY (Framer-motion fade layout) */}
-        <div className="flex-1 overflow-y-auto px-4.5 pt-4 pb-28 scrollbar-none flex flex-col gap-5">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4.5 pt-4 pb-28 scrollbar-none flex flex-col gap-5">
           <AnimatePresence mode="wait">
             {app.activeTab === 0 && (
               <DashboardTab

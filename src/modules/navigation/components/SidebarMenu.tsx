@@ -36,7 +36,7 @@ export default function SidebarMenu({
   themeCardBg,
   themeBorder
 }: SidebarMenuProps) {
-  const [appVersion, setAppVersion] = useState<string>('v 0.0.5');
+  const [appVersion, setAppVersion] = useState<string>('v 0.0.7');
 
   useEffect(() => {
     let isMounted = true;
@@ -57,7 +57,7 @@ export default function SidebarMenu({
         // Fallback in web browser or preview mode
         const el = document.getElementById('app-version');
         if (el && !el.innerText) {
-          el.innerText = 'v 0.0.5';
+          el.innerText = 'v 0.0.7';
         }
       }
     }

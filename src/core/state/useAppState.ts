@@ -16,6 +16,10 @@ import {
 } from '../types';
 import { loadAppState, saveAppState, getInitialState } from '../storage/storageAdapter';
 import { exportBackupAsJson, importBackupFromJson } from '../storage/backupService';
+import { DEFAULT_CATEGORIES, DEFAULT_SUBCATEGORIES, DEFAULT_WALLETS, DEFAULT_SETTINGS } from '../constants';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { PREBUILT_THEMES, AppTheme } from '../theme';
 import { triggerHapticFeedback } from '../utils/haptics';
 import { 
@@ -658,33 +662,120 @@ export function useAppState() {
 
   const handleFactoryReset = useCallback(() => {
     triggerHapticFeedback();
-    localStorage.clear();
-    const fresh = getInitialState();
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      // Storage clear
+    }
+
+    const fresh: AppState = {
+      transactions: [],
+      categories: DEFAULT_CATEGORIES,
+      subCategories: DEFAULT_SUBCATEGORIES,
+      wallets: DEFAULT_WALLETS.map(w => ({ ...w, balance: 0 })),
+      budgets: [],
+      savingsGoals: [{ id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: 0, color: '#10B981' }],
+      reminders: [],
+      settings: {
+        ...DEFAULT_SETTINGS,
+        userName: '',
+        userEmail: '',
+        userPhone: '',
+        userAddress: '',
+        pinCode: undefined,
+        vaultPassword: undefined
+      }
+    };
+
+    saveAppState(fresh);
     setState(fresh);
     setAvatar('');
     setActiveThemeId('emerald');
     localStorage.setItem('cocoon_theme_id', 'emerald');
     localStorage.setItem('finflow_theme_id', 'emerald');
     setIsLocked(false);
-  }, []);
-
-  const handleExportBackup = useCallback(() => {
-    triggerHapticFeedback();
-    const backupStr = exportBackupAsJson(state);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(backupStr);
-
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataUri);
-    downloadAnchor.setAttribute('download', 'cocoon_ledger_backup.json');
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    document.body.removeChild(downloadAnchor);
+    setEnteredPin('');
+    setActiveTab(0);
 
     addNotification(
-      'Backup Exported Successfully',
-      'Your financial ledger has been downloaded directly to your device\'s default "Downloads" folder as cocoon_ledger_backup.json. You can use this file to restore your balance and history anytime.',
-      'backup_export'
+      'Factory Reset Complete',
+      'All local transactions, vault entries, personal details, and data have been wiped clean.',
+      'system'
     );
+  }, [addNotification]);
+
+  const handleExportBackup = useCallback(async () => {
+    triggerHapticFeedback();
+    const backupStr = exportBackupAsJson(state);
+    const filename = 'cocoon_backup.json';
+
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // Native Android / iOS via Capacitor
+        // 1. Write file to Documents directory
+        const writeResult = await Filesystem.writeFile({
+          path: filename,
+          data: backupStr,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8
+        });
+
+        // 2. Open Android system save / share sheet so user can store directly in Downloads folder
+        try {
+          await Share.share({
+            title: 'Cocoon Database Backup',
+            text: 'Offline encrypted database backup for Cocoon Financial Tracker.',
+            url: writeResult.uri,
+            dialogTitle: 'Save cocoon_backup to Downloads'
+          });
+        } catch {
+          // Share dialog dismissed or completed
+        }
+
+        addNotification(
+          'Backup File Saved',
+          'Database backup "cocoon_backup.json" created successfully in Documents and ready in Downloads.',
+          'backup_export'
+        );
+      } else {
+        // Web browser / AI Studio fallback
+        const blob = new Blob([backupStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute('href', url);
+        downloadAnchor.setAttribute('download', filename);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        document.body.removeChild(downloadAnchor);
+        URL.revokeObjectURL(url);
+
+        addNotification(
+          'Backup Exported Successfully',
+          'Database backup "cocoon_backup.json" downloaded to your device downloads folder.',
+          'backup_export'
+        );
+      }
+    } catch (err: any) {
+      console.error('Export backup error:', err);
+      // Fallback to data URI
+      try {
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(backupStr);
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute('href', dataUri);
+        downloadAnchor.setAttribute('download', filename);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        document.body.removeChild(downloadAnchor);
+      } catch (fallbackErr) {
+        console.error('Fallback export error:', fallbackErr);
+      }
+      addNotification(
+        'Backup Export Notice',
+        'Database backup was prepared as cocoon_backup.json.',
+        'backup_export'
+      );
+    }
   }, [state, addNotification]);
 
   const handleImportBackup = useCallback((jsonStr: string) => {

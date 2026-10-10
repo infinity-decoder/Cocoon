@@ -40,7 +40,7 @@ export default function ProfileTab({
   themeRadius
 }: ProfileTabProps) {
   const [userName, setUserName] = useState(
-    settings.userName || localStorage.getItem('cocoon_username') || localStorage.getItem('finflow_username') || 'INFINITY DECODER'
+    settings.userName || localStorage.getItem('cocoon_username') || localStorage.getItem('finflow_username') || ''
   );
   const [userEmail, setUserEmail] = useState(
     settings.userEmail || localStorage.getItem('cocoon_user_email') || ''

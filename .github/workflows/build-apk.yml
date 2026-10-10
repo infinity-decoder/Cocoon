@@ -89,8 +89,9 @@ jobs:
 
       - name: Build Android Release APK
         run: |
+          VERSION="${{ steps.semver.outputs.version }}"
           cd android
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease -PversionName="$VERSION" -PversionCode=${{ github.run_number }} --no-daemon
 
       - name: Sign and Align APK for Android Installation
         id: sign_apk
@@ -151,6 +152,7 @@ jobs:
         with:
           tag_name: ${{ steps.semver.outputs.tag }}
           name: Release ${{ steps.semver.outputs.tag }}
+          generate_release_notes: true
           body: |
             ### Cocoon Android Release ${{ steps.semver.outputs.tag }}
             - **Version**: `${{ steps.semver.outputs.version }}`

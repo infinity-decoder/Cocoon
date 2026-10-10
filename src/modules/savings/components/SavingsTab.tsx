@@ -357,13 +357,13 @@ export default function SavingsTab({
   // If password is set but session is not unlocked
   if (vaultPassword && !vaultSessionUnlocked) {
     return (
-      <div className="w-full flex flex-col items-center justify-center py-0 select-none">
+      <div className="w-full flex flex-col items-center justify-center py-2 select-none">
         <div 
-          className="w-full max-w-sm p-3.5 sm:p-4 rounded-[24px] border text-center flex flex-col items-center gap-2 sm:gap-2.5 shadow-2xl relative"
+          className="w-full max-w-sm p-5 sm:p-6 rounded-[28px] border text-center flex flex-col items-center gap-3.5 shadow-2xl relative"
           style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
         >
           {/* Top navigation row with Back to Home and Red Cross close button */}
-          <div className="w-full flex items-center justify-between pb-1.5 border-b border-white/5">
+          <div className="w-full flex items-center justify-between pb-2 border-b border-white/5">
             {onBack ? (
               <button
                 type="button"
@@ -390,29 +390,29 @@ export default function SavingsTab({
                 className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 text-rose-400 cursor-pointer transition-all active:scale-90 shadow-sm"
                 title="Close Vault"
               >
-                <X size={14} />
+                <X size={15} />
               </button>
             )}
           </div>
 
-          <div className="p-2 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20">
-            <Lock size={20} />
+          <div className="p-3 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 mt-1">
+            <Lock size={24} />
           </div>
           <div className="flex flex-col">
-            <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight">Vault Locked</h3>
-            <p className="text-[11px] text-neutral-400 max-w-[220px] leading-tight mx-auto mt-0.5">
+            <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight">Vault Locked</h3>
+            <p className="text-xs text-neutral-400 max-w-[240px] leading-relaxed mx-auto mt-1">
               Enter your secure 4-digit Vault passcode.
             </p>
           </div>
 
           {/* PIN Indicators */}
-          <div className="flex gap-3 justify-center py-0.5">
+          <div className="flex gap-3 justify-center py-1">
             {[0, 1, 2, 3].map((idx) => (
               <div 
                 key={idx} 
-                className={`w-3 h-3 rounded-full border transition-all duration-150 ${
+                className={`w-3.5 h-3.5 rounded-full border transition-all duration-150 ${
                   idx < inputPin.length 
-                    ? 'bg-purple-500 border-purple-400 scale-110 shadow-[0_0_8px_rgba(139,92,246,0.6)]' 
+                    ? 'bg-purple-500 border-purple-400 scale-110 shadow-[0_0_10px_rgba(139,92,246,0.6)]' 
                     : 'bg-transparent border-neutral-600'
                 }`} 
               />
@@ -420,18 +420,18 @@ export default function SavingsTab({
           </div>
 
           {errMessage && (
-            <span className="text-[10px] text-rose-400 font-bold font-mono tracking-wide bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
+            <span className="text-[11px] text-rose-400 font-bold font-mono tracking-wide bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
               {errMessage}
             </span>
           )}
 
-          {/* Compact numeric keypad grid - no scroll on mobile */}
-          <div className="grid grid-cols-3 gap-2 w-full max-w-[220px] pt-0.5">
+          {/* Balanced, comfortable numeric keypad grid */}
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-full max-w-[260px] pt-1">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => (
               <button
                 key={k}
                 onClick={() => handleUnlockPinPress(k)}
-                className="w-12 h-11 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/5 transition-all active:scale-90"
+                className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/10 transition-all active:scale-95 shadow-sm"
               >
                 {k}
               </button>
@@ -442,21 +442,21 @@ export default function SavingsTab({
                 setInputPin('');
                 setErrMessage('');
               }}
-              className="w-12 h-11 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-90"
+              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-95"
             >
-              C
+              CLEAR
             </button>
             <button
               onClick={() => handleUnlockPinPress('0')}
-              className="w-12 h-11 rounded-2xl bg-white/5 hover:bg-white/10 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/5 transition-all active:scale-90"
+              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/10 transition-all active:scale-95 shadow-sm"
             >
               0
             </button>
             <button
               onClick={handleUnlockPinBackspace}
-              className="w-12 h-11 rounded-2xl bg-white/5 hover:bg-white/10 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-90"
+              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-95"
             >
-              <Delete size={16} />
+              <Delete size={18} />
             </button>
           </div>
         </div>
@@ -468,13 +468,13 @@ export default function SavingsTab({
   if (!vaultPassword) {
     const currentLen = setupStep === 'create' ? setupPin.length : confirmPin.length;
     return (
-      <div className="w-full flex flex-col items-center justify-center py-0 select-none">
+      <div className="w-full flex flex-col items-center justify-center py-2 select-none">
         <div 
-          className="w-full max-w-sm p-3.5 sm:p-4 rounded-[24px] border text-center flex flex-col items-center gap-2 sm:gap-2.5 shadow-2xl relative"
+          className="w-full max-w-sm p-5 sm:p-6 rounded-[28px] border text-center flex flex-col items-center gap-3.5 shadow-2xl relative"
           style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
         >
           {/* Top navigation row with Back to Home and Red Cross close button */}
-          <div className="w-full flex items-center justify-between pb-1.5 border-b border-white/5">
+          <div className="w-full flex items-center justify-between pb-2 border-b border-white/5">
             {onBack ? (
               <button
                 type="button"
@@ -501,17 +501,17 @@ export default function SavingsTab({
                 className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 text-rose-400 cursor-pointer transition-all active:scale-90 shadow-sm"
                 title="Close Vault"
               >
-                <X size={14} />
+                <X size={15} />
               </button>
             )}
           </div>
 
-          <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">
-            <Key size={20} />
+          <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 mt-1">
+            <Key size={24} />
           </div>
           <div className="flex flex-col">
-            <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight">Secure Your Vault</h3>
-            <p className="text-[11px] text-neutral-400 max-w-[220px] leading-tight mx-auto mt-0.5">
+            <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight">Secure Your Vault</h3>
+            <p className="text-xs text-neutral-400 max-w-[240px] leading-relaxed mx-auto mt-1">
               {setupStep === 'create' 
                 ? 'Create a secure 4-digit passcode for your personal Vault.' 
                 : 'Confirm your secure 4-digit passcode.'}
@@ -519,13 +519,13 @@ export default function SavingsTab({
           </div>
 
           {/* PIN Indicators */}
-          <div className="flex gap-3 justify-center py-0.5">
+          <div className="flex gap-3 justify-center py-1">
             {[0, 1, 2, 3].map((idx) => (
               <div 
                 key={idx} 
-                className={`w-3 h-3 rounded-full border transition-all duration-150 ${
+                className={`w-3.5 h-3.5 rounded-full border transition-all duration-150 ${
                   idx < currentLen 
-                    ? 'bg-emerald-500 border-emerald-400 scale-110 shadow-[0_0_8px_rgba(16,185,129,0.6)]' 
+                    ? 'bg-emerald-500 border-emerald-400 scale-110 shadow-[0_0_10px_rgba(16,185,129,0.6)]' 
                     : 'bg-transparent border-neutral-600'
                 }`} 
               />
@@ -533,18 +533,18 @@ export default function SavingsTab({
           </div>
 
           {errMessage && (
-            <span className="text-[10px] text-rose-400 font-bold font-mono tracking-wide bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
+            <span className="text-[11px] text-rose-400 font-bold font-mono tracking-wide bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
               {errMessage}
             </span>
           )}
 
-          {/* Compact numeric keypad grid */}
-          <div className="grid grid-cols-3 gap-2 w-full max-w-[220px] pt-0.5">
+          {/* Balanced numeric keypad grid */}
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-full max-w-[260px] pt-1">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => (
               <button
                 key={k}
                 onClick={() => handleSetupPinPress(k)}
-                className="w-12 h-11 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/5 transition-all active:scale-90"
+                className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/10 transition-all active:scale-95 shadow-sm"
               >
                 {k}
               </button>
@@ -557,21 +557,21 @@ export default function SavingsTab({
                 setSetupStep('create');
                 setErrMessage('');
               }}
-              className="w-12 h-11 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-90"
+              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-95"
             >
-              C
+              RESET
             </button>
             <button
               onClick={() => handleSetupPinPress('0')}
-              className="w-12 h-11 rounded-2xl bg-white/5 hover:bg-white/10 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/5 transition-all active:scale-90"
+              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/10 transition-all active:scale-95 shadow-sm"
             >
               0
             </button>
             <button
               onClick={handleSetupPinBackspace}
-              className="w-12 h-11 rounded-2xl bg-white/5 hover:bg-white/10 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-90"
+              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-95"
             >
-              <Delete size={16} />
+              <Delete size={18} />
             </button>
           </div>
         </div>
@@ -580,7 +580,7 @@ export default function SavingsTab({
   }
 
   return (
-    <div className="w-full flex flex-col gap-4 select-none relative">
+    <div className="w-full max-w-full overflow-x-hidden flex flex-col gap-4 select-none relative">
       {/* Top Vault Navigation & Control Header */}
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/5">
         <button

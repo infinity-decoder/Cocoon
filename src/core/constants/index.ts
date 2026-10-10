@@ -70,10 +70,8 @@ export const DEFAULT_SUBCATEGORIES: Category[] = [
 ];
 
 export const DEFAULT_WALLETS: Wallet[] = [
-  { id: 'wallet-cash', name: 'Cash In Hand', type: 'cash', balance: 18500.00, color: '#10B981' },
-  { id: 'wallet-bank', name: 'HBL Checking Account', type: 'bank', balance: 245000.00, color: '#3B82F6' },
-  { id: 'wallet-credit', name: 'Alfalah Credit Card', type: 'card', balance: -15400.00, color: '#EF4444' },
-  { id: 'wallet-savings', name: 'Meezan Savings Vault', type: 'savings', balance: 150000.00, color: '#8B5CF6' }
+  { id: 'wallet-cash', name: 'Cash In Hand', type: 'cash', balance: 0.00, color: '#10B981' },
+  { id: 'wallet-bank', name: 'Bank Account', type: 'bank', balance: 0.00, color: '#3B82F6' }
 ];
 
 export const PAYMENT_METHODS = [
@@ -88,17 +86,10 @@ export const PAYMENT_METHODS = [
 ] as const;
 
 export const DEFAULT_SAVINGS_GOALS: SavingsGoal[] = [
-  { id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: 0, color: '#10B981' },
-  { id: 'goal-vacation', name: 'Northern Areas Trip', targetAmount: 85000, currentAmount: 45000, color: '#3B82F6', deadline: '2026-10-15' },
-  { id: 'goal-emergency', name: 'Emergency Fund', targetAmount: 200000, currentAmount: 150000, color: '#10B981' },
-  { id: 'goal-laptop', name: 'New M3 Macbook Pro', targetAmount: 450000, currentAmount: 180000, color: '#F59E0B' }
+  { id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: 0, color: '#10B981' }
 ];
 
-export const DEFAULT_REMINDERS: BillReminder[] = [
-  { id: 'rem-rent', title: 'Home Monthly Rent', amount: 35000, dueDate: '2026-07-01', categoryId: 'exp-rent', isPaid: true, recurrence: 'monthly' },
-  { id: 'rem-wifi', title: 'StormFiber Broadband Bill', amount: 3500, dueDate: '2026-07-10', categoryId: 'exp-utilities', isPaid: false, recurrence: 'monthly' },
-  { id: 'rem-gym', title: 'Bodyfit Gym Fee', amount: 4500, dueDate: '2026-07-15', categoryId: 'exp-subscriptions', isPaid: false, recurrence: 'monthly' }
-];
+export const DEFAULT_REMINDERS: BillReminder[] = [];
 
 export const DEFAULT_SETTINGS: AppSettings = {
   currencySymbol: '₨',
@@ -114,142 +105,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export const generateDummyTransactions = (): Transaction[] => {
-  const transactions: Transaction[] = [];
-  const now = new Date();
-  
-  // Salary 28 days ago
-  const t1Date = new Date();
-  t1Date.setDate(now.getDate() - 28);
-  transactions.push({
-    id: 'tx-salary-1',
-    type: 'income',
-    amount: 180000,
-    currency: 'PKR',
-    date: t1Date.toISOString(),
-    note: 'Monthly Corporate Salary Transfer',
-    category: 'Salary',
-    walletId: 'wallet-bank',
-    paymentMethod: 'Bank Transfer',
-    isRecurring: true,
-    recurrence: 'monthly'
-  });
-
-  // Freelance project 14 days ago
-  const t2Date = new Date();
-  t2Date.setDate(now.getDate() - 14);
-  transactions.push({
-    id: 'tx-freelance',
-    type: 'income',
-    amount: 45000,
-    currency: 'PKR',
-    date: t2Date.toISOString(),
-    note: 'Web Dashboard Design Completion',
-    category: 'Freelance',
-    walletId: 'wallet-bank',
-    paymentMethod: 'Bank Transfer',
-    isRecurring: false
-  });
-
-  // Rent 25 days ago
-  const tRentDate = new Date();
-  tRentDate.setDate(now.getDate() - 25);
-  transactions.push({
-    id: 'tx-rent',
-    type: 'expense',
-    amount: 35000,
-    currency: 'PKR',
-    date: tRentDate.toISOString(),
-    note: 'Apartment Rent payment',
-    category: 'Rent/Mortgage',
-    walletId: 'wallet-bank',
-    paymentMethod: 'Bank Transfer',
-    isRecurring: true,
-    recurrence: 'monthly'
-  });
-
-  // Food / Groceries
-  const tFood1 = new Date();
-  tFood1.setDate(now.getDate() - 8);
-  transactions.push({
-    id: 'tx-food-1',
-    type: 'expense',
-    amount: 12500,
-    currency: 'PKR',
-    date: tFood1.toISOString(),
-    note: 'Monthly groceries haul from Imtiaz Super Store',
-    category: 'Food & Groceries',
-    subCategory: 'Groceries',
-    walletId: 'wallet-bank',
-    paymentMethod: 'Debit Card',
-    isRecurring: false
-  });
-
-  // Dining Out
-  const tDining = new Date();
-  tDining.setDate(now.getDate() - 4);
-  transactions.push({
-    id: 'tx-dining-1',
-    type: 'expense',
-    amount: 4800,
-    currency: 'PKR',
-    date: tDining.toISOString(),
-    note: 'Family Dinner at Kababjees',
-    category: 'Dining Out',
-    walletId: 'wallet-credit',
-    paymentMethod: 'Credit Card',
-    isRecurring: false
-  });
-
-  // Fuel / transport
-  const tTrans1 = new Date();
-  tTrans1.setDate(now.getDate() - 3);
-  transactions.push({
-    id: 'tx-trans-1',
-    type: 'expense',
-    amount: 6500,
-    currency: 'PKR',
-    date: tTrans1.toISOString(),
-    note: 'Car Fuel Full Tank Refill',
-    category: 'Transport & Fuel',
-    subCategory: 'Car Fuel',
-    walletId: 'wallet-credit',
-    paymentMethod: 'Credit Card',
-    isRecurring: false
-  });
-
-  // Electricity Bill
-  const tUtil1 = new Date();
-  tUtil1.setDate(now.getDate() - 12);
-  transactions.push({
-    id: 'tx-util-1',
-    type: 'expense',
-    amount: 18400,
-    currency: 'PKR',
-    date: tUtil1.toISOString(),
-    note: 'Monthly KE Electric Bill payment',
-    category: 'Utilities (Electricity/Water)',
-    subCategory: 'Electricity',
-    walletId: 'wallet-bank',
-    paymentMethod: 'UPI / Instant Transfer',
-    isRecurring: false
-  });
-
-  // Netflix Subscription
-  const tSub1 = new Date();
-  tSub1.setDate(now.getDate() - 1);
-  transactions.push({
-    id: 'tx-sub-1',
-    type: 'expense',
-    amount: 1500,
-    currency: 'PKR',
-    date: tSub1.toISOString(),
-    note: 'Netflix Premium Monthly Subscription',
-    category: 'Subscriptions',
-    walletId: 'wallet-credit',
-    paymentMethod: 'Credit Card',
-    isRecurring: true,
-    recurrence: 'monthly'
-  });
-
-  return transactions;
+  return [];
 };

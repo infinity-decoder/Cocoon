@@ -9,6 +9,30 @@ interface CocoonStatementSealProps {
 }
 
 export default function CocoonStatementSeal({ size = 110, className = '' }: CocoonStatementSealProps) {
+  // Arched text letters rendered using rotated SVG text nodes (100% compatible with html2canvas and Android WebView)
+  const topChars = [
+    { char: 'E', angle: -48 },
+    { char: '-', angle: -38 },
+    { char: 'S', angle: -28 },
+    { char: 'T', angle: -19 },
+    { char: 'A', angle: -10 },
+    { char: 'T', angle: 0 },
+    { char: 'E', angle: 10 },
+    { char: 'M', angle: 21 },
+    { char: 'E', angle: 31 },
+    { char: 'N', angle: 41 },
+    { char: 'T', angle: 50 },
+  ];
+
+  const bottomChars = [
+    { char: 'C', angle: 26 },
+    { char: 'O', angle: 16 },
+    { char: 'C', angle: 5 },
+    { char: 'O', angle: -5 },
+    { char: 'O', angle: -16 },
+    { char: 'N', angle: -26 },
+  ];
+
   return (
     <div
       className={`relative inline-flex items-center justify-center select-none pointer-events-none transform -rotate-12 ${className}`}
@@ -23,18 +47,6 @@ export default function CocoonStatementSeal({ size = 110, className = '' }: Coco
         className="overflow-visible filter drop-shadow-sm"
       >
         <defs>
-          {/* Top curved path for E-STATEMENT */}
-          <path
-            id="seal-top-curve"
-            d="M 68,250 A 182,182 0 0,1 432,250"
-            fill="none"
-          />
-          {/* Bottom curved path for COCOON */}
-          <path
-            id="seal-bottom-curve"
-            d="M 432,250 A 182,182 0 0,1 68,250"
-            fill="none"
-          />
           {/* 5-pointed Star definition */}
           <g id="seal-white-star">
             <polygon
@@ -53,31 +65,35 @@ export default function CocoonStatementSeal({ size = 110, className = '' }: Coco
         {/* 3. Central crimson red solid circle disc */}
         <circle cx="250" cy="250" r="145" fill="#A30006" />
 
-        {/* 4. Top Arched Bold Text: E-STATEMENT */}
-        <text
-          fill="#A30006"
-          fontFamily="Impact, 'Arial Black', -apple-system, sans-serif"
-          fontWeight="900"
-          fontSize="49"
-          letterSpacing="4"
-        >
-          <textPath href="#seal-top-curve" startOffset="50%" textAnchor="middle">
-            E-STATEMENT
-          </textPath>
-        </text>
+        {/* 4. Top Arched Bold Text: E-STATEMENT (standard rotated text, html2canvas safe) */}
+        <g fill="#A30006" fontFamily="Impact, 'Arial Black', sans-serif" fontWeight="900" fontSize="42">
+          {topChars.map((item, idx) => (
+            <text
+              key={`top-${idx}`}
+              x="250"
+              y="68"
+              textAnchor="middle"
+              transform={`rotate(${item.angle}, 250, 250)`}
+            >
+              {item.char}
+            </text>
+          ))}
+        </g>
 
-        {/* 5. Bottom Arched Bold Text: COCOON */}
-        <text
-          fill="#A30006"
-          fontFamily="Impact, 'Arial Black', -apple-system, sans-serif"
-          fontWeight="900"
-          fontSize="52"
-          letterSpacing="6"
-        >
-          <textPath href="#seal-bottom-curve" startOffset="50%" textAnchor="middle">
-            COCOON
-          </textPath>
-        </text>
+        {/* 5. Bottom Arched Bold Text: COCOON (standard rotated text, html2canvas safe) */}
+        <g fill="#A30006" fontFamily="Impact, 'Arial Black', sans-serif" fontWeight="900" fontSize="44">
+          {bottomChars.map((item, idx) => (
+            <text
+              key={`bottom-${idx}`}
+              x="250"
+              y="456"
+              textAnchor="middle"
+              transform={`rotate(${item.angle}, 250, 250)`}
+            >
+              {item.char}
+            </text>
+          ))}
+        </g>
 
         {/* 6. Top 3 white stars on crimson disc */}
         <g transform="translate(192, 142)">

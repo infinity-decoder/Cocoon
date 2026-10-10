@@ -23,15 +23,11 @@ export const LEGACY_STORAGE_KEY = 'finflow_app_state';
  */
 export function getInitialState(): AppState {
   return {
-    transactions: generateDummyTransactions(),
+    transactions: [],
     categories: DEFAULT_CATEGORIES,
     subCategories: DEFAULT_SUBCATEGORIES,
     wallets: DEFAULT_WALLETS,
-    budgets: [
-      { id: 'b-food', categoryId: 'exp-food', amount: 500, month: '2026-07', rollover: true },
-      { id: 'b-transport', categoryId: 'exp-transport', amount: 200, month: '2026-07', rollover: false },
-      { id: 'b-shopping', categoryId: 'exp-shopping', amount: 300, month: '2026-07', rollover: false }
-    ],
+    budgets: [],
     savingsGoals: DEFAULT_SAVINGS_GOALS,
     reminders: DEFAULT_REMINDERS,
     settings: DEFAULT_SETTINGS

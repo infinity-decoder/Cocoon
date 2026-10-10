@@ -4,7 +4,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Calendar, Image, FileText, Check, ChevronRight, Landmark, HelpCircle, Tag, CreditCard, ShieldAlert } from 'lucide-react';
+import { 
+  X, Plus, Calendar, Image, FileText, Check, ChevronRight, Landmark, 
+  HelpCircle, Tag, CreditCard, ShieldAlert, Banknote, Smartphone, Coins, Wallet as WalletIcon 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Category, Wallet, Transaction, TransactionType } from '../../../core/types';
 import { CATEGORY_ICONS_MAP } from '../../categories';
@@ -28,6 +31,29 @@ interface TransactionFormModalProps {
   themeBorder: string;
   isInline?: boolean;
 }
+
+export const getPaymentMethodInfo = (method: string) => {
+  switch (method.toLowerCase()) {
+    case 'cash':
+      return { icon: Banknote, color: '#10B981', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30', text: 'text-emerald-400' };
+    case 'credit card':
+      return { icon: CreditCard, color: '#F43F5E', bg: 'bg-rose-500/15', border: 'border-rose-500/30', text: 'text-rose-400' };
+    case 'debit card':
+      return { icon: CreditCard, color: '#3B82F6', bg: 'bg-blue-500/15', border: 'border-blue-500/30', text: 'text-blue-400' };
+    case 'digital wallet':
+      return { icon: WalletIcon, color: '#F59E0B', bg: 'bg-amber-500/15', border: 'border-amber-500/30', text: 'text-amber-400' };
+    case 'nayapay':
+      return { icon: Smartphone, color: '#EC4899', bg: 'bg-pink-500/15', border: 'border-pink-500/30', text: 'text-pink-400' };
+    case 'cryptocurrency':
+      return { icon: Coins, color: '#8B5CF6', bg: 'bg-purple-500/15', border: 'border-purple-500/30', text: 'text-purple-400' };
+    case 'bank transfer':
+      return { icon: Landmark, color: '#06B6D4', bg: 'bg-cyan-500/15', border: 'border-cyan-500/30', text: 'text-cyan-400' };
+    case 'cheque':
+      return { icon: FileText, color: '#6366F1', bg: 'bg-indigo-500/15', border: 'border-indigo-500/30', text: 'text-indigo-400' };
+    default:
+      return { icon: CreditCard, color: '#10B981', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30', text: 'text-emerald-400' };
+  }
+};
 
 export default function TransactionFormModal({
   isOpen,
@@ -57,6 +83,8 @@ export default function TransactionFormModal({
 
   // Interactive Bottom sheets & modals
   const [showCategorySheet, setShowCategorySheet] = useState(false);
+  const [showSubCategorySheet, setShowSubCategorySheet] = useState(false);
+  const [showPaymentMethodSheet, setShowPaymentMethodSheet] = useState(false);
   const [showCustomCatSheet, setShowCustomCatSheet] = useState(false);
   const [showAddSubCatModal, setShowAddSubCatModal] = useState(false);
   
@@ -222,19 +250,18 @@ export default function TransactionFormModal({
             Add {type}
           </span>
         </div>
-        {!isInline && (
-          <button 
-            type="button"
-            onClick={() => {
-              triggerHapticFeedback();
-              onClose();
-            }}
-            className="p-2 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-all cursor-pointer flex items-center justify-center active:scale-95 shadow-sm"
-            title="Cancel"
-          >
-            <X size={18} className="text-rose-400" />
-          </button>
-        )}
+        <button 
+          type="button"
+          onClick={() => {
+            triggerHapticFeedback();
+            onClose();
+          }}
+          className="p-2 bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 text-rose-400 rounded-full transition-all cursor-pointer flex items-center justify-center active:scale-95 shadow-sm"
+          title="Close page"
+          aria-label="Close page"
+        >
+          <X size={18} className="text-rose-400" />
+        </button>
       </div>
 
       {/* Form Content */}
@@ -327,7 +354,7 @@ export default function TransactionFormModal({
             </button>
           </div>
 
-          {/* Sub-Category with Add Button */}
+          {/* Sub-Category with Custom Bottom Sheet trigger */}
           <div className="flex flex-col gap-1">
             <div className="flex justify-between items-center">
               <span className="text-xs text-neutral-400 font-medium">Sub-Category</span>
@@ -343,22 +370,28 @@ export default function TransactionFormModal({
                 <Plus size={11} /> Add Sub
               </button>
             </div>
-            <select
-              value={selectedSubCategoryName}
-              onChange={(e) => setSelectedSubCategoryName(e.target.value)}
-              className="bg-neutral-900 border border-white/5 text-sm rounded-xl px-3 py-2.5 outline-none text-white cursor-pointer w-full focus:border-white/20 transition-colors"
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                setShowSubCategorySheet(true);
+              }}
+              className="flex items-center justify-between bg-white/3 border border-white/5 hover:bg-white/5 transition-colors rounded-xl px-3 py-2.5 text-left cursor-pointer"
             >
-              <option value="">None (General)</option>
-              {subCatsForActive.map(sc => (
-                <option key={sc.id} value={sc.name} className="bg-neutral-900 text-white">
-                  {sc.name}
-                </option>
-              ))}
-            </select>
+              <div className="flex items-center gap-2 truncate">
+                <div className="p-1 rounded-lg bg-white/10 text-neutral-300 shrink-0">
+                  <Tag size={14} />
+                </div>
+                <span className="text-sm font-medium text-white truncate">
+                  {selectedSubCategoryName || 'None (General)'}
+                </span>
+              </div>
+              <ChevronRight size={14} className="text-neutral-400 shrink-0" />
+            </button>
           </div>
         </div>
 
-        {/* PAYMENT METHOD (Destination/source wallet hidden on income & expense entries to keep private) */}
+        {/* PAYMENT METHOD (Custom In-App Bottom Sheet Trigger) */}
         {type === 'transfer' ? (
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
@@ -379,32 +412,46 @@ export default function TransactionFormModal({
 
             <div className="flex flex-col gap-1">
               <span className="text-xs text-neutral-400 font-medium">Payment Method</span>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="bg-neutral-900 border border-white/5 text-xs rounded-xl px-3 py-2.5 outline-none text-white cursor-pointer"
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticFeedback();
+                  setShowPaymentMethodSheet(true);
+                }}
+                className="flex items-center justify-between bg-white/3 border border-white/5 hover:bg-white/5 transition-colors rounded-xl px-3 py-2 text-left cursor-pointer"
               >
-                {paymentMethods.map(pm => (
-                  <option key={pm} value={pm}>{pm}</option>
-                ))}
-              </select>
+                <span className="text-xs font-medium text-white truncate">{paymentMethod}</span>
+                <ChevronRight size={12} className="text-neutral-400 shrink-0" />
+              </button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-1">
             <span className="text-xs text-neutral-400 font-medium">Payment Method</span>
-            <div className="flex items-center gap-2 bg-white/3 border border-white/5 rounded-xl px-3 py-2.5">
-              <CreditCard size={16} className="text-neutral-400 shrink-0" />
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="bg-transparent flex-1 text-sm outline-none text-white cursor-pointer"
-              >
-                {paymentMethods.map(pm => (
-                  <option key={pm} value={pm} className="bg-neutral-900 text-white">{pm}</option>
-                ))}
-              </select>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                setShowPaymentMethodSheet(true);
+              }}
+              className="flex items-center justify-between bg-white/3 border border-white/5 hover:bg-white/5 transition-colors rounded-xl px-3 py-2.5 text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-2 truncate">
+                {(() => {
+                  const info = getPaymentMethodInfo(paymentMethod);
+                  const IconC = info.icon;
+                  return (
+                    <div className={`p-1 rounded-lg ${info.bg} ${info.text} border ${info.border} shrink-0`}>
+                      <IconC size={14} />
+                    </div>
+                  );
+                })()}
+                <span className="text-sm font-medium text-white truncate">
+                  {paymentMethod}
+                </span>
+              </div>
+              <ChevronRight size={14} className="text-neutral-400 shrink-0" />
+            </button>
           </div>
         )}
 
@@ -504,7 +551,7 @@ export default function TransactionFormModal({
 
         {/* --- FULL SCREEN BOTTOM SHEET CATEGORY PICKER --- */}
         {showCategorySheet && (
-          <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-60 flex items-end justify-center">
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[85] flex items-end justify-center">
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -599,7 +646,7 @@ export default function TransactionFormModal({
 
         {/* --- ADD CUSTOM CATEGORY SUB-SHEET --- */}
         {showCustomCatSheet && (
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-70 flex items-end justify-center">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[90] flex items-end justify-center">
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -697,7 +744,7 @@ export default function TransactionFormModal({
 
         {/* --- ADD NEW SUBCATEGORY MODAL --- */}
         {showAddSubCatModal && (
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-70 flex items-end justify-center p-4">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[90] flex items-end justify-center p-4">
             <motion.div
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -775,6 +822,194 @@ export default function TransactionFormModal({
                 >
                   <Check size={14} strokeWidth={3} /> Save Sub-Category
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* --- CUSTOM SUBCATEGORY DIRECTORY SHEET (Matching Category Modal Design) --- */}
+        {showSubCategorySheet && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[85] flex items-end justify-center">
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              className="w-full max-w-md bg-neutral-900 border-t border-white/10 rounded-t-[32px] p-6 max-h-[85vh] overflow-y-auto flex flex-col text-left"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                <div className="flex flex-col">
+                  <span className="text-xs text-neutral-400 font-mono tracking-wider uppercase">
+                    {activeCategory?.name || 'CATEGORY'} SUBCATEGORIES
+                  </span>
+                  <span className="text-base font-bold text-white mt-0.5">Subcategory Directory</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    setShowSubCategorySheet(false);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm"
+                >
+                  <X size={14} className="text-rose-400" /> Cancel
+                </button>
+              </div>
+
+              {/* Subcategories Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-5">
+                {/* Option 1: None (General) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    setSelectedSubCategoryName('');
+                    setShowSubCategorySheet(false);
+                  }}
+                  className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                    selectedSubCategoryName === ''
+                      ? 'bg-emerald-500/20 border-emerald-500/50 text-white ring-2 ring-emerald-500/40 shadow-lg'
+                      : 'bg-white/5 hover:bg-white/10 border-white/10 text-neutral-300'
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-neutral-200">
+                    <Tag size={18} />
+                  </div>
+                  <span className="text-xs font-bold text-center truncate w-full">
+                    None (General)
+                  </span>
+                </button>
+
+                {/* Subcategories matching active category */}
+                {subCatsForActive.map((sc) => {
+                  const isSelected = selectedSubCategoryName === sc.name;
+                  return (
+                    <button
+                      key={sc.id}
+                      type="button"
+                      onClick={() => {
+                        triggerHapticFeedback();
+                        setSelectedSubCategoryName(sc.name);
+                        setShowSubCategorySheet(false);
+                      }}
+                      className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-emerald-500/20 border-emerald-500/50 text-white ring-2 ring-emerald-500/40 shadow-lg'
+                          : 'bg-white/5 hover:bg-white/10 border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
+                        style={{ backgroundColor: activeCategory?.color || '#10B981' }}
+                      >
+                        <Tag size={18} />
+                      </div>
+                      <span className="text-xs font-bold text-center truncate w-full">
+                        {sc.name}
+                      </span>
+                    </button>
+                  );
+                })}
+
+                {/* + Add New Subcategory Tile */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    setShowSubCategorySheet(false);
+                    setShowAddSubCatModal(true);
+                  }}
+                  className="p-3.5 rounded-2xl border-2 border-dashed border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+                    <Plus size={20} />
+                  </div>
+                  <span className="text-xs font-bold text-emerald-400 text-center truncate w-full">
+                    + Add New
+                  </span>
+                </button>
+              </div>
+
+              {/* Bottom Add Action Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticFeedback();
+                  setShowSubCategorySheet(false);
+                  setShowAddSubCatModal(true);
+                }}
+                className="w-full py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl font-bold text-sm text-emerald-400 cursor-pointer flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                <Plus size={16} /> Create New Subcategory
+              </button>
+            </motion.div>
+          </div>
+        )}
+
+        {/* --- CUSTOM PAYMENT METHOD SHEET (Matching Category Modal Design) --- */}
+        {showPaymentMethodSheet && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[85] flex items-end justify-center">
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              className="w-full max-w-md bg-neutral-900 border-t border-white/10 rounded-t-[32px] p-6 max-h-[85vh] overflow-y-auto flex flex-col text-left"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                <div className="flex flex-col">
+                  <span className="text-xs text-neutral-400 font-mono tracking-wider uppercase">
+                    SELECT PAYMENT CHANNEL
+                  </span>
+                  <span className="text-base font-bold text-white mt-0.5">Payment Method</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    setShowPaymentMethodSheet(false);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm"
+                >
+                  <X size={14} className="text-rose-400" /> Cancel
+                </button>
+              </div>
+
+              {/* Payment Methods Grid */}
+              <div className="grid grid-cols-2 gap-2.5 py-4 max-h-[60vh] overflow-y-auto">
+                {paymentMethods.map((pm) => {
+                  const isSelected = paymentMethod === pm;
+                  const info = getPaymentMethodInfo(pm);
+                  const IconC = info.icon;
+
+                  return (
+                    <button
+                      key={pm}
+                      type="button"
+                      onClick={() => {
+                        triggerHapticFeedback();
+                        setPaymentMethod(pm);
+                        setShowPaymentMethodSheet(false);
+                      }}
+                      className={`p-3 rounded-2xl border flex items-center gap-3 cursor-pointer transition-all text-left ${
+                        isSelected
+                          ? 'bg-emerald-500/20 border-emerald-500/50 text-white ring-2 ring-emerald-500/40 shadow-lg'
+                          : 'bg-white/5 hover:bg-white/10 border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      <div 
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${info.bg} ${info.text} border ${info.border} transition-transform ${
+                          isSelected ? 'scale-105' : ''
+                        }`}
+                      >
+                        <IconC size={18} />
+                      </div>
+                      <span className="text-xs font-bold leading-tight line-clamp-2">
+                        {pm}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </motion.div>
           </div>
