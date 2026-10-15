@@ -211,23 +211,8 @@ export default function TransactionFormModal({
         icon: customCatIcon,
         color: customCatColor
       });
-    } else {
-      categories.push({
-        id: `custom-${Date.now()}`,
-        name: trimmedName,
-        type: categoryType,
-        icon: customCatIcon,
-        color: customCatColor,
-        isCustom: true,
-        isEnabled: true
-      });
     }
 
-    // Find or assign id
-    const createdCat = categories.find(c => c.name === trimmedName) || categories[categories.length - 1];
-    if (createdCat) {
-      setSelectedCategoryId(createdCat.id);
-    }
     setCustomCatName('');
     setShowCustomCatSheet(false);
     setShowCategorySheet(false);

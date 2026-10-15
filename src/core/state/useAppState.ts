@@ -14,7 +14,14 @@ import {
   InAppNotification, 
   NotificationType 
 } from '../types';
-import { loadAppState, saveAppState, getInitialState } from '../storage/storageAdapter';
+import { loadAppState, getInitialState, initDatabaseAndMigrate } from '../storage/storageAdapter';
+import { sqlitePool } from '../../infrastructure/database/sqliteConnectionPool';
+import { databaseService, DatabaseErrorState } from '../../infrastructure/database/DatabaseService';
+import { 
+  PersonalFinanceService, 
+  SummaryQueryService, 
+  TransactionQueryService 
+} from '../../application/services';
 import { exportBackupAsJson, importBackupFromJson } from '../storage/backupService';
 import { DEFAULT_CATEGORIES, DEFAULT_SUBCATEGORIES, DEFAULT_WALLETS, DEFAULT_SETTINGS } from '../constants';
 import { Capacitor } from '@capacitor/core';
@@ -30,7 +37,7 @@ import {
 } from '../../modules/dashboard/calculations';
 
 export function useAppState() {
-  // 1. Core local-first App State
+  // 1. Core local-first App State loaded from authoritative SQLite store
   const [state, setState] = useState<AppState>(() => loadAppState());
 
   // 2. Active Theme
@@ -48,10 +55,40 @@ export function useAppState() {
     localStorage.setItem('finflow_theme_id', id);
   }, []);
 
-  // Auto-save state to local storage on changes
+  // Note: Continuous full-state localStorage writing is eliminated.
+  // Targeted SQLite writes in PersonalFinanceService guarantee atomic persistence
+  // without periodic disk writes or serialization bottlenecks.
+
+  // 2. Database safety and error monitoring
+  const [databaseError, setDatabaseError] = useState<DatabaseErrorState>(() => databaseService.getErrorState());
+
   useEffect(() => {
-    saveAppState(state);
-  }, [state]);
+    const unsub = databaseService.subscribeErrorState(errState => {
+      setDatabaseError(errState);
+    });
+    return unsub;
+  }, []);
+
+  const handleDatabaseRetry = useCallback(async () => {
+    try {
+      await databaseService.resetErrorAndRetry();
+      const migratedState = await initDatabaseAndMigrate();
+      setState(migratedState);
+    } catch (err) {
+      console.error('Retry connection failed:', err);
+    }
+  }, []);
+
+  // Bootstrap SQLite database and zero-loss migration on initial mount
+  useEffect(() => {
+    initDatabaseAndMigrate()
+      .then(migratedState => {
+        setState(migratedState);
+      })
+      .catch(err => {
+        console.warn('SQLite initialization and migration runner notice:', err);
+      });
+  }, []);
 
   // 3. Passcode security lock barrier
   const [isLocked, setIsLocked] = useState<boolean>(() => !!loadAppState().settings.pinCode);
@@ -296,377 +333,418 @@ export function useAppState() {
     }
   }, [currentMonth, state.categories, state.budgets, state.settings.currencySymbol]);
 
-  // 13. Financial mutator actions
-  const handleAddTransaction = useCallback((newTxData: Partial<Transaction>) => {
+  // 13. Financial mutator actions via PersonalFinanceService
+  const handleAddTransaction = useCallback(async (newTxData: Partial<Transaction>) => {
     triggerHapticFeedback();
 
-    const finalAmount = newTxData.amount || 0;
-    const isIncome = newTxData.type === 'income' || newTxData.type === 'savings_withdraw';
+    const finalAmount = Number(newTxData.amount) || 0;
+    const walletId = newTxData.walletId || (state.wallets[0]?.id || 'w-cash');
 
-    const transactionId = `tx-${Date.now()}`;
-    const newTx: Transaction = {
-      id: transactionId,
-      type: (newTxData.type || 'expense') as Transaction['type'],
-      amount: finalAmount,
-      currency: state.settings.currencySymbol,
-      date: newTxData.date || new Date().toISOString(),
-      note: newTxData.note || '',
-      category: newTxData.category || 'Uncategorized',
-      subCategory: newTxData.subCategory,
-      walletId: newTxData.walletId || (state.wallets[0]?.id || 'w-cash'),
-      toWalletId: newTxData.toWalletId,
-      paymentMethod: newTxData.paymentMethod || 'Cash',
-      attachment: newTxData.attachment,
-      isRecurring: newTxData.isRecurring || false,
-      recurrence: newTxData.recurrence
-    };
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const createdTx = await PersonalFinanceService.addTransaction(conn, {
+        id: newTxData.id,
+        type: (newTxData.type || 'expense') as Transaction['type'],
+        amount: finalAmount,
+        currency: state.settings.currencySymbol,
+        date: newTxData.date || new Date().toISOString(),
+        note: newTxData.note || '',
+        category: newTxData.category || 'Uncategorized',
+        subCategory: newTxData.subCategory,
+        walletId,
+        toWalletId: newTxData.toWalletId,
+        paymentMethod: newTxData.paymentMethod || 'Cash',
+        attachment: newTxData.attachment,
+        isRecurring: newTxData.isRecurring || false,
+        recurrence: newTxData.recurrence,
+        savingsGoalId: newTxData.savingsGoalId
+      });
 
-    const updatedWallets = state.wallets.map(w => {
-      if (newTx.type === 'transfer') {
-        if (w.id === newTx.walletId) {
-          return { ...w, balance: w.balance - finalAmount };
+      // Update state upon verified database commit
+      const isIncome = createdTx.type === 'income' || createdTx.type === 'savings_withdraw';
+      const updatedWallets = state.wallets.map(w => {
+        if (createdTx.type === 'transfer') {
+          if (w.id === createdTx.walletId) return { ...w, balance: w.balance - finalAmount };
+          if (w.id === createdTx.toWalletId) return { ...w, balance: w.balance + finalAmount };
+        } else if (w.id === createdTx.walletId) {
+          return { ...w, balance: isIncome ? w.balance + finalAmount : w.balance - finalAmount };
         }
-        if (w.id === newTx.toWalletId) {
-          return { ...w, balance: w.balance + finalAmount };
-        }
-      } else {
-        if (w.id === newTx.walletId) {
-          return { 
-            ...w, 
-            balance: isIncome ? w.balance + finalAmount : w.balance - finalAmount 
-          };
-        }
+        return w;
+      });
+
+      const updatedTransactions = [createdTx, ...state.transactions];
+      setState(prev => ({
+        ...prev,
+        transactions: updatedTransactions,
+        wallets: updatedWallets
+      }));
+
+      // Check category budget via SummaryQueryService
+      if (createdTx.type === 'expense') {
+        SummaryQueryService.checkBudgetThreshold(
+          conn,
+          createdTx.category,
+          currentMonth,
+          state.categories,
+          state.budgets
+        ).then(result => {
+          if (!result) return;
+          if (result.exceeded) {
+            setActiveAlert({
+              title: 'Strict Cap Exceeded!',
+              desc: `Warning: You have fully exceeded your monthly budget cap of ${state.settings.currencySymbol} ${result.budgetAmount.toLocaleString()} for "${createdTx.category}"!`
+            });
+          } else if (result.ratio >= 0.8) {
+            setActiveAlert({
+              title: 'Cap Alert threshold',
+              desc: `Alert: You spent ${Math.round(result.ratio * 100)}% of your monthly budget of ${state.settings.currencySymbol} ${result.budgetAmount.toLocaleString()} for "${createdTx.category}"!`
+            });
+          }
+        }).catch(() => {});
       }
-      return w;
-    });
-
-    const updatedTransactions = [newTx, ...state.transactions];
-
-    setState(prev => ({
-      ...prev,
-      transactions: updatedTransactions,
-      wallets: updatedWallets
-    }));
-
-    if (newTx.type === 'expense') {
-      checkCategoryBudgets(newTx.category, finalAmount, updatedTransactions);
+    } catch (err: any) {
+      console.error('Failed to commit transaction:', err);
+      setActiveAlert({
+        title: 'Transaction Error',
+        desc: err?.message || 'Failed to save transaction to database.'
+      });
     }
-  }, [state.settings.currencySymbol, state.wallets, state.transactions, checkCategoryBudgets]);
+  }, [state.settings.currencySymbol, state.wallets, state.transactions, state.categories, state.budgets, currentMonth]);
 
-  const handleDeleteTransaction = useCallback((id: string) => {
+  const handleDeleteTransaction = useCallback(async (id: string) => {
     triggerHapticFeedback();
-    const tx = state.transactions.find(t => t.id === id);
-    if (!tx) return;
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      await PersonalFinanceService.deleteTransaction(conn, id);
 
-    const isIncome = tx.type === 'income' || tx.type === 'savings_withdraw';
-    const amt = tx.amount;
+      setState(prev => {
+        const tx = prev.transactions.find(t => t.id === id);
+        if (!tx) return prev;
 
-    const updatedWallets = state.wallets.map(w => {
-      if (tx.type === 'transfer') {
-        if (w.id === tx.walletId) {
-          return { ...w, balance: w.balance + amt };
-        }
-        if (w.id === tx.toWalletId) {
-          return { ...w, balance: w.balance - amt };
-        }
-      } else {
-        if (w.id === tx.walletId) {
-          return {
-            ...w,
-            balance: isIncome ? w.balance - amt : w.balance + amt
-          };
-        }
-      }
-      return w;
-    });
+        const isIncome = tx.type === 'income' || tx.type === 'savings_withdraw';
+        const amt = tx.amount;
 
-    setState(prev => ({
-      ...prev,
-      transactions: prev.transactions.filter(t => t.id !== id),
-      wallets: updatedWallets
-    }));
-  }, [state.transactions, state.wallets]);
+        const updatedWallets = prev.wallets.map(w => {
+          if (tx.type === 'transfer') {
+            if (w.id === tx.walletId) return { ...w, balance: w.balance + amt };
+            if (w.id === tx.toWalletId) return { ...w, balance: w.balance - amt };
+          } else if (w.id === tx.walletId) {
+            return {
+              ...w,
+              balance: isIncome ? w.balance - amt : w.balance + amt
+            };
+          }
+          return w;
+        });
 
-  const handleEditTransaction = useCallback((id: string, updatedData: Partial<Transaction>) => {
-    triggerHapticFeedback();
-
-    const updatedTxList = state.transactions.map(t => {
-      if (t.id === id) {
-        const diff = (updatedData.amount || t.amount) - t.amount;
-
-        if (diff !== 0) {
-          const isIncome = t.type === 'income' || t.type === 'savings_withdraw';
-
-          setState(prev => ({
-            ...prev,
-            wallets: prev.wallets.map(w => {
-              if (w.id === t.walletId) {
-                return {
-                  ...w,
-                  balance: isIncome ? w.balance + diff : w.balance - diff
-                };
-              }
-              return w;
-            })
-          }));
-        }
-
-        return { ...t, ...updatedData };
-      }
-      return t;
-    });
-
-    setState(prev => ({
-      ...prev,
-      transactions: updatedTxList
-    }));
-  }, [state.transactions]);
-
-  const handleSetBudget = useCallback((categoryId: string, amount: number, rollover: boolean) => {
-    triggerHapticFeedback();
-
-    const existing = state.budgets.find(b => b.categoryId === categoryId);
-    let updatedBudgets: Budget[];
-
-    if (existing) {
-      updatedBudgets = state.budgets.map(b => 
-        b.categoryId === categoryId ? { ...b, amount, rollover } : b
-      );
-    } else {
-      updatedBudgets = [
-        ...state.budgets,
-        {
-          id: `b-${Date.now()}`,
-          categoryId,
-          amount,
-          month: currentMonth,
-          rollover
-        }
-      ];
+        return {
+          ...prev,
+          transactions: prev.transactions.filter(t => t.id !== id),
+          wallets: updatedWallets
+        };
+      });
+    } catch (err: any) {
+      console.error('Failed to delete transaction:', err);
+      setActiveAlert({
+        title: 'Delete Failed',
+        desc: err?.message || 'Failed to remove transaction.'
+      });
     }
-
-    setState(prev => ({
-      ...prev,
-      budgets: updatedBudgets
-    }));
-  }, [state.budgets, currentMonth]);
-
-  const handleDeleteBudget = useCallback((budgetId: string) => {
-    triggerHapticFeedback();
-    setState(prev => ({
-      ...prev,
-      budgets: prev.budgets.filter(b => b.id !== budgetId)
-    }));
   }, []);
 
-  const handleTransferToSavings = useCallback((goalId: string, amount: number, fromWalletId?: string) => {
+  const handleEditTransaction = useCallback(async (id: string, updatedData: Partial<Transaction>) => {
+    triggerHapticFeedback();
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const updatedTx = await PersonalFinanceService.editTransaction(conn, {
+        id,
+        amount: updatedData.amount,
+        note: updatedData.note,
+        category: updatedData.category,
+        subCategory: updatedData.subCategory,
+        date: updatedData.date,
+        paymentMethod: updatedData.paymentMethod
+      });
+
+      setState(prev => {
+        const oldTx = prev.transactions.find(t => t.id === id);
+        const diff = (updatedTx.amount || 0) - (oldTx?.amount || 0);
+
+        const updatedWallets = prev.wallets.map(w => {
+          if (diff !== 0 && oldTx && w.id === oldTx.walletId) {
+            const isIncome = oldTx.type === 'income' || oldTx.type === 'savings_withdraw';
+            return {
+              ...w,
+              balance: isIncome ? w.balance + diff : w.balance - diff
+            };
+          }
+          return w;
+        });
+
+        return {
+          ...prev,
+          wallets: updatedWallets,
+          transactions: prev.transactions.map(t => t.id === id ? { ...t, ...updatedTx } : t)
+        };
+      });
+    } catch (err: any) {
+      console.error('Failed to edit transaction:', err);
+      setActiveAlert({
+        title: 'Edit Failed',
+        desc: err?.message || 'Could not update transaction.'
+      });
+    }
+  }, []);
+
+  const handleSetBudget = useCallback(async (categoryId: string, amount: number, rollover: boolean) => {
+    triggerHapticFeedback();
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const budget = await PersonalFinanceService.setBudget(conn, categoryId, amount, rollover, currentMonth);
+
+      setState(prev => {
+        const existing = prev.budgets.find(b => b.categoryId === categoryId);
+        const updatedBudgets = existing
+          ? prev.budgets.map(b => b.categoryId === categoryId ? { ...b, amount, rollover } : b)
+          : [...prev.budgets, budget];
+
+        return { ...prev, budgets: updatedBudgets };
+      });
+    } catch (err: any) {
+      console.error('Failed to set budget:', err);
+      setActiveAlert({ title: 'Budget Error', desc: err?.message || 'Could not save budget.' });
+    }
+  }, [currentMonth]);
+
+  const handleDeleteBudget = useCallback(async (budgetId: string) => {
+    triggerHapticFeedback();
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      await PersonalFinanceService.deleteBudget(conn, budgetId);
+      setState(prev => ({
+        ...prev,
+        budgets: prev.budgets.filter(b => b.id !== budgetId)
+      }));
+    } catch (err: any) {
+      console.error('Failed to delete budget:', err);
+      setActiveAlert({ title: 'Delete Failed', desc: err?.message || 'Could not delete budget.' });
+    }
+  }, []);
+
+  const handleTransferToSavings = useCallback(async (goalId: string, amount: number, fromWalletId?: string) => {
     triggerHapticFeedback();
     const effectiveWalletId = fromWalletId || state.wallets[0]?.id || 'wallet-bank';
 
-    const updatedWallets = state.wallets.map(w => {
-      if (w.id === effectiveWalletId) {
-        return { ...w, balance: w.balance - amount };
-      }
-      return w;
-    });
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const res = await PersonalFinanceService.transferToSavings(
+        conn,
+        goalId,
+        amount,
+        effectiveWalletId,
+        state.settings.currencySymbol
+      );
 
-    let goalFound = false;
-    let updatedGoals = state.savingsGoals.map(g => {
-      if (g.id === goalId || (goalId === 'savings' && g.id === 'savings')) {
-        goalFound = true;
-        return { ...g, currentAmount: g.currentAmount + amount };
-      }
-      return g;
-    });
+      setState(prev => {
+        const updatedWallets = prev.wallets.map(w => {
+          if (w.id === effectiveWalletId) return { ...w, balance: w.balance - amount };
+          return w;
+        });
 
-    if (!goalFound && goalId === 'savings') {
-      updatedGoals = [
-        { id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: amount, color: '#10B981' },
-        ...updatedGoals
-      ];
+        const goalExists = prev.savingsGoals.some(g => g.id === res.goal.id);
+        const updatedGoals = goalExists
+          ? prev.savingsGoals.map(g => g.id === res.goal.id ? res.goal : g)
+          : [res.goal, ...prev.savingsGoals];
+
+        return {
+          ...prev,
+          wallets: updatedWallets,
+          savingsGoals: updatedGoals,
+          transactions: [res.transaction, ...prev.transactions]
+        };
+      });
+    } catch (err: any) {
+      console.error('Failed to transfer to savings:', err);
+      setActiveAlert({ title: 'Vault Transfer Error', desc: err?.message || 'Failed to transfer funds to vault.' });
     }
+  }, [state.wallets, state.settings.currencySymbol]);
 
-    const targetGoal = updatedGoals.find(g => g.id === goalId || (goalId === 'savings' && g.id === 'savings'));
-
-    const depositTx: Transaction = {
-      id: `tx-dep-${Date.now()}`,
-      type: 'savings_deposit',
-      amount,
-      currency: state.settings.currencySymbol,
-      date: new Date().toISOString(),
-      note: `Vault deposit: "${targetGoal?.name || 'Savings'}"`,
-      category: 'Savings Deposit',
-      walletId: effectiveWalletId,
-      paymentMethod: 'Vault Deposit',
-      isRecurring: false
-    };
-
-    setState(prev => ({
-      ...prev,
-      wallets: updatedWallets,
-      savingsGoals: updatedGoals,
-      transactions: [depositTx, ...prev.transactions]
-    }));
-  }, [state.wallets, state.savingsGoals, state.settings.currencySymbol]);
-
-  const handleWithdrawFromSavings = useCallback((goalId: string, amount: number, toWalletId?: string) => {
+  const handleWithdrawFromSavings = useCallback(async (goalId: string, amount: number, toWalletId?: string) => {
     triggerHapticFeedback();
     const effectiveWalletId = toWalletId || state.wallets[0]?.id || 'wallet-bank';
 
-    const goal = state.savingsGoals.find(g => g.id === goalId || (goalId === 'savings' && g.id === 'savings'));
-    if (goal && goal.currentAmount < amount) {
-      return;
-    }
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const res = await PersonalFinanceService.withdrawFromSavings(
+        conn,
+        goalId,
+        amount,
+        effectiveWalletId,
+        state.settings.currencySymbol
+      );
 
-    const updatedWallets = state.wallets.map(w => {
-      if (w.id === effectiveWalletId) {
-        return { ...w, balance: w.balance + amount };
-      }
-      return w;
-    });
-
-    const updatedGoals = state.savingsGoals.map(g => {
-      if (g.id === goalId || (goalId === 'savings' && g.id === 'savings')) {
-        return { ...g, currentAmount: Math.max(0, g.currentAmount - amount) };
-      }
-      return g;
-    });
-
-    const withdrawTx: Transaction = {
-      id: `tx-wdr-${Date.now()}`,
-      type: 'savings_withdraw',
-      amount,
-      currency: state.settings.currencySymbol,
-      date: new Date().toISOString(),
-      note: `Vault withdrawal to main income: "${goal?.name || 'Savings'}"`,
-      category: 'Savings Withdrawal',
-      walletId: effectiveWalletId,
-      paymentMethod: 'Vault Withdrawal',
-      isRecurring: false
-    };
-
-    setState(prev => ({
-      ...prev,
-      wallets: updatedWallets,
-      savingsGoals: updatedGoals,
-      transactions: [withdrawTx, ...prev.transactions]
-    }));
-  }, [state.savingsGoals, state.wallets, state.settings.currencySymbol]);
-
-  const handleAddSavingsGoal = useCallback((goalData: Omit<SavingsGoal, 'id' | 'currentAmount'>) => {
-    triggerHapticFeedback();
-
-    const newGoal: SavingsGoal = {
-      id: `goal-${Date.now()}`,
-      currentAmount: 0,
-      ...goalData
-    };
-
-    setState(prev => ({
-      ...prev,
-      savingsGoals: [...prev.savingsGoals, newGoal]
-    }));
-  }, []);
-
-  const handleEditSavingsGoal = useCallback((goalId: string, updatedData: Partial<SavingsGoal>) => {
-    triggerHapticFeedback();
-    setState(prev => ({
-      ...prev,
-      savingsGoals: prev.savingsGoals.map(g => {
-        if (g.id === goalId) {
-          return { ...g, ...updatedData };
-        }
-        return g;
-      })
-    }));
-  }, []);
-
-  const handleDeleteSavingsGoal = useCallback((goalId: string) => {
-    triggerHapticFeedback();
-    setState(prev => {
-      const goalToDelete = prev.savingsGoals.find(g => g.id === goalId);
-      if (!goalToDelete || goalId === 'savings') return prev;
-
-      const salvagedAmount = goalToDelete.currentAmount || 0;
-      let savingsFound = false;
-
-      let nextGoals = prev.savingsGoals
-        .filter(g => g.id !== goalId)
-        .map(g => {
-          if (g.id === 'savings') {
-            savingsFound = true;
-            return { ...g, currentAmount: g.currentAmount + salvagedAmount };
-          }
-          return g;
+      setState(prev => {
+        const updatedWallets = prev.wallets.map(w => {
+          if (w.id === effectiveWalletId) return { ...w, balance: w.balance + amount };
+          return w;
         });
 
-      if (!savingsFound) {
-        nextGoals = [
-          { id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: salvagedAmount, color: '#10B981' },
-          ...nextGoals
-        ];
-      }
+        const updatedGoals = prev.savingsGoals.map(g => g.id === res.goal.id ? res.goal : g);
 
-      return {
+        return {
+          ...prev,
+          wallets: updatedWallets,
+          savingsGoals: updatedGoals,
+          transactions: [res.transaction, ...prev.transactions]
+        };
+      });
+    } catch (err: any) {
+      console.error('Failed to withdraw from savings:', err);
+      setActiveAlert({ title: 'Vault Withdrawal Error', desc: err?.message || 'Failed to withdraw from vault.' });
+    }
+  }, [state.wallets, state.settings.currencySymbol]);
+
+  const handleAddSavingsGoal = useCallback(async (goalData: Omit<SavingsGoal, 'id' | 'currentAmount'>) => {
+    triggerHapticFeedback();
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const newGoal = await PersonalFinanceService.addSavingsGoal(conn, goalData);
+      setState(prev => ({
         ...prev,
-        savingsGoals: nextGoals
-      };
-    });
+        savingsGoals: [...prev.savingsGoals, newGoal]
+      }));
+    } catch (err: any) {
+      console.error('Failed to add savings goal:', err);
+      setActiveAlert({ title: 'Goal Error', desc: err?.message || 'Could not save savings goal.' });
+    }
   }, []);
 
-  const handleAddCategory = useCallback((catData: Omit<Category, 'id' | 'isCustom' | 'isEnabled'>) => {
+  const handleEditSavingsGoal = useCallback(async (goalId: string, updatedData: Partial<SavingsGoal>) => {
     triggerHapticFeedback();
-    const newCat: Category = {
-      id: `cat-custom-${Date.now()}`,
-      isCustom: true,
-      isEnabled: true,
-      ...catData
-    };
-    setState(prev => ({
-      ...prev,
-      categories: [...prev.categories, newCat]
-    }));
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const updated = await PersonalFinanceService.editSavingsGoal(conn, goalId, updatedData);
+      setState(prev => ({
+        ...prev,
+        savingsGoals: prev.savingsGoals.map(g => g.id === goalId ? updated : g)
+      }));
+    } catch (err: any) {
+      console.error('Failed to edit savings goal:', err);
+      setActiveAlert({ title: 'Goal Error', desc: err?.message || 'Could not update savings goal.' });
+    }
   }, []);
 
-  const handleDeleteCategory = useCallback((id: string) => {
+  const handleDeleteSavingsGoal = useCallback(async (goalId: string) => {
     triggerHapticFeedback();
-    setState(prev => ({
-      ...prev,
-      categories: prev.categories.filter(c => c.id !== id),
-      subCategories: prev.subCategories.filter(sc => sc.parentId !== id)
-    }));
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      await PersonalFinanceService.deleteSavingsGoal(conn, goalId);
+
+      setState(prev => {
+        const goalToDelete = prev.savingsGoals.find(g => g.id === goalId);
+        if (!goalToDelete || goalId === 'savings') return prev;
+        const salvagedAmount = goalToDelete.currentAmount || 0;
+        let savingsFound = false;
+
+        let nextGoals = prev.savingsGoals
+          .filter(g => g.id !== goalId)
+          .map(g => {
+            if (g.id === 'savings') {
+              savingsFound = true;
+              return { ...g, currentAmount: g.currentAmount + salvagedAmount };
+            }
+            return g;
+          });
+
+        if (!savingsFound && salvagedAmount > 0) {
+          nextGoals = [
+            { id: 'savings', name: 'Savings', targetAmount: 0, currentAmount: salvagedAmount, color: '#10B981' },
+            ...nextGoals
+          ];
+        }
+
+        return {
+          ...prev,
+          savingsGoals: nextGoals
+        };
+      });
+    } catch (err: any) {
+      console.error('Failed to delete savings goal:', err);
+      setActiveAlert({ title: 'Goal Error', desc: err?.message || 'Could not delete savings goal.' });
+    }
   }, []);
 
-  const handleAddSubCategory = useCallback((subCatData: Omit<Category, 'id' | 'isCustom' | 'isEnabled'>) => {
+  const handleAddCategory = useCallback(async (catData: Omit<Category, 'id' | 'isCustom' | 'isEnabled'>) => {
     triggerHapticFeedback();
-    const newSubCat: Category = {
-      id: `sub-custom-${Date.now()}`,
-      isCustom: true,
-      isEnabled: true,
-      ...subCatData
-    };
-    setState(prev => ({
-      ...prev,
-      subCategories: [...prev.subCategories, newSubCat]
-    }));
-    return newSubCat;
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const newCat = await PersonalFinanceService.addCategory(conn, catData);
+      setState(prev => ({
+        ...prev,
+        categories: [...prev.categories, newCat]
+      }));
+    } catch (err: any) {
+      console.error('Failed to add category:', err);
+      setActiveAlert({ title: 'Category Error', desc: err?.message || 'Could not save category.' });
+    }
   }, []);
 
-  const handleDeleteSubCategory = useCallback((id: string) => {
+  const handleDeleteCategory = useCallback(async (id: string) => {
     triggerHapticFeedback();
-    setState(prev => ({
-      ...prev,
-      subCategories: prev.subCategories.filter(sc => sc.id !== id)
-    }));
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      await PersonalFinanceService.deleteCategory(conn, id);
+      setState(prev => ({
+        ...prev,
+        categories: prev.categories.filter(c => c.id !== id),
+        subCategories: prev.subCategories.filter(sc => sc.parentId !== id)
+      }));
+    } catch (err: any) {
+      console.error('Failed to delete category:', err);
+      setActiveAlert({ title: 'Category Error', desc: err?.message || 'Could not delete category.' });
+    }
   }, []);
 
-  const handleFactoryReset = useCallback(() => {
+  const handleAddSubCategory = useCallback(async (subCatData: Omit<Category, 'id' | 'isCustom' | 'isEnabled'>) => {
+    triggerHapticFeedback();
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      const newSubCat = await PersonalFinanceService.addSubCategory(conn, subCatData);
+      setState(prev => ({
+        ...prev,
+        subCategories: [...prev.subCategories, newSubCat]
+      }));
+      return newSubCat;
+    } catch (err: any) {
+      console.error('Failed to add subcategory:', err);
+      setActiveAlert({ title: 'Subcategory Error', desc: err?.message || 'Could not save subcategory.' });
+    }
+  }, []);
+
+  const handleDeleteSubCategory = useCallback(async (id: string) => {
+    triggerHapticFeedback();
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      await PersonalFinanceService.deleteSubCategory(conn, id);
+      setState(prev => ({
+        ...prev,
+        subCategories: prev.subCategories.filter(sc => sc.id !== id)
+      }));
+    } catch (err: any) {
+      console.error('Failed to delete subcategory:', err);
+      setActiveAlert({ title: 'Subcategory Error', desc: err?.message || 'Could not delete subcategory.' });
+    }
+  }, []);
+
+  const handleFactoryReset = useCallback(async () => {
     triggerHapticFeedback();
     try {
       localStorage.clear();
       sessionStorage.clear();
-    } catch {
-      // Storage clear
+      const conn = await databaseService.getInitializedConnection();
+      await PersonalFinanceService.resetPersonalData(conn);
+    } catch (dbErr) {
+      console.warn('SQLite clear error on reset:', dbErr);
     }
 
     const fresh: AppState = {
@@ -688,7 +766,6 @@ export function useAppState() {
       }
     };
 
-    saveAppState(fresh);
     setState(fresh);
     setAvatar('');
     setActiveThemeId('emerald');
@@ -799,30 +876,42 @@ export function useAppState() {
     }
   }, [addNotification]);
 
-  const handleUpdateSettings = useCallback((updates: Partial<AppSettings>) => {
-    setState(prev => ({
-      ...prev,
-      settings: { ...prev.settings, ...updates }
-    }));
+  const handleUpdateSettings = useCallback(async (updates: Partial<AppSettings>) => {
+    triggerHapticFeedback();
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      await PersonalFinanceService.updateSettings(conn, updates);
+      setState(prev => ({
+        ...prev,
+        settings: { ...prev.settings, ...updates }
+      }));
+    } catch (err: any) {
+      console.error('Failed to update settings:', err);
+      setActiveAlert({ title: 'Settings Error', desc: err?.message || 'Could not save settings.' });
+    }
   }, []);
 
-  const handleSetVaultPassword = useCallback((pwd: string) => {
-    setState(prev => {
-      const updated = {
+  const handleSetVaultPassword = useCallback(async (pwd: string) => {
+    triggerHapticFeedback();
+    try {
+      const conn = await databaseService.getInitializedConnection();
+      await PersonalFinanceService.updateSettings(conn, { vaultPassword: pwd });
+      setState(prev => ({
         ...prev,
         settings: {
           ...prev.settings,
           vaultPassword: pwd
         }
-      };
-      saveAppState(updated);
-      return updated;
-    });
-    addNotification(
-      'Vault Security Activated',
-      'Your personal savings are now locked behind a secure Vault passcode.',
-      'backup_export'
-    );
+      }));
+      addNotification(
+        'Vault Security Activated',
+        'Your personal savings are now locked behind a secure Vault passcode.',
+        'backup_export'
+      );
+    } catch (err: any) {
+      console.error('Failed to set vault password:', err);
+      setActiveAlert({ title: 'Vault Error', desc: err?.message || 'Could not set vault password.' });
+    }
   }, [addNotification]);
 
   return {
@@ -909,6 +998,8 @@ export function useAppState() {
     handleExportBackup,
     handleImportBackup,
     handleUpdateSettings,
-    handleSetVaultPassword
+    handleSetVaultPassword,
+    databaseError,
+    handleDatabaseRetry
   };
 }

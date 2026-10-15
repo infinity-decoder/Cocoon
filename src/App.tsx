@@ -26,7 +26,8 @@ import {
   LockScreen, 
   NotificationsModal, 
   BalancePinModal, 
-  HelpSupportModal 
+  HelpSupportModal,
+  DatabaseRecoveryModal
 } from './modules/navigation';
 
 export default function App() {
@@ -42,6 +43,13 @@ export default function App() {
         className="w-full max-w-md h-screen md:max-h-[880px] md:h-[880px] md:rounded-[40px] md:shadow-[0_25px_60px_rgba(0,0,0,0.5)] md:border relative overflow-hidden flex flex-col justify-between"
         style={{ backgroundColor: app.activeTheme.background, borderColor: app.activeTheme.border }}
       >
+        {/* DATABASE ZERO-LOSS RECOVERY BARRIER */}
+        <DatabaseRecoveryModal
+          errorState={app.databaseError}
+          onRetry={app.handleDatabaseRetry}
+          theme={app.activeTheme}
+        />
+
         {/* APP LOCK PIN BARRIER */}
         <LockScreen
           isLocked={app.isLocked}

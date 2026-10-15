@@ -10,3 +10,5 @@ export { default as LockScreen } from './components/LockScreen';
 export { default as NotificationsModal } from './components/NotificationsModal';
 export { default as BalancePinModal } from './components/BalancePinModal';
 export { default as HelpSupportModal } from './components/HelpSupportModal';
+export { DatabaseRecoveryModal } from './components/DatabaseRecoveryModal';
+

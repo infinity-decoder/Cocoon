@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Search, Filter, Calendar, CreditCard, ChevronDown, Trash2, Edit, 
   FileSpreadsheet, Printer, ShieldCheck, X, ChevronRight, Pencil, ChevronLeft, ArrowLeft,
@@ -103,14 +103,32 @@ export default function TransactionsTab({
   const [editAmount, setEditAmount] = useState('');
   const [editError, setEditError] = useState('');
 
+  // Debounced search with cleanup and stale-guard
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Pagination state: default 25 transactions per page
+  const [visibleCount, setVisibleCount] = useState(25);
+
+  // Reset pagination when search or filters change
+  useEffect(() => {
+    setVisibleCount(25);
+  }, [debouncedSearch, filterType, filterCategory, filterPayment, filterMinAmount, filterMaxAmount, startDate, endDate]);
+
   // Core Filtered Transactions
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      // Search term filter
+      // Search term filter using debounced term
       const matchesSearch = 
-        t.note.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.amount.toString().includes(searchTerm);
+        !debouncedSearch ||
+        t.note.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        t.category.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        t.amount.toString().includes(debouncedSearch);
 
       // Type filter
       const matchesType = 
@@ -142,9 +160,14 @@ export default function TransactionsTab({
 
       return matchesSearch && matchesType && matchesCategory && matchesPayment && matchesMin && matchesMax && matchesStart && matchesEnd;
     });
-  }, [transactions, searchTerm, filterType, filterCategory, filterPayment, filterMinAmount, filterMaxAmount, startDate, endDate]);
+  }, [transactions, debouncedSearch, filterType, filterCategory, filterPayment, filterMinAmount, filterMaxAmount, startDate, endDate]);
 
-  // Group filtered transactions by Date
+  // Paginated visible slice
+  const paginatedTransactions = useMemo(() => {
+    return filteredTransactions.slice(0, visibleCount);
+  }, [filteredTransactions, visibleCount]);
+
+  // Group paginated transactions by Date
   const groupedTransactions = useMemo(() => {
     const groups: { [key: string]: Transaction[] } = {};
     const todayStr = new Date().toISOString().split('T')[0];
@@ -153,7 +176,7 @@ export default function TransactionsTab({
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    filteredTransactions.forEach(t => {
+    paginatedTransactions.forEach(t => {
       const dateStr = t.date.split('T')[0];
       let header = '';
 
@@ -173,7 +196,7 @@ export default function TransactionsTab({
     });
 
     return groups;
-  }, [filteredTransactions]);
+  }, [paginatedTransactions]);
 
   // Export CSV Helper
   const handleExportCSV = () => {
@@ -934,10 +957,50 @@ export default function TransactionsTab({
           </div>
         ))}
 
+        {/* --- PAGINATION LOAD MORE CONTROLS --- */}
+        {visibleCount < filteredTransactions.length && (
+          <div className="pt-2 pb-4 flex flex-col items-center gap-2">
+            <span className="text-[11px] text-neutral-400 font-mono">
+              Showing {paginatedTransactions.length} of {filteredTransactions.length} transactions
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHapticFeedback();
+                setVisibleCount(prev => prev + 25);
+              }}
+              className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700/80 border border-white/10 rounded-xl text-xs font-bold text-white transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 shadow-md"
+            >
+              Load More Transactions
+            </button>
+          </div>
+        )}
+
         {filteredTransactions.length === 0 && (
-          <div className="text-center py-12 text-neutral-500">
-            <span className="text-sm block">No matching transactions found</span>
-            <span className="text-xs opacity-60">Adjust your filters or search keywords</span>
+          <div className="text-center py-12 text-neutral-500 flex flex-col items-center gap-3">
+            <div>
+              <span className="text-sm font-semibold text-neutral-400 block">No matching transactions found</span>
+              <span className="text-xs opacity-60">Adjust your filters or search keywords</span>
+            </div>
+            {(searchTerm || filterType !== 'all' || filterCategory !== 'all' || filterPayment !== 'all' || filterMinAmount || filterMaxAmount || startDate || endDate) && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHapticFeedback();
+                  setFilterType('all');
+                  setFilterCategory('all');
+                  setFilterPayment('all');
+                  setFilterMinAmount('');
+                  setFilterMaxAmount('');
+                  setStartDate('');
+                  setEndDate('');
+                  setSearchTerm('');
+                }}
+                className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-all cursor-pointer"
+              >
+                Reset All Filters
+              </button>
+            )}
           </div>
         )}
       </div>
