@@ -46,6 +46,7 @@ jobs:
           echo "Calculated new version: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
@@ -147,21 +148,37 @@ jobs:
           path: release-output/Cocoon-v${{ steps.semver.outputs.version }}.apk
           if-no-files-found: error
 
+      - name: Generate Release Notes & Changelog
+        run: |
+          PREV_TAG="${{ steps.semver.outputs.previous_tag }}"
+          VERSION="${{ steps.semver.outputs.version }}"
+          TAG="${{ steps.semver.outputs.tag }}"
+          COMMIT_SHA="${{ github.sha }}"
+
+          cat << EOF > release-body.md
+          ### Cocoon Android Release ${TAG}
+          - **Version**: \`${VERSION}\`
+          - **Compatibility**: Android 7.0 (API 24) to Android 12, 13, 14, 15+ (API 36)
+          - **Signature**: Signed with APK Signature Scheme v2 & v3 (fully valid for package manager installation)
+          - **Commit**: \`${COMMIT_SHA}\`
+
+          #### How to Install:
+          Download **Cocoon-v${VERSION}.apk** below directly on your Android device and tap to install.
+
+          EOF
+
+          node .github/scripts/generate-release-notes.js "$PREV_TAG" "changelog-part.md"
+          if [ -f "changelog-part.md" ]; then
+            cat changelog-part.md >> release-body.md
+          fi
+
       - name: Create GitHub Release & Upload APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.semver.outputs.tag }}
           name: Release ${{ steps.semver.outputs.tag }}
-          generate_release_notes: true
-          body: |
-            ### Cocoon Android Release ${{ steps.semver.outputs.tag }}
-            - **Version**: `${{ steps.semver.outputs.version }}`
-            - **Compatibility**: Android 7.0 (API 24) to Android 12, 13, 14, 15+ (API 36)
-            - **Signature**: Signed with APK Signature Scheme v2 & v3 (fully valid for package manager installation)
-            - **Commit**: `${{ github.sha }}`
-            
-            #### How to Install:
-            Download **Cocoon-v${{ steps.semver.outputs.version }}.apk** below directly on your Android device and tap to install.
+          generate_release_notes: false
+          body_path: release-body.md
           files: release-output/Cocoon-v${{ steps.semver.outputs.version }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

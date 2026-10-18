@@ -1,21 +1,22 @@
 changelog:
   categories:
-    - title: "🚀 Features"
+    - title: "🚀 Features & Enhancements"
       labels:
         - "feature"
         - "enhancement"
         - "feat"
-    - title: "🐛 Bug Fixes"
+    - title: "🐛 Bug Fixes & Stability"
       labels:
         - "bug"
         - "fix"
         - "bugfix"
-    - title: "🧰 Maintenance & Documentation"
+    - title: "🔄 Maintenance & Updates"
       labels:
         - "chore"
         - "dependencies"
         - "documentation"
         - "docs"
+        - "*"
   exclude:
     labels:
       - "ignore"
