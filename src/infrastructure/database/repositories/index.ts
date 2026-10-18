@@ -4,6 +4,12 @@
  */
 
 export * from './WorkspaceRepository';
+export * from './BusinessProfileRepository';
 export * from './AccountRepository';
 export * from './PartyRepository';
 export * from './JournalEntryRepository';
+export * from './ProductRepository';
+export * from './DocumentRepository';
+export * from './PaymentRepository';
+export * from './PartyLedgerRepository';
+export * from './TransferRepository';

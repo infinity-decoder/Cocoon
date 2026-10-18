@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Tag, ShieldCheck, HelpCircle, 
-  ChevronRight, ClipboardList, Vault, Settings
+  ChevronRight, ClipboardList, Vault, Settings, Building2
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
@@ -20,6 +20,9 @@ interface SidebarMenuProps {
   onOpenSavings: () => void;
   onOpenSettings: () => void;
   onOpenHelp: () => void;
+  onOpenBusinessManagement?: () => void;
+  activeWorkspaceName?: string;
+  isBusinessMode?: boolean;
   activeThemeId: string;
   themeCardBg: string;
   themeBorder: string;
@@ -33,6 +36,9 @@ export default function SidebarMenu({
   onOpenSavings,
   onOpenSettings,
   onOpenHelp,
+  onOpenBusinessManagement,
+  activeWorkspaceName,
+  isBusinessMode,
   themeCardBg,
   themeBorder
 }: SidebarMenuProps) {
@@ -111,6 +117,42 @@ export default function SidebarMenu({
 
               {/* Navigation Items List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-none">
+                {/* Manage Business Workspace entry */}
+                {onOpenBusinessManagement && (
+                  <button
+                    onClick={() => {
+                      triggerHapticFeedback();
+                      onClose();
+                      onOpenBusinessManagement();
+                    }}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border mb-1.5 ${
+                      isBusinessMode
+                        ? 'bg-blue-500/15 border-blue-500/30 text-white'
+                        : 'bg-white/[0.04] border-white/5 hover:bg-white/10 text-neutral-200 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 group-hover:scale-105 transition-transform">
+                        <Building2 size={16} />
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold">Manage Business</span>
+                          {isBusinessMode && (
+                            <span className="text-[8px] font-mono px-1 py-0.2 rounded bg-blue-500/30 text-blue-300">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[9px] text-neutral-400">
+                          {isBusinessMode ? `Active: ${activeWorkspaceName || 'Business'}` : 'Switch or create business profiles'}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
                     triggerHapticFeedback();

@@ -9,6 +9,7 @@ import { MigrationService } from './MigrationService';
 import { Migration } from './types';
 import { migration001 } from './001_initial_personal_finance';
 import { migration002, DEFAULT_PERSONAL_WORKSPACE_ID } from './002_business_workspaces_ledger_parties';
+import { MIGRATION_REGISTRY } from './MigrationRegistry';
 import { SqliteConnectionPool } from '../sqliteConnectionPool';
 import { DatabaseService } from '../DatabaseService';
 import {
@@ -118,7 +119,7 @@ describe('Infrastructure: Database Schema & Migration Framework', () => {
     const pool = SqliteConnectionPool.getInstance();
     const conn = await pool.getConnection(`test_fk_enforcement_${Date.now()}`);
     const migService = new MigrationService();
-    await migService.runPendingMigrations(conn, [migration001, migration002]);
+    await migService.runPendingMigrations(conn, [...MIGRATION_REGISTRY]);
 
     const partyRepo = new PartyRepository(conn);
 
@@ -257,7 +258,7 @@ describe('Infrastructure: Database Schema & Migration Framework', () => {
 
     // Verify migrations were applied exactly once (not duplicated)
     const applied = await migService.getAppliedMigrations(connections[0]);
-    assert.equal(applied.length, 2);
+    assert.equal(applied.length, MIGRATION_REGISTRY.length);
   });
 
   it('runs sanitized health-check diagnostic without leaking sensitive data', async () => {
@@ -272,8 +273,8 @@ describe('Infrastructure: Database Schema & Migration Framework', () => {
     assert.equal(diagnostic.status, 'healthy');
     assert.equal(diagnostic.integrityCheckPassed, true);
     assert.equal(diagnostic.foreignKeysEnforced, true);
-    assert.equal(diagnostic.appliedMigrationsCount, 2);
-    assert.equal(diagnostic.latestMigrationVersion, 2);
+    assert.equal(diagnostic.appliedMigrationsCount, MIGRATION_REGISTRY.length);
+    assert.equal(diagnostic.latestMigrationVersion, MIGRATION_REGISTRY.length);
     assert.equal(typeof diagnostic.timestamp, 'string');
     assert.equal(typeof diagnostic.journalMode, 'string');
   });
@@ -282,7 +283,7 @@ describe('Infrastructure: Database Schema & Migration Framework', () => {
     const pool = SqliteConnectionPool.getInstance();
     const conn = await pool.getConnection(`test_double_entry_money_${Date.now()}`);
     const migService = new MigrationService();
-    await migService.runPendingMigrations(conn, [migration001, migration002]);
+    await migService.runPendingMigrations(conn, [...MIGRATION_REGISTRY]);
 
     const journalRepo = new JournalEntryRepository(conn);
     const partyRepo = new PartyRepository(conn);

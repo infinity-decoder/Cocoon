@@ -228,8 +228,8 @@ export default function TransactionFormModal({
       {/* Header */}
       <div className="flex justify-between items-center pb-2 border-b border-white/5">
         <div className="flex flex-col text-left">
-          <span className="text-xs text-neutral-400 font-mono tracking-widest uppercase">
-            New Transaction
+          <span className="text-[10px] text-emerald-400 font-mono tracking-widest uppercase font-semibold">
+            Workspace Context: Personal Finance
           </span>
           <span className="text-xl font-bold tracking-tight mt-0.5 capitalize">
             Add {type}

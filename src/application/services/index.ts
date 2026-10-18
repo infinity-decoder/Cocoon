@@ -8,3 +8,5 @@ export * from './PartyLedgerService';
 export * from './TransactionQueryService';
 export * from './SummaryQueryService';
 export * from './PersonalFinanceService';
+export * from './WorkspaceService';
+export * from './InventoryService';

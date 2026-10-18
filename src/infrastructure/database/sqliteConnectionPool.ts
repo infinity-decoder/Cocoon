@@ -424,11 +424,34 @@ export class MemoryDatabaseAdapter implements DatabaseConnection {
     if (tableName && this.tables.has(tableName)) {
       let rows = Array.from(this.getTable(tableName).values());
 
-      // Filter by ID
-      if (/WHERE\s+id\s*=\s*\?/i.test(trimmed) && v.length > 0) {
-        rows = rows.filter(r => String(r.id) === String(v[0]));
-      } else if (/WHERE\s+category_id\s*=\s*\?/i.test(trimmed) && v.length > 0) {
-        rows = rows.filter(r => String(r.category_id || r.categoryId) === String(v[0]));
+      // Generic WHERE clause filtering
+      const whereMatch = trimmed.match(/WHERE\s+(.*?)(?:\s+ORDER|\s+LIMIT|\s*$)/i);
+      if (whereMatch) {
+        const whereClause = whereMatch[1].trim();
+        const clauses = whereClause.split(/\s+AND\s+/i);
+        let paramIdx = 0;
+        for (const cl of clauses) {
+          const eqParam = cl.match(/^(\w+)\s*=\s*\?/i);
+          const eqLiteral = cl.match(/^(\w+)\s*=\s*(\d+|'[^']*')/i);
+          if (eqParam && paramIdx < v.length) {
+            const col = eqParam[1].toLowerCase();
+            const targetVal = v[paramIdx++];
+            rows = rows.filter(r => {
+              const val = r[col] ?? r[col.replace(/_([a-z])/g, (_, l) => l.toUpperCase())];
+              if (typeof targetVal === 'number') return Number(val) === targetVal;
+              return String(val ?? '') === String(targetVal ?? '');
+            });
+          } else if (eqLiteral) {
+            const col = eqLiteral[1].toLowerCase();
+            const rawLit = eqLiteral[2];
+            const targetVal = rawLit.startsWith("'") ? rawLit.slice(1, -1) : Number(rawLit);
+            rows = rows.filter(r => {
+              const val = r[col] ?? r[col.replace(/_([a-z])/g, (_, l) => l.toUpperCase())];
+              if (typeof targetVal === 'number') return Number(val) === targetVal;
+              return String(val ?? '') === String(targetVal ?? '');
+            });
+          }
+        }
       }
 
       // Check if this is a count query
@@ -466,6 +489,10 @@ export class MemoryDatabaseAdapter implements DatabaseConnection {
       }
 
       return rows as T[];
+    }
+
+    if (/SELECT\s+count\(\*\)/i.test(trimmed)) {
+      return [{ count: 0, total: 0 }] as any[];
     }
 
     return [];

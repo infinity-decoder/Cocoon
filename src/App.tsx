@@ -30,8 +30,22 @@ import {
   DatabaseRecoveryModal
 } from './modules/navigation';
 
-export default function App() {
+// Business Workspaces & Isolation Modules
+import { 
+  WorkspaceProvider, 
+  useWorkspace, 
+  WorkspaceSelectorModal, 
+  CreateBusinessModal, 
+  CreatePartyModal, 
+  CreateProductModal, 
+  CreateDocumentModal, 
+  BusinessDashboardTab 
+} from './modules/businesses';
+import { DEFAULT_PERSONAL_WORKSPACE_ID } from './infrastructure/database/migrations/002_business_workspaces_ledger_parties';
+
+function AppContent() {
   const app = useAppState();
+  const ws = useWorkspace();
 
   return (
     <div 
@@ -93,35 +107,74 @@ export default function App() {
           onClearAll={app.clearAllNotifications}
         />
 
-        {/* BRAND TOP BAR (Cocoon Logo & Notification/Hamburger Triggers) */}
+        {/* BRAND TOP BAR (Cocoon Logo & Workspace Switcher Trigger) */}
         <TopBar
           theme={app.activeTheme}
           hasUnreadNotifications={app.notifications.some(n => n.unread)}
+          activeWorkspaceName={ws.currentWorkspace.name}
+          isBusinessMode={ws.isBusinessMode}
           onHomeClick={() => app.setActiveTab(0)}
           onToggleNotifications={() => app.setIsNotificationsOpen(prev => !prev)}
           onOpenSidebar={() => app.setIsSidebarOpen(true)}
+          onOpenWorkspaceSelector={() => ws.setIsWorkspaceSelectorOpen(true)}
         />
 
         {/* APP MAIN VIEW BODY (Framer-motion fade layout) */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-4.5 pt-4 pb-28 scrollbar-none flex flex-col gap-5">
           <AnimatePresence mode="wait">
             {app.activeTab === 0 && (
-              <DashboardTab
-                netBalance={app.financialTotals.netLiquidBalance}
-                balanceRevealed={app.balanceRevealed}
-                currencySymbol={app.state.settings.currencySymbol}
-                theme={app.activeTheme}
-                onToggleBalanceReveal={app.handleToggleBalanceReveal}
-                dashboardToggle={app.dashboardToggle}
-                onToggleDashboardView={app.toggleDashboardView}
-                categoryBreakdown={app.categoryBreakdown}
-                doughnutSegments={app.doughnutSegments}
-                monthIncome={app.financialTotals.monthIncome}
-                activeDoughnutIndex={app.activeDoughnutIndex}
-                onSelectDoughnutIndex={app.setActiveDoughnutIndex}
-                allCategories={app.state.categories}
-                budgets={app.state.budgets}
-              />
+              ws.isBusinessMode ? (
+                <motion.div
+                  key={`biz-tab-${ws.currentWorkspace.id}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                >
+                  <BusinessDashboardTab
+                    workspace={ws.currentWorkspace}
+                    summary={ws.businessSummary}
+                    parties={ws.parties}
+                    products={ws.products}
+                    documents={ws.documents}
+                    accounts={ws.accounts}
+                    currencySymbol={ws.currentWorkspace.currencyCode === 'PKR' ? '₨' : ws.currentWorkspace.currencyCode}
+                    theme={app.activeTheme}
+                    onReturnToPersonal={() => {
+                      ws.switchWorkspace(DEFAULT_PERSONAL_WORKSPACE_ID);
+                      app.setActiveTab(0);
+                    }}
+                    onOpenWorkspaceSelector={() => ws.setIsWorkspaceSelectorOpen(true)}
+                    onOpenCreateParty={() => ws.setIsCreatePartyOpen(true)}
+                    onOpenCreateProduct={() => ws.setIsCreateProductOpen(true)}
+                    onOpenCreateDocument={() => ws.setIsCreateDocumentOpen(true)}
+                    onArchiveWorkspace={(id) => ws.archiveWorkspace(id)}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="personal-dashboard-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                >
+                  <DashboardTab
+                    netBalance={app.financialTotals.netLiquidBalance}
+                    balanceRevealed={app.balanceRevealed}
+                    currencySymbol={app.state.settings.currencySymbol}
+                    theme={app.activeTheme}
+                    onToggleBalanceReveal={app.handleToggleBalanceReveal}
+                    dashboardToggle={app.dashboardToggle}
+                    onToggleDashboardView={app.toggleDashboardView}
+                    categoryBreakdown={app.categoryBreakdown}
+                    doughnutSegments={app.doughnutSegments}
+                    monthIncome={app.financialTotals.monthIncome}
+                    activeDoughnutIndex={app.activeDoughnutIndex}
+                    onSelectDoughnutIndex={app.setActiveDoughnutIndex}
+                    allCategories={app.state.categories}
+                    budgets={app.state.budgets}
+                  />
+                </motion.div>
+              )
             )}
 
             {app.activeTab === 1 && (
@@ -431,7 +484,7 @@ export default function App() {
           }}
         />
 
-        {/* --- DUAL TRANSACTION FORM MODAL SHEET --- */}
+        {/* --- DUAL TRANSACTION FORM MODAL SHEET (PERSONAL FINANCE CONTEXT) --- */}
         <TransactionFormModal
           isOpen={app.isTxModalOpen}
           type={app.txModalType}
@@ -474,6 +527,9 @@ export default function App() {
           onOpenSavings={() => app.setActiveTab(2)}
           onOpenSettings={() => app.setActiveTab(9)}
           onOpenHelp={() => app.setActiveTab(10)}
+          onOpenBusinessManagement={() => ws.setIsWorkspaceSelectorOpen(true)}
+          activeWorkspaceName={ws.currentWorkspace.name}
+          isBusinessMode={ws.isBusinessMode}
           activeThemeId={app.activeThemeId}
           themeCardBg={app.activeTheme.cardBg}
           themeBorder={app.activeTheme.border}
@@ -490,7 +546,81 @@ export default function App() {
           onBackspace={app.handleBalancePinBackspace}
         />
 
+        {/* --- WORKSPACE SELECTOR MODAL --- */}
+        <WorkspaceSelectorModal
+          isOpen={ws.isWorkspaceSelectorOpen}
+          onClose={() => ws.setIsWorkspaceSelectorOpen(false)}
+          workspaces={ws.availableWorkspaces}
+          activeWorkspaceId={ws.activeWorkspaceId}
+          onSelectWorkspace={(id) => {
+            ws.switchWorkspace(id);
+            app.setActiveTab(0);
+          }}
+          onOpenCreateBusiness={() => ws.setIsCreateBusinessOpen(true)}
+          onArchiveWorkspace={(id) => ws.archiveWorkspace(id)}
+          onUnarchiveWorkspace={(id) => ws.unarchiveWorkspace(id)}
+          theme={app.activeTheme}
+        />
+
+        {/* --- CREATE BUSINESS MODAL --- */}
+        <CreateBusinessModal
+          isOpen={ws.isCreateBusinessOpen}
+          onClose={() => ws.setIsCreateBusinessOpen(false)}
+          onSubmit={async (params) => {
+            await ws.createBusiness(params);
+            app.setActiveTab(0);
+          }}
+          theme={app.activeTheme}
+        />
+
+        {/* --- CREATE PARTY MODAL (SCOPED TO ACTIVE BUSINESS) --- */}
+        <CreatePartyModal
+          isOpen={ws.isCreatePartyOpen}
+          workspaceName={ws.currentWorkspace.name}
+          currencySymbol={ws.currentWorkspace.currencyCode === 'PKR' ? '₨' : ws.currentWorkspace.currencyCode}
+          existingParties={ws.parties}
+          onClose={() => ws.setIsCreatePartyOpen(false)}
+          onSubmit={async (params) => {
+            await ws.createParty(params);
+          }}
+          theme={app.activeTheme}
+        />
+
+        {/* --- CREATE PRODUCT MODAL (SCOPED TO ACTIVE BUSINESS) --- */}
+        <CreateProductModal
+          isOpen={ws.isCreateProductOpen}
+          workspaceName={ws.currentWorkspace.name}
+          currencySymbol={ws.currentWorkspace.currencyCode === 'PKR' ? '₨' : ws.currentWorkspace.currencyCode}
+          onClose={() => ws.setIsCreateProductOpen(false)}
+          onSubmit={async (params) => {
+            await ws.createProduct(params);
+          }}
+          theme={app.activeTheme}
+        />
+
+        {/* --- CREATE DOCUMENT MODAL (SCOPED TO ACTIVE BUSINESS) --- */}
+        <CreateDocumentModal
+          isOpen={ws.isCreateDocumentOpen}
+          workspaceName={ws.currentWorkspace.name}
+          currencySymbol={ws.currentWorkspace.currencyCode === 'PKR' ? '₨' : ws.currentWorkspace.currencyCode}
+          parties={ws.parties}
+          products={ws.products}
+          onClose={() => ws.setIsCreateDocumentOpen(false)}
+          onSubmit={async (params) => {
+            await ws.createDocument(params);
+          }}
+          theme={app.activeTheme}
+        />
+
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <WorkspaceProvider>
+      <AppContent />
+    </WorkspaceProvider>
   );
 }
