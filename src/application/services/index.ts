@@ -10,3 +10,8 @@ export * from './SummaryQueryService';
 export * from './PersonalFinanceService';
 export * from './WorkspaceService';
 export * from './InventoryService';
+export * from './PostingService';
+export * from './PartyKhataService';
+export * from './InterWorkspaceTransferService';
+export * from './PurchaseService';
+export * from './SaleService';

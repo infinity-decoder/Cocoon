@@ -712,7 +712,7 @@ export class ProductRepository {
       `SELECT SUM(quantity_delta) as net_stock FROM stock_movements WHERE product_id = ?`,
       [productId]
     );
-    const netStock = Math.max(0, Number(rows[0]?.net_stock ?? 0));
+    const netStock = Number(rows[0]?.net_stock ?? 0);
 
     await this.conn.run(
       `UPDATE products SET current_stock_quantity = ?, updated_at = ? WHERE id = ?`,
@@ -841,7 +841,7 @@ export class ProductRepository {
 
   // --- Row Mappers ---
 
-  private mapRow(r: any): ProductRecord {
+  public mapRow(r: any): ProductRecord {
     return {
       id: r.id,
       workspaceId: r.workspace_id,

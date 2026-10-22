@@ -11,6 +11,10 @@ export type DocumentStatus = 'draft' | 'unpaid' | 'partial' | 'paid' | 'cancelle
 export interface DocumentLineItem {
   id: string;
   itemId?: string;
+  productId?: string;
+  packageUnit?: string;
+  costPriceScaled?: bigint;
+  returnedQuantity?: number;
   description: string;
   quantity: number;
   unitPriceScaled: bigint;
@@ -37,6 +41,9 @@ export interface InvoiceProps {
   totalScaled: bigint;
   paidAmountScaled: bigint;
   status: DocumentStatus;
+  paymentMethod?: string;
+  isPos?: boolean;
+  cashierName?: string;
   notes?: string;
   attachmentRelativePath?: string; // Relative path in context.getFilesDir() e.g. "attachments/bills/inv_123.jpg"
   createdAt: string;

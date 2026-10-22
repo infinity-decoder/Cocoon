@@ -23,6 +23,10 @@ export interface DocumentRecord {
   totalScaled: bigint;
   paidAmountScaled: bigint;
   status: DocumentStatus;
+  paymentMethod?: string | null;
+  isPos?: boolean;
+  cashierName?: string | null;
+  idempotencyKey?: string | null;
   notes?: string | null;
   attachmentRelativePath?: string | null;
   isArchived: boolean;
@@ -60,6 +64,10 @@ export class DocumentRepository {
     const lines: DocumentLineItem[] = lineRows.map(l => ({
       id: l.id,
       itemId: l.item_id || undefined,
+      productId: l.item_id || undefined,
+      packageUnit: l.package_unit || undefined,
+      costPriceScaled: l.cost_price_scaled ? BigInt(l.cost_price_scaled) : undefined,
+      returnedQuantity: l.returned_quantity !== undefined ? Number(l.returned_quantity) : undefined,
       description: l.description,
       quantity: Number(l.quantity),
       unitPriceScaled: BigInt(l.unit_price_scaled),
@@ -197,6 +205,10 @@ export class DocumentRepository {
       totalScaled: BigInt(r.total_scaled ?? 0),
       paidAmountScaled: BigInt(r.paid_amount_scaled ?? 0),
       status: r.status,
+      paymentMethod: r.payment_method,
+      isPos: Boolean(r.is_pos),
+      cashierName: r.cashier_name,
+      idempotencyKey: r.idempotency_key,
       notes: r.notes,
       attachmentRelativePath: r.attachment_relative_path,
       isArchived: Boolean(r.is_archived),

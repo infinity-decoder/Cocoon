@@ -13,3 +13,5 @@ export * from './DocumentRepository';
 export * from './PaymentRepository';
 export * from './PartyLedgerRepository';
 export * from './TransferRepository';
+export * from './PurchaseRepository';
+export * from './SalesRepository';

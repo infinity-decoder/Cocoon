@@ -8,12 +8,18 @@ import { generateEntityId } from '../../../domain/primitives/EntityId';
 
 export type JournalSourceType =
   | 'manual'
+  | 'manual_journal'
   | 'transfer'
   | 'inter_workspace_transfer'
   | 'invoice'
+  | 'sales_invoice'
+  | 'sales_return'
   | 'payment'
   | 'reversal'
-  | 'opening_balance';
+  | 'opening_balance'
+  | 'purchase_bill'
+  | 'purchase_return'
+  | 'supplier_payment';
 
 export type JournalStatus = 'draft' | 'posted' | 'reversed';
 

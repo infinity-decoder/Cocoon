@@ -11,7 +11,7 @@ import {
   ChevronRight, BookOpen, AlertCircle, ShoppingBag, 
   Truck, ArrowUpRight, ArrowDownLeft, CreditCard,
   RotateCcw, Search, Filter, CheckCircle2,
-  ArrowRightLeft, Scale, Layers, Barcode, Sliders, History, Tag, AlertTriangle
+  ArrowRightLeft, Scale, Layers, Barcode, Sliders, History, Tag, AlertTriangle, BarChart3
 } from 'lucide-react';
 import { AppTheme } from '../../../core/theme';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
@@ -37,6 +37,9 @@ import {
   StockAdjustmentModal, 
   BarcodeScannerModal 
 } from '../../inventory/components';
+import { PurchasesView } from '../../purchases';
+import { SalesView } from '../../sales';
+import { ReportsView } from '../../reports';
 
 interface BusinessDashboardTabProps {
   workspace: WorkspaceWithProfile;
@@ -83,7 +86,7 @@ export function BusinessDashboardTab({
   onArchiveWorkspace
 }: BusinessDashboardTabProps) {
   const ws = useWorkspace();
-  const [activeSection, setActiveSection] = useState<'overview' | 'documents' | 'parties' | 'inventory' | 'accounts'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'sales' | 'documents' | 'parties' | 'inventory' | 'purchases' | 'accounts' | 'reports'>('overview');
   const [selectedPartyForStatement, setSelectedPartyForStatement] = useState<PartyRecord | null>(null);
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const [paymentPartyForModal, setPaymentPartyForModal] = useState<PartyRecord | null>(null);
@@ -183,7 +186,7 @@ export function BusinessDashboardTab({
 
       {/* 2. SUB-NAVIGATION SECTION TABS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {(['overview', 'documents', 'parties', 'inventory', 'accounts'] as const).map(sec => (
+        {(['overview', 'sales', 'documents', 'parties', 'inventory', 'purchases', 'accounts', 'reports'] as const).map(sec => (
           <button
             key={sec}
             onClick={() => {
@@ -196,7 +199,7 @@ export function BusinessDashboardTab({
                 : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            {sec === 'parties' ? 'Customers & Suppliers' : sec}
+            {sec === 'parties' ? 'Customers & Suppliers' : sec === 'purchases' ? 'Purchasing & Orders' : sec === 'sales' ? 'Point of Sale (POS)' : sec === 'reports' ? 'Official Reports' : sec}
           </button>
         ))}
       </div>
@@ -285,6 +288,60 @@ export function BusinessDashboardTab({
             </div>
             <span className="text-base font-black text-purple-400 font-mono">
               {currencySymbol} {formatScaled(summary?.inventoryValuationScaled)}
+            </span>
+          </div>
+
+          {/* POS Quick Launcher Banner */}
+          <div 
+            onClick={() => {
+              triggerHapticFeedback();
+              setActiveSection('sales');
+            }}
+            className="p-4 rounded-2xl border bg-gradient-to-r from-emerald-950/40 via-neutral-900 to-neutral-900 border-emerald-500/30 flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-all shadow-md group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
+                <ShoppingBag size={20} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                  Point of Sale (POS) Register
+                </span>
+                <span className="text-[10px] text-neutral-400">
+                  Offline barcode checkout, cash & split payments, thermal receipts
+                </span>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 rounded-xl bg-emerald-600/20 text-emerald-300 text-xs font-bold flex items-center gap-1 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+              Launch POS
+              <ChevronRight size={14} />
+            </span>
+          </div>
+
+          {/* Official Reports Quick Launcher Banner */}
+          <div 
+            onClick={() => {
+              triggerHapticFeedback();
+              setActiveSection('reports');
+            }}
+            className="p-4 rounded-2xl border bg-gradient-to-r from-indigo-950/40 via-neutral-900 to-neutral-900 border-indigo-500/30 flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-all shadow-md group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
+                <BarChart3 size={20} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-white group-hover:text-indigo-400 transition-colors">
+                  Financial & Operational Reports
+                </span>
+                <span className="text-[10px] text-neutral-400">
+                  P&L, Balance Sheet, Daybook, Aging & WhatsApp reminders from posted ledger data
+                </span>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 text-xs font-bold flex items-center gap-1 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+              View Reports
+              <ChevronRight size={14} />
             </span>
           </div>
 
@@ -400,7 +457,21 @@ export function BusinessDashboardTab({
         </div>
       )}
 
-      {/* 4. DOCUMENTS SECTION */}
+      {/* 4. POINT OF SALE & SALES DOMAIN SECTION */}
+      {activeSection === 'sales' && (
+        <SalesView
+          workspaceId={workspace.id}
+          parties={parties}
+          products={products}
+          accounts={accounts}
+          currencySymbol={currencySymbol}
+          onRefreshWorkspace={() => {
+            ws.refreshBusinessData();
+          }}
+        />
+      )}
+
+      {/* 5. DOCUMENTS SECTION */}
       {activeSection === 'documents' && (
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
@@ -870,6 +941,17 @@ export function BusinessDashboardTab({
         </div>
       )}
 
+      {/* 6. PURCHASING & ORDERS DOMAIN SECTION */}
+      {activeSection === 'purchases' && (
+        <PurchasesView
+          workspaceId={workspace.id}
+          parties={parties}
+          products={products}
+          accounts={accounts}
+          currencySymbol={currencySymbol}
+        />
+      )}
+
       {/* 7. CHART OF ACCOUNTS & TRANSFERS SECTION */}
       {activeSection === 'accounts' && (
         <div className="flex flex-col gap-4">
@@ -1011,6 +1093,17 @@ export function BusinessDashboardTab({
             </div>
           )}
         </div>
+      )}
+
+      {/* 10. OFFICIAL FINANCIAL & OPERATIONAL REPORTS */}
+      {activeSection === 'reports' && (
+        <ReportsView
+          workspaceId={workspace.id}
+          parties={parties}
+          products={products}
+          accounts={accounts}
+          currencySymbol={currencySymbol}
+        />
       )}
 
       {/* Khata Statement Modal */}
