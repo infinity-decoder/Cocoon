@@ -40,12 +40,13 @@ export default function BottomNav({
           triggerHapticFeedback();
           onSelectTab(0);
         }}
-        className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-          activeTab === 0 ? 'text-emerald-400 scale-110 font-black' : 'text-neutral-400 hover:text-white'
+        className={`min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+          activeTab === 0 ? 'text-[#168FE0] scale-105 font-black' : 'text-neutral-400 hover:text-white'
         }`}
       >
         <HomeIcon size={18} strokeWidth={theme.iconStrokeWidth} />
         <span className="text-[8px] uppercase font-mono tracking-widest font-black">Home</span>
+        {activeTab === 0 && <span className="w-1 h-1 rounded-full bg-[#A9E547]" />}
       </button>
 
       {/* Button 2: Budget */}
@@ -54,12 +55,13 @@ export default function BottomNav({
           triggerHapticFeedback();
           onSelectTab(5);
         }}
-        className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-          activeTab === 5 ? 'text-amber-400 scale-110 font-black' : 'text-neutral-400 hover:text-white'
+        className={`min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+          activeTab === 5 ? 'text-[#168FE0] scale-105 font-black' : 'text-neutral-400 hover:text-white'
         }`}
       >
-        <Landmark size={18} strokeWidth={theme.iconStrokeWidth} className={activeTab === 5 ? 'text-amber-400' : ''} />
+        <Landmark size={18} strokeWidth={theme.iconStrokeWidth} className={activeTab === 5 ? 'text-[#168FE0]' : ''} />
         <span className="text-[8px] uppercase font-mono tracking-widest font-black">Budget</span>
+        {activeTab === 5 && <span className="w-1 h-1 rounded-full bg-[#A9E547]" />}
       </button>
 
       {/* Button 3: Rotating Big Plus Radial Trigger */}
@@ -125,10 +127,10 @@ export default function BottomNav({
             triggerHapticFeedback();
             onToggleRadial();
           }}
-          className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg cursor-pointer relative z-50 border border-white/10 transform transition-all active:scale-95 duration-200 ${
+          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg cursor-pointer relative z-50 border border-white/10 transform transition-all active:scale-95 duration-200 ${
             isRadialOpen 
               ? 'bg-rose-500 text-white shadow-[0_4px_16px_rgba(244,63,94,0.4)] animate-[pulse_2s_infinite]' 
-              : 'bg-emerald-500 text-white shadow-[0_4px_16px_rgba(16,185,129,0.4)]'
+              : 'bg-[#168FE0] hover:bg-[#2196E8] text-white shadow-[0_4px_16px_rgba(22,143,224,0.4)]'
           }`}
           style={{ transform: isRadialOpen ? 'rotate(135deg)' : 'none' }}
         >
@@ -142,12 +144,13 @@ export default function BottomNav({
           triggerHapticFeedback();
           onSelectTab(4);
         }}
-        className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-          activeTab === 4 ? 'text-cyan-400 scale-110 font-black' : 'text-neutral-400 hover:text-white'
+        className={`min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+          activeTab === 4 ? 'text-[#168FE0] scale-105 font-black' : 'text-neutral-400 hover:text-white'
         }`}
       >
-        <BarChart2 size={18} strokeWidth={theme.iconStrokeWidth} className={activeTab === 4 ? 'text-cyan-400' : ''} />
+        <BarChart2 size={18} strokeWidth={theme.iconStrokeWidth} className={activeTab === 4 ? 'text-[#168FE0]' : ''} />
         <span className="text-[8px] uppercase font-mono tracking-widest font-black">Analysis</span>
+        {activeTab === 4 && <span className="w-1 h-1 rounded-full bg-[#A9E547]" />}
       </button>
 
       {/* Button 5: Profile */}
@@ -156,12 +159,12 @@ export default function BottomNav({
           triggerHapticFeedback();
           onSelectTab(3);
         }}
-        className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-          activeTab === 3 ? 'text-emerald-400 scale-110 font-black' : 'text-neutral-400 hover:text-white'
+        className={`min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+          activeTab === 3 ? 'text-[#168FE0] scale-105 font-black' : 'text-neutral-400 hover:text-white'
         }`}
       >
         <div className={`w-5 h-5 rounded-full overflow-hidden border transition-all shrink-0 ${
-          activeTab === 3 ? 'border-emerald-400 ring-2 ring-emerald-500/20' : 'border-neutral-500'
+          activeTab === 3 ? 'border-[#168FE0] ring-2 ring-[#168FE0]/30' : 'border-neutral-500'
         }`}>
           <img 
             src={avatar || DEFAULT_AVATAR} 
@@ -171,6 +174,7 @@ export default function BottomNav({
           />
         </div>
         <span className="text-[8px] uppercase font-mono tracking-widest font-black">Profile</span>
+        {activeTab === 3 && <span className="w-1 h-1 rounded-full bg-[#A9E547]" />}
       </button>
     </div>
   );

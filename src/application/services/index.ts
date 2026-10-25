@@ -15,3 +15,4 @@ export * from './PartyKhataService';
 export * from './InterWorkspaceTransferService';
 export * from './PurchaseService';
 export * from './SaleService';
+export * from './AuditTrailService';

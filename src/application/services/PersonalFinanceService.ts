@@ -676,6 +676,8 @@ export class PersonalFinanceService {
   ): Promise<void> {
     await conn.executeTransaction(async () => {
       for (const [key, val] of Object.entries(updates)) {
+        // SECURITY: Never write plaintext PIN into database
+        if (key === 'pinCode') continue;
         await conn.run(
           'INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)',
           [key, JSON.stringify(val)]

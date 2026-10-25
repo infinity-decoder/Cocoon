@@ -119,10 +119,21 @@ export async function loadAppStateAsync(): Promise<AppState> {
  * LocalStorage is maintained strictly as an auxiliary recovery cache.
  */
 export function saveAppState(state: AppState): void {
+  // SECURITY: Strip plaintext PIN before writing to localStorage or SQLite
+  const sanitizedSettings = { ...state.settings };
+  if (sanitizedSettings.pinCode) {
+    sanitizedSettings.isPinConfigured = true;
+    delete sanitizedSettings.pinCode;
+  }
+  const sanitizedState: AppState = {
+    ...state,
+    settings: sanitizedSettings
+  };
+
   // 1. Auxiliary recovery backup in localStorage (prevents crash on abrupt termination)
   try {
     if (typeof localStorage !== 'undefined') {
-      const serialized = JSON.stringify(state);
+      const serialized = JSON.stringify(sanitizedState);
       localStorage.setItem(PRIMARY_STORAGE_KEY, serialized);
       localStorage.setItem(LEGACY_STORAGE_KEY, serialized);
     }
@@ -133,7 +144,7 @@ export function saveAppState(state: AppState): void {
   // 2. Authoritative persistence in SQLite
   if (isAuthoritativeStoreSqlite()) {
     sqlitePool.getConnection()
-      .then(conn => saveAppStateToDatabase(conn, state))
+      .then(conn => saveAppStateToDatabase(conn, sanitizedState))
       .catch(err => {
         console.error('Authoritative SQLite write error in saveAppState:', err);
       });

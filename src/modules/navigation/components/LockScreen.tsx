@@ -13,6 +13,8 @@ interface LockScreenProps {
   onKeyPress: (digit: string) => void;
   onBackspace: () => void;
   onClear: () => void;
+  lockoutSeconds?: number;
+  errorMessage?: string;
 }
 
 export default function LockScreen({
@@ -20,8 +22,12 @@ export default function LockScreen({
   enteredPin,
   onKeyPress,
   onBackspace,
-  onClear
+  onClear,
+  lockoutSeconds = 0,
+  errorMessage
 }: LockScreenProps) {
+  const isLockedOut = lockoutSeconds > 0;
+
   return (
     <AnimatePresence>
       {isLocked && (
@@ -29,14 +35,31 @@ export default function LockScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-neutral-950 z-[99] flex flex-col justify-between p-8 text-white select-none"
+          className="absolute inset-0 bg-[#101E37] z-[99] flex flex-col justify-between p-8 text-white select-none"
         >
-          <div className="flex flex-col items-center mt-12 gap-2">
-            <div className="p-4 bg-white/5 rounded-full border border-white/10 text-emerald-400">
-              <Lock size={32} className="animate-pulse" />
+          <div className="flex flex-col items-center mt-8 gap-2 text-center">
+            <div className={`p-4 rounded-full border transition-all ${
+              isLockedOut ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-white/5 border-white/10 text-[#168FE0]'
+            }`}>
+              <Lock size={32} className={isLockedOut ? 'animate-bounce' : 'animate-pulse'} />
             </div>
-            <span className="text-lg font-bold mt-2">Cocoon Secure Lock</span>
-            <span className="text-xs text-neutral-400 font-mono">Offline cryptographic device validation</span>
+            <span className="text-lg font-black mt-2 tracking-tight">Cocoon Secure Lock</span>
+            <span className="text-xs text-neutral-400 font-mono">
+              {isLockedOut ? 'Rate limit cooldown enforced' : 'PBKDF2 Cryptographic Validation'}
+            </span>
+
+            {isLockedOut ? (
+              <div className="mt-3 px-4 py-2 bg-rose-500/20 border border-rose-500/40 rounded-2xl flex flex-col items-center">
+                <span className="text-xs font-bold text-rose-300">Too many failed attempts</span>
+                <span className="text-sm font-black font-mono text-white mt-0.5">
+                  Try again in {lockoutSeconds}s
+                </span>
+              </div>
+            ) : errorMessage ? (
+              <div className="mt-2 text-xs font-bold text-rose-400 animate-shake">
+                {errorMessage}
+              </div>
+            ) : null}
           </div>
 
           <div className="flex flex-col items-center gap-6">
@@ -44,45 +67,55 @@ export default function LockScreen({
               {[0, 1, 2, 3].map((idx) => (
                 <div 
                   key={idx} 
-                  className={`w-4 h-4 rounded-full border border-white/30 transition-all ${
-                    enteredPin.length > idx ? 'bg-emerald-400 border-emerald-400 scale-125' : 'bg-transparent'
+                  className={`w-4 h-4 rounded-full border transition-all ${
+                    isLockedOut
+                      ? 'border-neutral-700 bg-neutral-800'
+                      : enteredPin.length > idx
+                        ? 'bg-[#168FE0] border-[#168FE0] scale-125 shadow-[0_0_10px_#168FE0]'
+                        : 'border-white/30 bg-transparent'
                   }`} 
                 />
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-y-4 gap-x-6 max-w-xs mx-auto mb-8 w-full">
+          <div className={`grid grid-cols-3 gap-y-4 gap-x-6 max-w-xs mx-auto mb-8 w-full transition-opacity ${
+            isLockedOut ? 'opacity-30 pointer-events-none' : ''
+          }`}>
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((key) => (
               <button
                 key={key}
+                disabled={isLockedOut}
                 onClick={() => onKeyPress(key)}
-                className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-bold flex items-center justify-center cursor-pointer select-none"
+                className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-bold flex items-center justify-center cursor-pointer select-none transition-all"
               >
                 {key}
               </button>
             ))}
             
             <button
+              disabled={isLockedOut}
               onClick={() => {
                 triggerHapticFeedback();
                 onClear();
               }}
-              className="w-16 h-16 rounded-full bg-white/2 hover:bg-white/5 text-xs font-bold flex items-center justify-center cursor-pointer"
+              className="w-16 h-16 rounded-full bg-white/2 hover:bg-white/5 text-xs font-bold flex items-center justify-center cursor-pointer transition-all"
             >
               Clear
             </button>
 
             <button
+              disabled={isLockedOut}
               onClick={() => onKeyPress('0')}
-              className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-bold flex items-center justify-center cursor-pointer select-none"
+              className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-bold flex items-center justify-center cursor-pointer select-none transition-all"
             >
               0
             </button>
 
             <button
+              disabled={isLockedOut}
               onClick={onBackspace}
-              className="w-16 h-16 rounded-full bg-white/2 hover:bg-white/5 flex items-center justify-center text-rose-400 cursor-pointer"
+              className="w-16 h-16 rounded-full bg-white/2 hover:bg-white/5 flex items-center justify-center text-rose-400 cursor-pointer transition-all"
             >
               <Delete size={20} />
             </button>

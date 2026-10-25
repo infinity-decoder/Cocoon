@@ -10,7 +10,6 @@ import {
   Sparkles, Download, Check, User, Phone, Mail, MapPin, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import html2pdf from 'html2pdf.js';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -359,7 +358,9 @@ export default function TransactionsTab({
       };
 
       const pdfExecution = (async () => {
-        const worker = html2pdf().set(opt).from(element);
+        const html2pdfModule = await import('html2pdf.js');
+        const html2pdf = html2pdfModule.default || html2pdfModule;
+        const worker = (html2pdf as any)().set(opt).from(element);
 
         if (Capacitor.isNativePlatform()) {
           // Native Android / iOS via Capacitor

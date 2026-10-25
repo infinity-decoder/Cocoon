@@ -23,6 +23,8 @@ import {
   TransactionQueryService 
 } from '../../application/services';
 import { exportBackupAsJson, importBackupFromJson } from '../storage/backupService';
+import { backupArchiveService } from '../../infrastructure/storage/BackupArchiveService';
+import { isEncryptedBackup } from '../security/backupCrypto';
 import { DEFAULT_CATEGORIES, DEFAULT_SUBCATEGORIES, DEFAULT_WALLETS, DEFAULT_SETTINGS } from '../constants';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -35,6 +37,8 @@ import {
   computeDoughnutSegments, 
   checkBudgetThreshold 
 } from '../../modules/dashboard/calculations';
+import { keyManagementService } from '../security/keyManagementService';
+import { securityLockoutService } from '../security/securityLockoutService';
 
 export function useAppState() {
   // 1. Core local-first App State loaded from authoritative SQLite store
@@ -42,7 +46,7 @@ export function useAppState() {
 
   // 2. Active Theme
   const [activeThemeId, setActiveThemeId] = useState<string>(() => {
-    return localStorage.getItem('cocoon_theme_id') || localStorage.getItem('finflow_theme_id') || 'emerald';
+    return localStorage.getItem('cocoon_theme_id') || localStorage.getItem('finflow_theme_id') || 'cocoon-navy';
   });
 
   const activeTheme: AppTheme = useMemo(() => {
@@ -90,31 +94,106 @@ export function useAppState() {
       });
   }, []);
 
-  // 3. Passcode security lock barrier
-  const [isLocked, setIsLocked] = useState<boolean>(() => !!loadAppState().settings.pinCode);
+  // 3. Cryptographic Passcode security lock barrier
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    return (
+      keyManagementService.hasKeyEnvelope() ||
+      !!loadAppState().settings.pinHash ||
+      !!loadAppState().settings.isPinConfigured ||
+      !!loadAppState().settings.pinCode
+    );
+  });
   const [enteredPin, setEnteredPin] = useState<string>('');
+  const [lockoutSeconds, setLockoutSeconds] = useState<number>(() => securityLockoutService.getStatus().remainingSeconds);
+  const [lockError, setLockError] = useState<string>('');
 
-  const handlePinKeyPress = useCallback((digit: string) => {
+  // Lockout countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const status = securityLockoutService.getStatus();
+      setLockoutSeconds(status.remainingSeconds);
+      if (!status.isLockedOut && lockError.includes('locked for')) {
+        setLockError('');
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockError]);
+
+  // Seamless legacy PIN migration: Upgrade plaintext PIN to PBKDF2 envelope and wipe plaintext
+  useEffect(() => {
+    if (state.settings.pinCode) {
+      const legacyPin = state.settings.pinCode;
+      keyManagementService.setupPinAndEnvelope(legacyPin).then(() => {
+        setState(prev => {
+          const updated = { ...prev.settings, isPinConfigured: true };
+          delete updated.pinCode;
+          return { ...prev, settings: updated };
+        });
+      }).catch(err => {
+        console.warn('Legacy PIN envelope upgrade notice:', err);
+      });
+    }
+  }, []);
+
+  const handlePinKeyPress = useCallback(async (digit: string) => {
     triggerHapticFeedback();
-    setEnteredPin(prev => {
-      if (prev.length >= 4) return prev;
-      const nextPin = prev + digit;
-      if (nextPin.length === 4) {
-        if (nextPin === state.settings.pinCode) {
+    setLockError('');
+    const status = securityLockoutService.getStatus();
+    if (status.isLockedOut) {
+      setLockoutSeconds(status.remainingSeconds);
+      setLockError(`Security Lockout Active (${status.remainingSeconds}s remaining).`);
+      return;
+    }
+
+    if (enteredPin.length >= 4) return;
+    const nextPin = enteredPin + digit;
+    setEnteredPin(nextPin);
+
+    if (nextPin.length === 4) {
+      // 1. Authenticate with KeyManagementService envelope (PBKDF2 + AES-256-GCM)
+      if (keyManagementService.hasKeyEnvelope()) {
+        const unlockRes = await keyManagementService.unlockWithPin(nextPin);
+        if (unlockRes.success) {
           setTimeout(() => {
             setIsLocked(false);
             setEnteredPin('');
+            setLockError('');
           }, 200);
         } else {
+          if (unlockRes.isLockedOut) {
+            setLockoutSeconds(unlockRes.remainingSeconds || 30);
+            setLockError(`Device locked for ${unlockRes.remainingSeconds || 30}s.`);
+          } else {
+            setLockError(unlockRes.error || 'Incorrect PIN code.');
+          }
           setTimeout(() => {
             setEnteredPin('');
             triggerHapticFeedback();
-          }, 300);
+          }, 350);
         }
+      } else if (state.settings.pinCode && nextPin === state.settings.pinCode) {
+        // First-time envelope generation from legacy PIN
+        await keyManagementService.setupPinAndEnvelope(nextPin);
+        setTimeout(() => {
+          setIsLocked(false);
+          setEnteredPin('');
+          setLockError('');
+        }, 200);
+      } else {
+        const lockout = securityLockoutService.recordFailedAttempt();
+        if (lockout.isLockedOut) {
+          setLockoutSeconds(lockout.remainingSeconds);
+          setLockError(`Device locked for ${lockout.remainingSeconds}s.`);
+        } else {
+          setLockError('Incorrect PIN code.');
+        }
+        setTimeout(() => {
+          setEnteredPin('');
+          triggerHapticFeedback();
+        }, 350);
       }
-      return nextPin;
-    });
-  }, [state.settings.pinCode]);
+    }
+  }, [enteredPin, state.settings.pinCode]);
 
   const handlePinBackspace = useCallback(() => {
     triggerHapticFeedback();
@@ -124,6 +203,7 @@ export function useAppState() {
   const handlePinClear = useCallback(() => {
     triggerHapticFeedback();
     setEnteredPin('');
+    setLockError('');
   }, []);
 
   // 4. Navigation tabs
@@ -203,12 +283,14 @@ export function useAppState() {
   const [balancePinInput, setBalancePinInput] = useState('');
   const [balancePinError, setBalancePinError] = useState('');
 
+  const isPinEnabled = keyManagementService.hasKeyEnvelope() || !!state.settings.isPinConfigured || !!state.settings.pinCode;
+
   const handleToggleBalanceReveal = useCallback(() => {
     triggerHapticFeedback();
     if (balanceRevealed) {
       setBalanceRevealed(false);
     } else {
-      if (state.settings.pinCode) {
+      if (isPinEnabled) {
         setShowBalancePinPrompt(true);
         setBalancePinInput('');
         setBalancePinError('');
@@ -216,16 +298,27 @@ export function useAppState() {
         setBalanceRevealed(true);
       }
     }
-  }, [balanceRevealed, state.settings.pinCode]);
+  }, [balanceRevealed, isPinEnabled]);
 
-  const handleBalancePinKeyPress = useCallback((digit: string) => {
+  const handleBalancePinKeyPress = useCallback(async (digit: string) => {
     triggerHapticFeedback();
     setBalancePinError('');
     if (balancePinInput.length < 4) {
       const next = balancePinInput + digit;
       setBalancePinInput(next);
       if (next.length === 4) {
-        if (next === state.settings.pinCode) {
+        if (keyManagementService.hasKeyEnvelope()) {
+          const res = await keyManagementService.unlockWithPin(next);
+          if (res.success) {
+            setBalanceRevealed(true);
+            setShowBalancePinPrompt(false);
+            setBalancePinInput('');
+          } else {
+            setBalancePinError(res.error || 'Incorrect PIN code.');
+            setBalancePinInput('');
+          }
+        } else if (state.settings.pinCode && next === state.settings.pinCode) {
+          await keyManagementService.setupPinAndEnvelope(next);
           setBalanceRevealed(true);
           setShowBalancePinPrompt(false);
           setBalancePinInput('');
@@ -739,6 +832,8 @@ export function useAppState() {
   const handleFactoryReset = useCallback(async () => {
     triggerHapticFeedback();
     try {
+      keyManagementService.wipeKeys();
+      securityLockoutService.resetLockout();
       localStorage.clear();
       sessionStorage.clear();
       const conn = await databaseService.getInitializedConnection();
@@ -782,15 +877,17 @@ export function useAppState() {
     );
   }, [addNotification]);
 
-  const handleExportBackup = useCallback(async () => {
+  const handleExportBackup = useCallback(async (passphrase?: string) => {
     triggerHapticFeedback();
-    const backupStr = exportBackupAsJson(state);
-    const filename = 'cocoon_backup.json';
-
     try {
+      const backupStr = await backupArchiveService.exportFullBackupArchive({
+        stateOverride: state,
+        passphrase: passphrase && passphrase.trim().length > 0 ? passphrase.trim() : undefined
+      });
+      const isEnc = isEncryptedBackup(backupStr);
+      const filename = isEnc ? 'cocoon_encrypted_backup.json' : 'cocoon_backup.json';
+
       if (Capacitor.isNativePlatform()) {
-        // Native Android / iOS via Capacitor
-        // 1. Write file to Documents directory
         const writeResult = await Filesystem.writeFile({
           path: filename,
           data: backupStr,
@@ -798,25 +895,25 @@ export function useAppState() {
           encoding: Encoding.UTF8
         });
 
-        // 2. Open Android system save / share sheet so user can store directly in Downloads folder
         try {
           await Share.share({
-            title: 'Cocoon Database Backup',
-            text: 'Offline encrypted database backup for Cocoon Financial Tracker.',
+            title: isEnc ? 'Cocoon Encrypted Backup (AES-256-GCM)' : 'Cocoon Database Backup',
+            text: isEnc
+              ? 'Password-protected offline database backup for Cocoon Financial Tracker.'
+              : 'Offline verified database backup for Cocoon Financial Tracker.',
             url: writeResult.uri,
-            dialogTitle: 'Save cocoon_backup to Downloads'
+            dialogTitle: 'Save Backup File'
           });
         } catch {
-          // Share dialog dismissed or completed
+          // Share dialog dismissed
         }
 
         addNotification(
           'Backup File Saved',
-          'Database backup "cocoon_backup.json" created successfully in Documents and ready in Downloads.',
+          `Database backup "${filename}" created successfully in Documents and presented via Android Share sheet.`,
           'backup_export'
         );
       } else {
-        // Web browser / AI Studio fallback
         const blob = new Blob([backupStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const downloadAnchor = document.createElement('a');
@@ -829,61 +926,89 @@ export function useAppState() {
 
         addNotification(
           'Backup Exported Successfully',
-          'Database backup "cocoon_backup.json" downloaded to your device downloads folder.',
+          `Database backup "${filename}" downloaded to your device downloads folder.`,
           'backup_export'
         );
       }
+
+      setState(prev => ({
+        ...prev,
+        settings: {
+          ...prev.settings,
+          lastBackupTimestamp: new Date().toISOString(),
+          lastBackupStatus: 'success',
+          unsavedChangeCount: 0
+        }
+      }));
     } catch (err: any) {
       console.error('Export backup error:', err);
-      // Fallback to data URI
-      try {
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(backupStr);
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute('href', dataUri);
-        downloadAnchor.setAttribute('download', filename);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        document.body.removeChild(downloadAnchor);
-      } catch (fallbackErr) {
-        console.error('Fallback export error:', fallbackErr);
-      }
+      setState(prev => ({
+        ...prev,
+        settings: {
+          ...prev.settings,
+          lastBackupStatus: 'failed'
+        }
+      }));
       addNotification(
-        'Backup Export Notice',
-        'Database backup was prepared as cocoon_backup.json.',
-        'backup_export'
+        'Backup Export Failed',
+        err?.message || 'Failed to generate secure backup archive.',
+        'system'
       );
+      throw err;
     }
   }, [state, addNotification]);
 
-  const handleImportBackup = useCallback((jsonStr: string) => {
+  const handleImportBackup = useCallback(async (jsonStr: string, passphrase?: string) => {
     try {
-      const importedState = importBackupFromJson(jsonStr);
-      setState(importedState);
-      if (importedState.settings?.accentColor) {
-        setActiveThemeId(importedState.settings.accentColor);
+      const result = await backupArchiveService.importBackupArchive(jsonStr, passphrase);
+      setState(result.state);
+      if (result.state.settings?.accentColor) {
+        setActiveThemeId(result.state.settings.accentColor);
       }
       addNotification(
         'Backup Restored Successfully',
-        'Your offline secure database records have been fully restored from JSON.',
+        `Restored ${result.state.transactions?.length || 0} transactions and ${result.attachmentsRestored} attachments from version ${result.archiveVersion}.`,
         'backup_import'
       );
+      return true;
     } catch (err: any) {
       addNotification(
         'Restoration Failed',
-        err?.message || 'Restoration failed. Please check file formatting.',
+        err?.message || 'Restoration failed. Please check file formatting or passphrase.',
         'system'
       );
+      throw err;
     }
   }, [addNotification]);
 
   const handleUpdateSettings = useCallback(async (updates: Partial<AppSettings>) => {
     triggerHapticFeedback();
     try {
+      const sanitizedUpdates = { ...updates };
+      if (sanitizedUpdates.pinCode !== undefined) {
+        if (sanitizedUpdates.pinCode && sanitizedUpdates.pinCode.length >= 4) {
+          // Cryptographically setup the envelope and derive PBKDF2 hash
+          await keyManagementService.setupPinAndEnvelope(sanitizedUpdates.pinCode);
+          const envelope = keyManagementService.getKeyEnvelope();
+          sanitizedUpdates.isPinConfigured = true;
+          sanitizedUpdates.pinSalt = envelope?.saltHex;
+          sanitizedUpdates.pinHash = envelope?.pinHashHex;
+          delete sanitizedUpdates.pinCode;
+        } else {
+          // User removed PIN
+          keyManagementService.wipeKeys();
+          sanitizedUpdates.isPinConfigured = false;
+          sanitizedUpdates.pinSalt = undefined;
+          sanitizedUpdates.pinHash = undefined;
+          delete sanitizedUpdates.pinCode;
+        }
+      }
+
       const conn = await databaseService.getInitializedConnection();
-      await PersonalFinanceService.updateSettings(conn, updates);
+      await PersonalFinanceService.updateSettings(conn, sanitizedUpdates);
       setState(prev => ({
         ...prev,
-        settings: { ...prev.settings, ...updates }
+        settings: { ...prev.settings, ...sanitizedUpdates }
       }));
     } catch (err: any) {
       console.error('Failed to update settings:', err);
@@ -923,6 +1048,8 @@ export function useAppState() {
     isLocked,
     setIsLocked,
     enteredPin,
+    lockoutSeconds,
+    lockError,
     handlePinKeyPress,
     handlePinBackspace,
     handlePinClear,

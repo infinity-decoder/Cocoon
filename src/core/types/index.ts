@@ -77,11 +77,20 @@ export interface AppSettings {
   currencyFormat: 'symbol-amount' | 'amount-symbol';
   decimalPlaces: number;
   firstDayOfWeek: 'monday' | 'sunday';
-  pinCode?: string; // Local security PIN
+  pinCode?: string; // Legacy plaintext PIN (migrated and deleted upon first launch)
+  pinSalt?: string; // Cryptographic 16-byte salt (hex) for PBKDF2
+  pinHash?: string; // PBKDF2-HMAC-SHA256 derived hash (hex)
+  isPinConfigured?: boolean; // Secure flag indicating PIN authentication is active
   biometricsEnabled: boolean;
   accentColor: string; // Hex color code
   themeMode: 'light' | 'dark' | 'system';
   backupSchedule: BackupSchedule;
+  lastBackupTimestamp?: string;
+  lastBackupStatus?: 'success' | 'failed' | 'never';
+  lastBackupId?: string;
+  autoBackupTrigger?: 'periodic' | 'change_count' | 'both';
+  autoBackupChangeThreshold?: number;
+  unsavedChangeCount?: number;
   isFirstTime: boolean;
   vaultPassword?: string; // Persistent passcode for savings vault
   userName?: string;

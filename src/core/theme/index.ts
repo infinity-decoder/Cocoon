@@ -25,6 +25,25 @@ export interface AppTheme {
 
 export const PREBUILT_THEMES: AppTheme[] = [
   {
+    id: 'cocoon-navy',
+    name: 'Cocoon Deep Navy',
+    isDark: true,
+    background: '#101E37',
+    cardBg: '#142038',
+    primary: '#168FE0', // Electric blue
+    secondary: '#A9E547', // Distinctive lime-green active indicator
+    textPrimary: '#FFFFFF',
+    textSecondary: '#CBD5E1',
+    border: '#23334F',
+    radius: 'rounded-[24px]',
+    fontFamily: 'font-sans',
+    accentGlow: 'shadow-[0_0_20px_rgba(22,143,224,0.35)]',
+    glassmorphic: 'bg-[#142038]/90 backdrop-blur-xl border border-[#23334F]',
+    badgeBg: 'bg-[#168FE0]/15 text-[#60A5FA] border border-[#168FE0]/30',
+    iconStrokeWidth: 2,
+    iconFilled: true
+  },
+  {
     id: 'emerald',
     name: 'Emerald Dream',
     isDark: true,

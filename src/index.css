@@ -6,6 +6,34 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --font-display: "Space Grotesk", sans-serif;
   --font-serif: "Playfair Display", serif;
+
+  --color-primary-navy: #101E37;
+  --color-secondary-navy: #142038;
+  --color-elevated-navy: #20314D;
+  --color-workspace-bg: #EFF2F8;
+  --color-card-surface: #FFFFFF;
+  --color-muted-surface: #F6F8FC;
+  --color-standard-border: #DCE3ED;
+  --color-dark-border: #23334F;
+  --color-electric-blue: #168FE0;
+  --color-electric-blue-hover: #2196E8;
+  --color-soft-blue: #E6F4FD;
+  --color-active-lime: #A9E547;
+}
+
+:root {
+  --cocoon-navy-primary: #101E37;
+  --cocoon-navy-secondary: #142038;
+  --cocoon-navy-elevated: #20314D;
+  --cocoon-workspace-bg: #EFF2F8;
+  --cocoon-card-surface: #FFFFFF;
+  --cocoon-muted-surface: #F6F8FC;
+  --cocoon-border-standard: #DCE3ED;
+  --cocoon-border-dark: #23334F;
+  --cocoon-accent-blue: #168FE0;
+  --cocoon-accent-blue-hover: #2196E8;
+  --cocoon-accent-soft-blue: #E6F4FD;
+  --cocoon-active-lime: #A9E547;
 }
 
 html, body {

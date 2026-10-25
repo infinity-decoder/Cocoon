@@ -7,6 +7,7 @@ import { Capacitor } from '@capacitor/core';
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { DatabaseConnection, RunResult } from './types';
 import { COCOON_DATABASE_NAME } from './schema';
+import { keyManagementService } from '../../core/security/keyManagementService';
 
 /**
  * Adapter wrapping Capacitor SQLite plugin's SQLiteDBConnection.
@@ -639,10 +640,22 @@ export class SqliteConnectionPool {
       if (isConn.result) {
         dbConn = await this.sqlitePlugin.retrieveConnection(dbName, false);
       } else {
+        const activeDek = keyManagementService.getActiveDecryptedKey();
+        const hasEnvelope = keyManagementService.hasKeyEnvelope();
+        const isEncrypted = !!activeDek || hasEnvelope;
+
+        if (activeDek) {
+          try {
+            await this.sqlitePlugin.setEncryptionSecret(activeDek);
+          } catch (secErr) {
+            console.warn('Set encryption secret notice:', secErr);
+          }
+        }
+
         dbConn = await this.sqlitePlugin.createConnection(
           dbName,
-          false,
-          'no-encryption',
+          isEncrypted,
+          isEncrypted ? 'encryption' : 'no-encryption',
           1,
           false
         );

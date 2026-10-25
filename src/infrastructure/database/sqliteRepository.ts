@@ -267,6 +267,8 @@ export async function saveAppStateToDatabase(conn: DatabaseConnection, state: Ap
     // 7. Settings
     if (state.settings) {
       for (const [k, v] of Object.entries(state.settings)) {
+        // SECURITY POLICY: Never persist raw/plaintext PIN in app_settings database table
+        if (k === 'pinCode') continue;
         await conn.run(
           'INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)',
           [k, JSON.stringify(v)]

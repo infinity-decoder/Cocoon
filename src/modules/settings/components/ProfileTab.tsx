@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, DollarSign, Calendar, Camera, ArrowLeft, Check, Trash2, Save } from 'lucide-react';
+import { User, Mail, Phone, MapPin, DollarSign, Calendar, Camera, ArrowLeft, Check, Trash2, Save, Building2, ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { AppTheme, PREBUILT_THEMES } from '../../../core/theme';
 import { AppSettings } from '../../../core/types';
@@ -25,6 +25,9 @@ interface ProfileTabProps {
   themeBorder: string;
   themeRadius: string;
   themePrimary: string;
+  onOpenWorkspaceSelector?: () => void;
+  activeWorkspaceName?: string;
+  isBusinessMode?: boolean;
 }
 
 export default function ProfileTab({
@@ -37,7 +40,10 @@ export default function ProfileTab({
   onBack,
   themeCardBg,
   themeBorder,
-  themeRadius
+  themeRadius,
+  onOpenWorkspaceSelector,
+  activeWorkspaceName,
+  isBusinessMode
 }: ProfileTabProps) {
   const [userName, setUserName] = useState(
     settings.userName || localStorage.getItem('cocoon_username') || localStorage.getItem('finflow_username') || ''
@@ -108,23 +114,58 @@ export default function ProfileTab({
 
   return (
     <div className="w-full flex flex-col gap-5 select-none text-white">
-      {/* Top Header with Back to Home button */}
-      {onBack && (
-        <div className="flex items-center justify-between pb-1 border-b border-white/5">
+      {/* Top Header with Back to Home button & Workspace Switcher */}
+      <div className="flex items-center justify-between pb-2 border-b border-white/5 gap-2">
+        {onBack ? (
           <button
             type="button"
             onClick={() => {
               triggerHapticFeedback();
               onBack();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
           >
-            <ArrowLeft size={14} className="text-emerald-400" />
+            <ArrowLeft size={14} className="text-[#168FE0]" />
             <span>Back to Home</span>
           </button>
+        ) : (
+          <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider font-mono">
+            Profile Settings
+          </div>
+        )}
+
+        {/* Workspace Switcher Button directly on the place where text 'Preferences & Profile' was */}
+        {onOpenWorkspaceSelector ? (
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticFeedback();
+              onOpenWorkspaceSelector();
+            }}
+            className={`px-3 py-1.5 min-h-[44px] rounded-xl border flex items-center gap-2 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95 ${
+              isBusinessMode
+                ? 'bg-[#168FE0]/15 border-[#168FE0]/40 text-[#60A5FA] hover:bg-[#168FE0]/25'
+                : 'bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10'
+            }`}
+            title="Switch Workspace Context"
+          >
+            {isBusinessMode ? (
+              <Building2 size={15} className="text-[#168FE0] shrink-0" />
+            ) : (
+              <User size={15} className="text-[#A9E547] shrink-0" />
+            )}
+            <div className="flex flex-col text-left">
+              <span className="text-[8px] uppercase font-mono tracking-wider text-neutral-400">Workspace</span>
+              <span className="max-w-[110px] truncate text-xs font-bold text-white">
+                {activeWorkspaceName || 'Personal'}
+              </span>
+            </div>
+            <ChevronDown size={13} className="text-neutral-400 shrink-0" />
+          </button>
+        ) : (
           <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Preferences & Profile</span>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Visual Avatar & Profile Photo Section */}
       <div 

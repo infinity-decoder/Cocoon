@@ -20,6 +20,7 @@ import { InventoryService } from './InventoryService';
 import { convertStandardUnit } from '../../domain/inventory/InventoryItem';
 import { WorkspaceService } from './WorkspaceService';
 import { generateEntityId } from '../../domain/primitives/EntityId';
+import { auditTrailService } from './AuditTrailService';
 
 export interface SplitPaymentLine {
   method: 'cash' | 'bank' | 'card' | 'other';
@@ -825,6 +826,25 @@ export class SaleService {
         paymentMethod: input.paymentType.replace('_', ' ').toUpperCase()
       };
 
+      // Cryptographic Audit Trail Event
+      await auditTrailService.logEvent(conn, {
+        workspaceId,
+        eventType: 'SALE_POSTED',
+        actorId: input.cashierName || 'counter_cashier',
+        actorRole: 'cashier',
+        sourceEntity: 'document',
+        sourceId: docId,
+        action: 'POST_SALE',
+        summary: `POS Sale posted: ${invoiceNumber} total ${Number(totalScaled) / 10000} ${currency}`,
+        details: {
+          invoiceNumber,
+          customerName: customerDisplayName,
+          totalScaled: Number(totalScaled),
+          paidAmountScaled: Number(paidAmountScaled),
+          linesCount: validatedLines.length
+        }
+      });
+
       return {
         document: committedDoc,
         invoiceNumber,
@@ -1172,6 +1192,24 @@ export class SaleService {
         },
         linesToSave
       );
+
+      // Cryptographic Audit Trail Event
+      await auditTrailService.logEvent(conn, {
+        workspaceId,
+        eventType: 'SALES_RETURN_POSTED',
+        actorId: 'counter_cashier',
+        actorRole: 'cashier',
+        sourceEntity: 'sales_return',
+        sourceId: createdReturn.id,
+        action: 'REVERSE_DOCUMENT',
+        summary: `Sales Return processed: ${returnNumber} total ${Number(totalReturnScaled) / 10000}`,
+        details: {
+          returnNumber,
+          originalDocumentId: originalDoc.id,
+          totalScaled: Number(totalReturnScaled),
+          reason: input.reason
+        }
+      });
 
       return createdReturn;
     });

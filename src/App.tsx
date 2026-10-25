@@ -71,6 +71,8 @@ function AppContent() {
           onKeyPress={app.handlePinKeyPress}
           onBackspace={app.handlePinBackspace}
           onClear={app.handlePinClear}
+          lockoutSeconds={app.lockoutSeconds}
+          errorMessage={app.lockError}
         />
 
         {/* IN-APP ALERTS WARNING BANNER */}
@@ -107,16 +109,13 @@ function AppContent() {
           onClearAll={app.clearAllNotifications}
         />
 
-        {/* BRAND TOP BAR (Cocoon Logo & Workspace Switcher Trigger) */}
+        {/* BRAND TOP BAR */}
         <TopBar
           theme={app.activeTheme}
           hasUnreadNotifications={app.notifications.some(n => n.unread)}
-          activeWorkspaceName={ws.currentWorkspace.name}
-          isBusinessMode={ws.isBusinessMode}
           onHomeClick={() => app.setActiveTab(0)}
           onToggleNotifications={() => app.setIsNotificationsOpen(prev => !prev)}
           onOpenSidebar={() => app.setIsSidebarOpen(true)}
-          onOpenWorkspaceSelector={() => ws.setIsWorkspaceSelectorOpen(true)}
         />
 
         {/* APP MAIN VIEW BODY (Framer-motion fade layout) */}
@@ -266,6 +265,9 @@ function AppContent() {
                   themeBorder={app.activeTheme.border}
                   themeRadius={app.activeTheme.radius}
                   themePrimary={app.activeTheme.primary}
+                  onOpenWorkspaceSelector={() => ws.setIsWorkspaceSelectorOpen(true)}
+                  activeWorkspaceName={ws.currentWorkspace.name}
+                  isBusinessMode={ws.isBusinessMode}
                 />
               </motion.div>
             )}

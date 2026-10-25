@@ -12,6 +12,7 @@ import { migration005 } from './005_accounting_core_and_linked_transfers';
 import { migration006 } from './006_product_catalog_and_inventory_domain';
 import { migration007 } from './007_purchases_orders_receipts_bills';
 import { migration008 } from './008_sales_pos_returns_idempotency';
+import { migration009 } from './009_security_audit_trail_and_actor_permissions';
 
 /**
  * Immutable, ordered registry of database migrations.
@@ -26,7 +27,8 @@ export const MIGRATION_REGISTRY: readonly Migration[] = Object.freeze([
   migration005,
   migration006,
   migration007,
-  migration008
+  migration008,
+  migration009
 ]);
 
 export function getMigrationByVersion(version: number): Migration | undefined {
