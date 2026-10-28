@@ -142,18 +142,175 @@ export class JournalEntryRepository {
     );
     const totalCount = Number(countRows[0]?.count || 0);
 
-    const rows = await this.conn.query<any>(
-      `SELECT id FROM journal_entries WHERE workspace_id = ? ORDER BY entry_date DESC, entry_number DESC LIMIT ? OFFSET ?`,
+    const headerRows = await this.conn.query<any>(
+      `SELECT id, workspace_id, entry_number, entry_date, description, source_type, source_id,
+              reference_type, reference_id, status, is_posted, reversal_of_entry_id, reversed_by_entry_id,
+              reversal_reason, idempotency_key, audit_actor, created_at, updated_at
+       FROM journal_entries 
+       WHERE workspace_id = ? 
+       ORDER BY entry_date DESC, entry_number DESC, id DESC 
+       LIMIT ? OFFSET ?`,
       [workspaceId, pageSize, offset]
     );
 
-    const entries: JournalEntryWithLines[] = [];
-    for (const r of rows) {
-      const entry = await this.findById(r.id);
-      if (entry) entries.push(entry);
+    if (headerRows.length === 0) {
+      return { entries: [], totalCount };
     }
 
+    const entryIds = headerRows.map(h => h.id);
+    const placeholders = entryIds.map(() => '?').join(',');
+    const lineRows = await this.conn.query<any>(
+      `SELECT id, journal_entry_id, account_id, debit_amount_scaled, credit_amount_scaled, currency_code,
+              description, party_id, product_id, idempotency_key
+       FROM journal_lines 
+       WHERE journal_entry_id IN (${placeholders})
+       ORDER BY debit_amount_scaled DESC, id ASC`,
+      entryIds
+    );
+
+    const linesByEntryId = new Map<string, Array<JournalLineItem & { id: string }>>();
+    for (const l of lineRows) {
+      const arr = linesByEntryId.get(l.journal_entry_id) || [];
+      arr.push({
+        id: l.id,
+        accountId: l.account_id,
+        debitAmountScaled: BigInt(l.debit_amount_scaled || 0),
+        creditAmountScaled: BigInt(l.credit_amount_scaled || 0),
+        currencyCode: l.currency_code || 'PKR',
+        description: l.description,
+        partyId: l.party_id,
+        productId: l.product_id,
+        idempotencyKey: l.idempotency_key
+      });
+      linesByEntryId.set(l.journal_entry_id, arr);
+    }
+
+    const entries: JournalEntryWithLines[] = headerRows.map(e => ({
+      id: e.id,
+      workspaceId: e.workspace_id,
+      entryNumber: e.entry_number,
+      entryDate: e.entry_date,
+      description: e.description,
+      sourceType: (e.source_type as JournalSourceType) || 'manual',
+      sourceId: e.source_id,
+      referenceType: e.reference_type,
+      referenceId: e.reference_id,
+      status: (e.status as JournalStatus) || (e.is_posted ? 'posted' : 'draft'),
+      isPosted: Boolean(e.is_posted),
+      reversalOfEntryId: e.reversal_of_entry_id,
+      reversedByEntryId: e.reversed_by_entry_id,
+      reversalReason: e.reversal_reason,
+      idempotencyKey: e.idempotency_key,
+      auditActor: e.audit_actor || 'local_user',
+      createdAt: e.created_at,
+      updatedAt: e.updated_at,
+      lines: linesByEntryId.get(e.id) || []
+    }));
+
     return { entries, totalCount };
+  }
+
+  /**
+   * Keyset pagination for fast seeking across large double-entry histories.
+   */
+  public async findByWorkspaceKeyset(
+    workspaceId: string,
+    cursor?: { entryDate: string; id: string },
+    limit = 20
+  ): Promise<{
+    entries: JournalEntryWithLines[];
+    nextCursor: { entryDate: string; id: string } | null;
+    hasMore: boolean;
+  }> {
+    const fetchLimit = limit + 1;
+    let headerRows: any[];
+
+    if (cursor) {
+      headerRows = await this.conn.query<any>(
+        `SELECT id, workspace_id, entry_number, entry_date, description, source_type, source_id,
+                reference_type, reference_id, status, is_posted, reversal_of_entry_id, reversed_by_entry_id,
+                reversal_reason, idempotency_key, audit_actor, created_at, updated_at
+         FROM journal_entries
+         WHERE workspace_id = ? AND (entry_date < ? OR (entry_date = ? AND id < ?))
+         ORDER BY entry_date DESC, id DESC
+         LIMIT ?`,
+        [workspaceId, cursor.entryDate, cursor.entryDate, cursor.id, fetchLimit]
+      );
+    } else {
+      headerRows = await this.conn.query<any>(
+        `SELECT id, workspace_id, entry_number, entry_date, description, source_type, source_id,
+                reference_type, reference_id, status, is_posted, reversal_of_entry_id, reversed_by_entry_id,
+                reversal_reason, idempotency_key, audit_actor, created_at, updated_at
+         FROM journal_entries
+         WHERE workspace_id = ?
+         ORDER BY entry_date DESC, id DESC
+         LIMIT ?`,
+        [workspaceId, fetchLimit]
+      );
+    }
+
+    const hasMore = headerRows.length > limit;
+    const selectedHeaders = hasMore ? headerRows.slice(0, limit) : headerRows;
+
+    if (selectedHeaders.length === 0) {
+      return { entries: [], nextCursor: null, hasMore: false };
+    }
+
+    const entryIds = selectedHeaders.map(h => h.id);
+    const placeholders = entryIds.map(() => '?').join(',');
+    const lineRows = await this.conn.query<any>(
+      `SELECT id, journal_entry_id, account_id, debit_amount_scaled, credit_amount_scaled, currency_code,
+              description, party_id, product_id, idempotency_key
+       FROM journal_lines 
+       WHERE journal_entry_id IN (${placeholders})
+       ORDER BY debit_amount_scaled DESC, id ASC`,
+      entryIds
+    );
+
+    const linesByEntryId = new Map<string, Array<JournalLineItem & { id: string }>>();
+    for (const l of lineRows) {
+      const arr = linesByEntryId.get(l.journal_entry_id) || [];
+      arr.push({
+        id: l.id,
+        accountId: l.account_id,
+        debitAmountScaled: BigInt(l.debit_amount_scaled || 0),
+        creditAmountScaled: BigInt(l.credit_amount_scaled || 0),
+        currencyCode: l.currency_code || 'PKR',
+        description: l.description,
+        partyId: l.party_id,
+        productId: l.product_id,
+        idempotencyKey: l.idempotency_key
+      });
+      linesByEntryId.set(l.journal_entry_id, arr);
+    }
+
+    const entries: JournalEntryWithLines[] = selectedHeaders.map(e => ({
+      id: e.id,
+      workspaceId: e.workspace_id,
+      entryNumber: e.entry_number,
+      entryDate: e.entry_date,
+      description: e.description,
+      sourceType: (e.source_type as JournalSourceType) || 'manual',
+      sourceId: e.source_id,
+      referenceType: e.reference_type,
+      referenceId: e.reference_id,
+      status: (e.status as JournalStatus) || (e.is_posted ? 'posted' : 'draft'),
+      isPosted: Boolean(e.is_posted),
+      reversalOfEntryId: e.reversal_of_entry_id,
+      reversedByEntryId: e.reversed_by_entry_id,
+      reversalReason: e.reversal_reason,
+      idempotencyKey: e.idempotency_key,
+      auditActor: e.audit_actor || 'local_user',
+      createdAt: e.created_at,
+      updatedAt: e.updated_at,
+      lines: linesByEntryId.get(e.id) || []
+    }));
+
+    const nextCursor = hasMore && entries.length > 0
+      ? { entryDate: entries[entries.length - 1].entryDate, id: entries[entries.length - 1].id }
+      : null;
+
+    return { entries, nextCursor, hasMore };
   }
 
   public async createWithLines(

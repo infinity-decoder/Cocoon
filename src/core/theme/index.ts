@@ -23,10 +23,70 @@ export interface AppTheme {
   iconFilled: boolean;
 }
 
+export const COCOON_PALETTE = {
+  // Primary brand palette requested
+  contessa: '#C67764',
+  wispPink: '#FDF2F3',
+  ebony: '#0D1726',
+  cinnabar: '#E74425',
+  doubleSpanishWhite: '#E5CFB4',
+  asphalt: '#191009',
+  digikhataNavy: '#111F49',
+  white: '#FFFFFF',
+  charcoal: '#26282A',
+  spanishGray: '#9E9FA0',
+
+  // Harmonious orange tints and elevated tones
+  tangerineGlow: '#FF6B4A',
+  amberCinnabar: '#F25835',
+  warmSand: '#EFE0CD',
+  deepTerracotta: '#A34F3D',
+  elevatedNavy: '#172758',
+  softNavyBorder: 'rgba(198, 119, 100, 0.22)'
+} as const;
+
 export const PREBUILT_THEMES: AppTheme[] = [
   {
+    id: 'cocoon',
+    name: 'Cocoon Flagship',
+    isDark: true,
+    background: '#0D1726', // Ebony
+    cardBg: '#111F49', // DigiKhata Navy
+    primary: '#E74425', // Cinnabar (punchy warm orange)
+    secondary: '#C67764', // Contessa (warm terracotta)
+    textPrimary: '#FFFFFF', // White
+    textSecondary: '#9E9FA0', // Spanish Gray
+    border: 'rgba(198, 119, 100, 0.22)', // Contessa-tinted soft border
+    radius: 'rounded-[24px]',
+    fontFamily: 'font-sans',
+    accentGlow: 'shadow-[0_0_24px_rgba(231,68,37,0.35)]',
+    glassmorphic: 'bg-[#111F49]/90 backdrop-blur-xl border border-[#C67764]/25',
+    badgeBg: 'bg-[#E74425]/15 text-[#FF6B4A] border border-[#E74425]/30',
+    iconStrokeWidth: 2,
+    iconFilled: true
+  },
+  {
+    id: 'cocoon-light',
+    name: 'Cocoon Light Canvas',
+    isDark: false,
+    background: '#FDF2F3', // Wisp Pink
+    cardBg: '#FFFFFF', // Pure White
+    primary: '#E74425', // Cinnabar
+    secondary: '#C67764', // Contessa
+    textPrimary: '#0D1726', // Ebony
+    textSecondary: '#9E9FA0', // Spanish Gray
+    border: 'rgba(198, 119, 100, 0.2)',
+    radius: 'rounded-[24px]',
+    fontFamily: 'font-sans',
+    accentGlow: 'shadow-[0_4px_20px_rgba(231,68,37,0.15)]',
+    glassmorphic: 'bg-white/90 backdrop-blur-xl border border-[#E5CFB4]/60',
+    badgeBg: 'bg-[#E74425]/10 text-[#E74425] border border-[#E74425]/20',
+    iconStrokeWidth: 2,
+    iconFilled: false
+  },
+  {
     id: 'cocoon-navy',
-    name: 'Cocoon Deep Navy',
+    name: 'Cocoon Classic Navy',
     isDark: true,
     background: '#101E37',
     cardBg: '#142038',

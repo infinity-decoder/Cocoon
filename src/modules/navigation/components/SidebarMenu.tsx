@@ -99,11 +99,11 @@ export default function SidebarMenu({
               style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
             >
               {/* Drawer Header */}
-              <div className="p-5 border-b flex justify-between items-center bg-[#142038]" style={{ borderColor: '#23334F' }}>
+              <div className="p-5 border-b flex justify-between items-center" style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#A9E547] shadow-[0_0_6px_#A9E547]" />
-                    <span className="text-[10px] font-mono tracking-widest text-[#A9E547] font-bold uppercase">Cocoon Navigation</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E74425] shadow-[0_0_6px_#E74425]" />
+                    <span className="text-[10px] font-mono tracking-widest text-[#E74425] font-bold uppercase">Cocoon Navigation</span>
                   </div>
                   <span className="text-base font-black tracking-tight text-white mt-1">Control Menu</span>
                 </div>
@@ -120,7 +120,7 @@ export default function SidebarMenu({
               </div>
 
               {/* Navigation Items List */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-none bg-[#101E37]">
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-none" style={{ backgroundColor: '#0D1726' }}>
                 {/* Manage Business Workspace entry */}
                 {onOpenBusinessManagement && (
                   <button
@@ -131,20 +131,20 @@ export default function SidebarMenu({
                     }}
                     className={`w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border ${
                       isBusinessMode
-                        ? 'bg-[#168FE0]/15 border-[#168FE0]/40 text-white shadow-sm'
-                        : 'bg-white/[0.04] border-white/5 hover:bg-[#20314D] text-neutral-200 hover:text-white'
+                        ? 'bg-[#E74425]/15 border-[#E74425]/40 text-white shadow-sm'
+                        : 'bg-white/[0.04] border-white/5 hover:bg-[#111F49] text-neutral-200 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2.5 rounded-xl bg-[#168FE0]/20 text-[#60A5FA] border border-[#168FE0]/30 group-hover:scale-105 transition-transform">
+                      <div className="p-2.5 rounded-xl bg-[#E74425]/20 text-[#E74425] border border-[#E74425]/30 group-hover:scale-105 transition-transform">
                         <Building2 size={16} />
                       </div>
                       <div className="flex flex-col text-left">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-bold">Manage Business</span>
                           {isBusinessMode && (
-                            <span className="flex items-center gap-1 text-[8px] font-mono px-1.5 py-0.5 rounded-full bg-[#A9E547]/20 text-[#A9E547] border border-[#A9E547]/40 font-bold">
-                              <span className="w-1 h-1 rounded-full bg-[#A9E547]" />
+                            <span className="flex items-center gap-1 text-[8px] font-mono px-1.5 py-0.5 rounded-full bg-[#E74425]/20 text-[#E74425] border border-[#E74425]/40 font-bold">
+                              <span className="w-1 h-1 rounded-full bg-[#E74425]" />
                               Active
                             </span>
                           )}
@@ -155,7 +155,7 @@ export default function SidebarMenu({
                       </div>
                     </div>
                     {isBusinessMode ? (
-                      <div className="w-1.5 h-6 rounded-full bg-[#A9E547] shadow-[0_0_8px_#A9E547]" />
+                      <div className="w-1.5 h-6 rounded-full bg-[#E74425] shadow-[0_0_8px_#E74425]" />
                     ) : (
                       <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
                     )}
@@ -168,10 +168,10 @@ export default function SidebarMenu({
                     onClose();
                     onOpenLedger();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#20314D] active:bg-[#20314D]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-105 transition-transform">
+                    <div className="p-2 rounded-xl bg-[#C67764]/15 text-[#E5CFB4] border border-[#C67764]/25 group-hover:scale-105 transition-transform">
                       <ClipboardList size={16} />
                     </div>
                     <div className="flex flex-col text-left">
@@ -188,10 +188,10 @@ export default function SidebarMenu({
                     onClose();
                     onOpenSavings();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#20314D] active:bg-[#20314D]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:scale-105 transition-transform">
+                    <div className="p-2.5 rounded-xl bg-[#E74425]/15 text-[#E74425] border border-[#E74425]/25 group-hover:scale-105 transition-transform">
                       <Vault size={16} />
                     </div>
                     <div className="flex flex-col text-left">
@@ -208,10 +208,10 @@ export default function SidebarMenu({
                     onClose();
                     onOpenCategories();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#20314D] active:bg-[#20314D]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-[#A9E547]/10 text-[#A9E547] border border-[#A9E547]/20 group-hover:scale-105 transition-transform">
+                    <div className="p-2.5 rounded-xl bg-[#C67764]/15 text-[#C67764] border border-[#C67764]/25 group-hover:scale-105 transition-transform">
                       <Tag size={16} />
                     </div>
                     <div className="flex flex-col text-left">
@@ -228,10 +228,10 @@ export default function SidebarMenu({
                     onClose();
                     onOpenSettings();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#20314D] active:bg-[#20314D]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-transform">
+                    <div className="p-2.5 rounded-xl bg-[#E5CFB4]/15 text-[#E5CFB4] border border-[#E5CFB4]/25 group-hover:scale-105 transition-transform">
                       <Settings size={16} />
                     </div>
                     <div className="flex flex-col text-left">
@@ -248,7 +248,7 @@ export default function SidebarMenu({
                     onClose();
                     onOpenHelp();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#20314D] active:bg-[#20314D]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 group-hover:scale-105 transition-transform">
@@ -264,9 +264,9 @@ export default function SidebarMenu({
               </div>
 
               {/* Sidebar Footer */}
-              <div className="p-4 border-t flex flex-col gap-2 bg-[#142038]" style={{ borderColor: '#23334F' }}>
+              <div className="p-4 border-t flex flex-col gap-2" style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
                 <div className="flex items-center gap-2 text-neutral-400 text-[10px] font-mono">
-                  <ShieldCheck size={14} className="text-[#A9E547]" />
+                  <ShieldCheck size={14} className="text-[#E74425]" />
                   <span>100% Offline Encrypted</span>
                 </div>
                 <div id="app-version" className="text-[8px] text-neutral-500 font-mono">

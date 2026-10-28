@@ -474,6 +474,108 @@ export class ProductRepository {
     };
   }
 
+  /**
+   * Single-roundtrip indexed barcode lookup joining product_barcodes and products directly.
+   * Leverages idx_barcodes_ws_norm_covering and primary key index for sub-millisecond resolution.
+   */
+  public async lookupBarcodeDirect(
+    workspaceId: string,
+    scannedBarcode: string
+  ): Promise<{
+    product: ProductRecord;
+    barcodeRecord: ProductBarcodeRecord;
+    packagingUnit: string;
+    conversionFactor: number;
+    unitPriceScaled: bigint;
+  } | null> {
+    const normalized = scannedBarcode.trim().toUpperCase();
+
+    // 1. Single roundtrip indexed join
+    const rows = await this.conn.query<any>(
+      `SELECT 
+         p.*,
+         b.id AS b_id,
+         b.packaging_unit AS b_packaging_unit,
+         b.conversion_factor AS b_conversion_factor,
+         b.price_scaled AS b_price_scaled,
+         b.is_primary AS b_is_primary,
+         b.barcode AS b_barcode,
+         b.normalized_barcode AS b_normalized_barcode,
+         b.notes AS b_notes,
+         b.created_at AS b_created_at,
+         b.updated_at AS b_updated_at
+       FROM product_barcodes b
+       JOIN products p ON p.id = b.product_id
+       WHERE b.workspace_id = ? AND b.normalized_barcode = ? AND p.is_archived = 0
+       LIMIT 1`,
+      [workspaceId, normalized]
+    );
+
+    if (rows.length > 0) {
+      const r = rows[0];
+      const product = this.mapRow(r);
+      const barcodeRecord: ProductBarcodeRecord = {
+        id: r.b_id,
+        workspaceId,
+        productId: product.id,
+        barcode: r.b_barcode,
+        normalizedBarcode: r.b_normalized_barcode,
+        packagingUnit: r.b_packaging_unit,
+        conversionFactor: Number(r.b_conversion_factor),
+        priceScaled: r.b_price_scaled != null ? BigInt(r.b_price_scaled) : null,
+        isPrimary: Boolean(r.b_is_primary),
+        notes: r.b_notes,
+        createdAt: r.b_created_at,
+        updatedAt: r.b_updated_at
+      };
+
+      const unitPriceScaled = barcodeRecord.priceScaled !== undefined && barcodeRecord.priceScaled !== null
+        ? barcodeRecord.priceScaled
+        : product.salePriceScaled;
+
+      return {
+        product,
+        barcodeRecord,
+        packagingUnit: barcodeRecord.packagingUnit,
+        conversionFactor: barcodeRecord.conversionFactor,
+        unitPriceScaled
+      };
+    }
+
+    // 2. Direct fallback on products table using idx_products_ws_barcode
+    const directRows = await this.conn.query<any>(
+      `SELECT * FROM products WHERE workspace_id = ? AND barcode = ? AND is_archived = 0 LIMIT 1`,
+      [workspaceId, scannedBarcode.trim()]
+    );
+
+    if (directRows.length > 0) {
+      const product = this.mapRow(directRows[0]);
+      const virtualBarcodeRecord: ProductBarcodeRecord = {
+        id: `pbc_virtual_${product.id}`,
+        workspaceId,
+        productId: product.id,
+        barcode: product.barcode || scannedBarcode,
+        normalizedBarcode: normalized,
+        packagingUnit: product.unit,
+        conversionFactor: 1.0,
+        priceScaled: product.salePriceScaled,
+        isPrimary: true,
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt
+      };
+
+      return {
+        product,
+        barcodeRecord: virtualBarcodeRecord,
+        packagingUnit: product.unit,
+        conversionFactor: 1.0,
+        unitPriceScaled: product.salePriceScaled
+      };
+    }
+
+    return null;
+  }
+
   public async deleteBarcode(id: string): Promise<void> {
     await this.conn.run(`DELETE FROM product_barcodes WHERE id = ?`, [id]);
   }

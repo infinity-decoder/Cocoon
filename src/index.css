@@ -7,33 +7,59 @@
   --font-display: "Space Grotesk", sans-serif;
   --font-serif: "Playfair Display", serif;
 
-  --color-primary-navy: #101E37;
-  --color-secondary-navy: #142038;
-  --color-elevated-navy: #20314D;
-  --color-workspace-bg: #EFF2F8;
-  --color-card-surface: #FFFFFF;
-  --color-muted-surface: #F6F8FC;
-  --color-standard-border: #DCE3ED;
-  --color-dark-border: #23334F;
-  --color-electric-blue: #168FE0;
-  --color-electric-blue-hover: #2196E8;
-  --color-soft-blue: #E6F4FD;
-  --color-active-lime: #A9E547;
+  /* Flagship Cocoon Brand Tokens */
+  --color-cocoon-ebony: #0D1726;
+  --color-cocoon-navy: #111F49;
+  --color-cocoon-elevated: #172758;
+  --color-cocoon-cinnabar: #E74425;
+  --color-cocoon-contessa: #C67764;
+  --color-cocoon-sand: #E5CFB4;
+  --color-cocoon-asphalt: #191009;
+  --color-cocoon-wisp: #FDF2F3;
+  --color-cocoon-charcoal: #26282A;
+  --color-cocoon-gray: #9E9FA0;
+  --color-cocoon-tangerine: #FF6B4A;
+
+  /* App Canvas & Card Tokens */
+  --color-primary-navy: #0D1726;
+  --color-secondary-navy: #111F49;
+  --color-elevated-navy: #172758;
+  --color-workspace-bg: #0D1726;
+  --color-card-surface: #111F49;
+  --color-muted-surface: #191009;
+  --color-standard-border: rgba(198, 119, 100, 0.22);
+  --color-dark-border: #23335A;
+  --color-electric-blue: #E74425;
+  --color-electric-blue-hover: #FF6B4A;
+  --color-soft-blue: #FDF2F3;
+  --color-active-lime: #E74425;
 }
 
 :root {
-  --cocoon-navy-primary: #101E37;
-  --cocoon-navy-secondary: #142038;
-  --cocoon-navy-elevated: #20314D;
-  --cocoon-workspace-bg: #EFF2F8;
-  --cocoon-card-surface: #FFFFFF;
-  --cocoon-muted-surface: #F6F8FC;
-  --cocoon-border-standard: #DCE3ED;
-  --cocoon-border-dark: #23334F;
-  --cocoon-accent-blue: #168FE0;
-  --cocoon-accent-blue-hover: #2196E8;
-  --cocoon-accent-soft-blue: #E6F4FD;
-  --cocoon-active-lime: #A9E547;
+  --cocoon-ebony: #0D1726;
+  --cocoon-navy: #111F49;
+  --cocoon-elevated: #172758;
+  --cocoon-cinnabar: #E74425;
+  --cocoon-contessa: #C67764;
+  --cocoon-sand: #E5CFB4;
+  --cocoon-asphalt: #191009;
+  --cocoon-wisp: #FDF2F3;
+  --cocoon-charcoal: #26282A;
+  --cocoon-gray: #9E9FA0;
+  --cocoon-tangerine: #FF6B4A;
+
+  --cocoon-navy-primary: #0D1726;
+  --cocoon-navy-secondary: #111F49;
+  --cocoon-navy-elevated: #172758;
+  --cocoon-workspace-bg: #0D1726;
+  --cocoon-card-surface: #111F49;
+  --cocoon-muted-surface: #191009;
+  --cocoon-border-standard: rgba(198, 119, 100, 0.22);
+  --cocoon-border-dark: #23335A;
+  --cocoon-accent-blue: #E74425;
+  --cocoon-accent-blue-hover: #FF6B4A;
+  --cocoon-accent-soft-blue: #FDF2F3;
+  --cocoon-active-lime: #E74425;
 }
 
 html, body {

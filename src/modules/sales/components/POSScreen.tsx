@@ -58,7 +58,9 @@ export function POSScreen({
 }: POSScreenProps) {
   // Products & Filter state
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [productsList, setProductsList] = useState<ProductRecord[]>(initialProducts);
+  const [visibleProductCount, setVisibleProductCount] = useState(30);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
 
@@ -96,6 +98,15 @@ export function POSScreen({
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
+  // Debounce search query to prevent typing lag and database lock churn
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setVisibleProductCount(30);
+    }, 200);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   // Filter customers
   const customers = useMemo(() => {
     return parties.filter(p => (p.type === 'customer' || p.type === 'both') && p.isActive);
@@ -114,31 +125,44 @@ export function POSScreen({
     return accounts.filter(a => a.accountCode === '1020' || a.subCategory === 'bank');
   }, [accounts]);
 
-  // Load / search products from database
-  const loadProducts = useCallback(async (query: string) => {
-    try {
-      const pool = SqliteConnectionPool.getInstance();
-      const conn = await pool.getConnection();
-      const results = await SaleService.searchProductsForPOS(conn, workspaceId, query);
-      setProductsList(results);
-    } catch {
-      // Fallback to in-memory filter
-      if (!query.trim()) {
-        setProductsList(initialProducts);
-      } else {
-        const q = query.toLowerCase();
-        setProductsList(initialProducts.filter(p => 
-          p.name.toLowerCase().includes(q) ||
-          p.sku?.toLowerCase().includes(q) ||
-          p.barcode?.toLowerCase().includes(q)
-        ));
-      }
-    }
-  }, [workspaceId, initialProducts]);
-
+  // Load / search products from database with stale request cancellation guard
   useEffect(() => {
-    loadProducts(searchQuery);
-  }, [searchQuery, loadProducts]);
+    let isStale = false;
+    const fetchCatalog = async () => {
+      try {
+        const pool = SqliteConnectionPool.getInstance();
+        const conn = await pool.getConnection();
+        const results = await SaleService.searchProductsForPOS(conn, workspaceId, debouncedSearchQuery);
+        if (!isStale) {
+          setProductsList(results);
+        }
+      } catch {
+        if (!isStale) {
+          // Fallback to in-memory filter
+          if (!debouncedSearchQuery.trim()) {
+            setProductsList(initialProducts);
+          } else {
+            const q = debouncedSearchQuery.toLowerCase();
+            setProductsList(initialProducts.filter(p => 
+              p.name.toLowerCase().includes(q) ||
+              p.sku?.toLowerCase().includes(q) ||
+              p.barcode?.toLowerCase().includes(q)
+            ));
+          }
+        }
+      }
+    };
+
+    fetchCatalog();
+    return () => {
+      isStale = true;
+    };
+  }, [debouncedSearchQuery, workspaceId, initialProducts]);
+
+  // Windowed visible catalog slice for high-volume responsiveness
+  const displayedProducts = useMemo(() => {
+    return productsList.slice(0, visibleProductCount);
+  }, [productsList, visibleProductCount]);
 
   // Hardware wedge scanner integration (laser & bluetooth handheld barcode guns)
   useEffect(() => {
@@ -527,44 +551,58 @@ export function POSScreen({
                 No products found matching "{searchQuery}".
               </div>
             ) : (
-              productsList.map(prod => {
-                const isOutOfStock = prod.currentStockQuantity <= 0;
-                return (
-                  <div
-                    key={prod.id}
-                    onClick={() => addProductToCart(prod)}
-                    className="p-3 bg-neutral-950/50 hover:bg-white/5 border border-white/5 hover:border-blue-500/30 rounded-xl flex items-center justify-between transition-all cursor-pointer group"
+              <>
+                {displayedProducts.map(prod => {
+                  const isOutOfStock = prod.currentStockQuantity <= 0;
+                  return (
+                    <div
+                      key={prod.id}
+                      onClick={() => addProductToCart(prod)}
+                      className="p-3 bg-neutral-950/50 hover:bg-white/5 border border-white/5 hover:border-blue-500/30 rounded-xl flex items-center justify-between transition-all cursor-pointer group"
+                    >
+                      <div className="flex flex-col gap-0.5 text-left">
+                        <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">
+                          {prod.name}
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-neutral-400 font-mono">
+                          {prod.sku && <span>SKU: {prod.sku}</span>}
+                          {prod.barcode && <span>BAR: {prod.barcode}</span>}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="text-xs font-bold text-white font-mono">
+                            {currencySymbol} {formatScaled(prod.salePriceScaled)}
+                          </div>
+                          <div className={`text-[10px] font-mono ${isOutOfStock ? 'text-rose-400' : 'text-neutral-500'}`}>
+                            {prod.currentStockQuantity} {prod.unit}
+                          </div>
+                        </div>
+
+                        <button
+                          className="p-1.5 rounded-lg bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all cursor-pointer"
+                          title="Add to cart"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {productsList.length > visibleProductCount && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHapticFeedback();
+                      setVisibleProductCount(prev => prev + 30);
+                    }}
+                    className="w-full py-2.5 bg-neutral-800/80 hover:bg-neutral-700/80 active:bg-neutral-700 border border-white/10 rounded-xl text-xs font-bold text-neutral-300 transition-all cursor-pointer shadow-sm"
                   >
-                    <div className="flex flex-col gap-0.5 text-left">
-                      <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">
-                        {prod.name}
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-neutral-400 font-mono">
-                        {prod.sku && <span>SKU: {prod.sku}</span>}
-                        {prod.barcode && <span>BAR: {prod.barcode}</span>}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-xs font-bold text-white font-mono">
-                          {currencySymbol} {formatScaled(prod.salePriceScaled)}
-                        </div>
-                        <div className={`text-[10px] font-mono ${isOutOfStock ? 'text-rose-400' : 'text-neutral-500'}`}>
-                          {prod.currentStockQuantity} {prod.unit}
-                        </div>
-                      </div>
-
-                      <button
-                        className="p-1.5 rounded-lg bg-blue-600/20 text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all cursor-pointer"
-                        title="Add to cart"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
+                    Load More Products ({productsList.length - visibleProductCount} remaining)
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

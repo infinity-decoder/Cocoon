@@ -39,10 +39,10 @@ export default function NetBalanceCard({
         {/* Animated privacy eye button */}
         <button
           onClick={onToggleReveal}
-          className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 active:scale-95 transition-all text-emerald-400 cursor-pointer flex items-center justify-center"
+          className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
         >
           {balanceRevealed ? (
-            <Eye size={16} className="text-emerald-400 transition-transform" />
+            <Eye size={16} style={{ color: theme.primary }} className="transition-transform" />
           ) : (
             <EyeOff size={16} className="text-neutral-400 animate-pulse transition-transform" />
           )}
@@ -59,7 +59,10 @@ export default function NetBalanceCard({
               exit={{ opacity: 0, y: 5 }}
               className="flex items-baseline gap-1.5"
             >
-              <span className={`text-3xl font-black font-mono tracking-tight ${netBalance >= 0 ? 'text-teal-400' : 'text-rose-400'}`}>
+              <span 
+                className={`text-3xl font-black font-mono tracking-tight ${netBalance < 0 ? 'text-rose-400' : ''}`}
+                style={{ color: netBalance >= 0 ? theme.primary : undefined }}
+              >
                 {currencySymbol} {netBalance.toLocaleString()}
               </span>
             </motion.div>

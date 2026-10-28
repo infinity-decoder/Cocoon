@@ -9,7 +9,14 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "test:unit": "tsx --test src/domain/**/*.test.ts src/core/**/*.test.ts",
+    "test:accounting": "tsx --test src/application/services/AccountingCoreAndTransfers.test.ts src/application/services/FinancialCalculationService.test.ts src/application/services/PartyKhataService.test.ts",
+    "test:migrations": "tsx --test src/infrastructure/database/migrations/MigrationService.test.ts src/infrastructure/database/migrationRunner.test.ts",
+    "test:backups": "tsx --test src/infrastructure/storage/BackupArchiveService.test.ts",
+    "test:benchmarks": "tsx --test src/infrastructure/database/benchmarks/highVolumePerformance.test.ts",
+    "verify:secrets": "node scripts/scan-secrets.mjs",
+    "verify:pipeline": "npm run verify:secrets && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
     "@capacitor-community/sqlite": "^8.1.1",

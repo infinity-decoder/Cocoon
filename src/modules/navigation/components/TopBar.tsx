@@ -46,7 +46,10 @@ export default function TopBar({
         >
           <Bell size={18} />
           {hasUnreadNotifications && (
-            <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-[#A9E547] animate-pulse border border-[#101E37]" />
+            <div 
+              className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full animate-pulse border shadow-sm" 
+              style={{ backgroundColor: theme.primary, borderColor: theme.background }} 
+            />
           )}
         </button>
 

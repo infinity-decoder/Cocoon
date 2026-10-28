@@ -25,6 +25,7 @@ interface ProfileTabProps {
   themeBorder: string;
   themeRadius: string;
   themePrimary: string;
+  themeSecondary?: string;
   onOpenWorkspaceSelector?: () => void;
   activeWorkspaceName?: string;
   isBusinessMode?: boolean;
@@ -41,6 +42,8 @@ export default function ProfileTab({
   themeCardBg,
   themeBorder,
   themeRadius,
+  themePrimary = '#E74425',
+  themeSecondary = '#C67764',
   onOpenWorkspaceSelector,
   activeWorkspaceName,
   isBusinessMode
@@ -125,7 +128,7 @@ export default function ProfileTab({
             }}
             className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
           >
-            <ArrowLeft size={14} className="text-[#168FE0]" />
+            <ArrowLeft size={14} style={{ color: themePrimary }} />
             <span>Back to Home</span>
           </button>
         ) : (
@@ -144,15 +147,24 @@ export default function ProfileTab({
             }}
             className={`px-3 py-1.5 min-h-[44px] rounded-xl border flex items-center gap-2 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95 ${
               isBusinessMode
-                ? 'bg-[#168FE0]/15 border-[#168FE0]/40 text-[#60A5FA] hover:bg-[#168FE0]/25'
+                ? 'hover:opacity-90'
                 : 'bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10'
             }`}
+            style={
+              isBusinessMode
+                ? {
+                    backgroundColor: `${themePrimary}20`,
+                    borderColor: `${themePrimary}50`,
+                    color: themePrimary
+                  }
+                : undefined
+            }
             title="Switch Workspace Context"
           >
             {isBusinessMode ? (
-              <Building2 size={15} className="text-[#168FE0] shrink-0" />
+              <Building2 size={15} style={{ color: themePrimary }} className="shrink-0" />
             ) : (
-              <User size={15} className="text-[#A9E547] shrink-0" />
+              <User size={15} style={{ color: themeSecondary || themePrimary }} className="shrink-0" />
             )}
             <div className="flex flex-col text-left">
               <span className="text-[8px] uppercase font-mono tracking-wider text-neutral-400">Workspace</span>
@@ -312,40 +324,53 @@ export default function ProfileTab({
         </form>
       </div>
 
-      {/* DYNAMIC ACCENT / PRE-BUILT MATERIAL 3 THEMING GRID */}
+      {/* DYNAMIC ACCENT / PRE-BUILT THEMES GRID */}
       <div className="flex flex-col gap-2.5">
         <span className="text-xs font-semibold tracking-wider opacity-60 uppercase px-1 text-left">
-          Material 3 Themes
+          Cocoon Themes & Palettes
         </span>
-        <div className="grid grid-cols-5 gap-2.5">
-          {PREBUILT_THEMES.map(theme => {
-            const isSelected = activeThemeId === theme.id;
+        <div className="grid grid-cols-4 gap-2.5">
+          {PREBUILT_THEMES.map(t => {
+            const isSelected = activeThemeId === t.id;
             return (
               <motion.button
-                key={theme.id}
+                key={t.id}
                 whileTap={{ scale: 0.93 }}
                 onClick={() => {
-                  onSelectTheme(theme.id);
+                  onSelectTheme(t.id);
                   triggerHapticFeedback();
                 }}
-                className={`relative p-2 h-20 flex flex-col items-center justify-between border rounded-xl cursor-pointer ${
-                  isSelected ? 'ring-2 ring-emerald-400 border-transparent shadow-xl' : 'border-white/5 bg-white/2'
+                className={`relative p-2 h-22 flex flex-col items-center justify-between border rounded-xl cursor-pointer transition-all ${
+                  isSelected ? 'border-transparent shadow-xl scale-[1.02]' : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]'
                 }`}
+                style={
+                  isSelected 
+                    ? { outline: `2px solid ${t.primary}`, boxShadow: `0 0 16px ${t.primary}50`, backgroundColor: `${t.primary}12` } 
+                    : undefined
+                }
               >
                 {/* Background swatch preview inside card */}
                 <div 
-                  className="w-full h-8 rounded-lg border border-white/10 flex items-center justify-center relative overflow-hidden"
-                  style={{ backgroundColor: theme.background }}
+                  className="w-full h-8 rounded-lg border border-white/15 flex items-center justify-center relative overflow-hidden"
+                  style={{ backgroundColor: t.background }}
                 >
-                  <div className="w-2 h-2 rounded-full absolute" style={{ backgroundColor: theme.primary }} />
+                  <div 
+                    className="w-5 h-4 rounded-sm border border-white/20 flex items-center justify-center" 
+                    style={{ backgroundColor: t.cardBg }}
+                  >
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.primary }} />
+                  </div>
                 </div>
 
-                <span className="text-[8px] font-bold tracking-tight text-center text-neutral-300 truncate w-full">
-                  {theme.name.split(' ')[0]}
+                <span className="text-[9px] font-bold tracking-tight text-center text-neutral-200 truncate w-full mt-1">
+                  {t.name.replace('Cocoon ', '')}
                 </span>
 
                 {isSelected && (
-                  <div className="absolute top-1 right-1 bg-emerald-500 rounded-full p-0.5 text-white">
+                  <div 
+                    className="absolute top-1 right-1 rounded-full p-0.5 text-white shadow-sm"
+                    style={{ backgroundColor: t.primary }}
+                  >
                     <Check size={8} strokeWidth={4} />
                   </div>
                 )}

@@ -35,11 +35,11 @@ export default function LockScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-[#101E37] z-[99] flex flex-col justify-between p-8 text-white select-none"
+          className="absolute inset-0 bg-[#0D1726] z-[99] flex flex-col justify-between p-8 text-white select-none"
         >
           <div className="flex flex-col items-center mt-8 gap-2 text-center">
             <div className={`p-4 rounded-full border transition-all ${
-              isLockedOut ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-white/5 border-white/10 text-[#168FE0]'
+              isLockedOut ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-[#E74425]/15 border-[#E74425]/30 text-[#E74425]'
             }`}>
               <Lock size={32} className={isLockedOut ? 'animate-bounce' : 'animate-pulse'} />
             </div>
@@ -71,7 +71,7 @@ export default function LockScreen({
                     isLockedOut
                       ? 'border-neutral-700 bg-neutral-800'
                       : enteredPin.length > idx
-                        ? 'bg-[#168FE0] border-[#168FE0] scale-125 shadow-[0_0_10px_#168FE0]'
+                        ? 'bg-[#E74425] border-[#E74425] scale-125 shadow-[0_0_12px_#E74425]'
                         : 'border-white/30 bg-transparent'
                   }`} 
                 />

@@ -475,6 +475,7 @@ export class InventoryService {
 
   /**
    * Fast indexed barcode lookup returning the product, package unit, conversion factor, and price.
+   * Utilizes direct indexed join and covering index (sub-millisecond resolution).
    */
   public static async lookupBarcode(
     conn: DatabaseConnection,
@@ -482,61 +483,7 @@ export class InventoryService {
     scannedBarcode: string
   ): Promise<BarcodeLookupResult | null> {
     const repo = new ProductRepository(conn);
-    const normalized = scannedBarcode.trim().toUpperCase();
-
-    // 1. Direct barcode lookup in product_barcodes table
-    const barcodeRecord = await repo.findByNormalizedBarcode(workspaceId, normalized);
-    if (barcodeRecord) {
-      const product = await repo.findById(barcodeRecord.productId);
-      if (product && product.isActive) {
-        const unitPriceScaled = barcodeRecord.priceScaled !== undefined && barcodeRecord.priceScaled !== null
-          ? barcodeRecord.priceScaled
-          : product.salePriceScaled;
-
-        return {
-          product,
-          barcodeRecord,
-          packagingUnit: barcodeRecord.packagingUnit,
-          conversionFactor: barcodeRecord.conversionFactor,
-          unitPriceScaled
-        };
-      }
-    }
-
-    // 2. Fallback: check if barcode matches products.barcode directly
-    const directRows = await conn.query<any>(
-      `SELECT * FROM products WHERE workspace_id = ? AND UPPER(barcode) = ? AND is_archived = 0 LIMIT 1`,
-      [workspaceId, normalized]
-    );
-
-    if (directRows.length > 0) {
-      const product = await repo.findById(directRows[0].id);
-      if (product) {
-        const virtualBarcodeRecord: ProductBarcodeRecord = {
-          id: `pbc_virtual_${product.id}`,
-          workspaceId,
-          productId: product.id,
-          barcode: product.barcode || scannedBarcode,
-          normalizedBarcode: normalized,
-          packagingUnit: product.unit,
-          conversionFactor: 1.0,
-          priceScaled: product.salePriceScaled,
-          isPrimary: true,
-          createdAt: product.createdAt,
-          updatedAt: product.updatedAt
-        };
-
-        return {
-          product,
-          barcodeRecord: virtualBarcodeRecord,
-          packagingUnit: product.unit,
-          conversionFactor: 1.0,
-          unitPriceScaled: product.salePriceScaled
-        };
-      }
-    }
-
-    return null;
+    return await repo.lookupBarcodeDirect(workspaceId, scannedBarcode);
   }
 
   /**

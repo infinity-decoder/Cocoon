@@ -46,7 +46,7 @@ export function useAppState() {
 
   // 2. Active Theme
   const [activeThemeId, setActiveThemeId] = useState<string>(() => {
-    return localStorage.getItem('cocoon_theme_id') || localStorage.getItem('finflow_theme_id') || 'cocoon-navy';
+    return localStorage.getItem('cocoon_theme_id') || localStorage.getItem('finflow_theme_id') || 'cocoon';
   });
 
   const activeTheme: AppTheme = useMemo(() => {

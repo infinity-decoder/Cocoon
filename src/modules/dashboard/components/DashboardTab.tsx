@@ -72,7 +72,8 @@ export default function DashboardTab({
             triggerHapticFeedback();
             onToggleDashboardView();
           }}
-          className="text-[9px] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/5 font-mono"
+          className="text-[9px] font-black uppercase tracking-widest transition-colors cursor-pointer bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/5 font-mono hover:bg-white/10"
+          style={{ color: theme.primary }}
         >
           {dashboardToggle === 'expense' ? 'Show Income' : 'Show Expense'}
         </button>
