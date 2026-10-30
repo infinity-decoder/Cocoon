@@ -4,9 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, DollarSign, Calendar, Camera, ArrowLeft, Check, Trash2, Save, Building2, ChevronDown } from 'lucide-react';
+import { User, Mail, Phone, MapPin, DollarSign, Calendar, Camera, ArrowLeft, Check, Trash2, Save, Building2, ChevronDown, Sun, Moon, Laptop } from 'lucide-react';
 import { motion } from 'motion/react';
-import { AppTheme, PREBUILT_THEMES } from '../../../core/theme';
+import { PREBUILT_THEMES, useTheme } from '../../../core/theme';
 import { AppSettings } from '../../../core/types';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
 
@@ -48,6 +48,8 @@ export default function ProfileTab({
   activeWorkspaceName,
   isBusinessMode
 }: ProfileTabProps) {
+  const { theme, themeMode, setThemeMode } = useTheme();
+
   const [userName, setUserName] = useState(
     settings.userName || localStorage.getItem('cocoon_username') || localStorage.getItem('finflow_username') || ''
   );
@@ -116,9 +118,9 @@ export default function ProfileTab({
   };
 
   return (
-    <div className="w-full flex flex-col gap-5 select-none text-white">
+    <div className="w-full flex flex-col gap-5 select-none text-left" style={{ color: theme.textPrimary }}>
       {/* Top Header with Back to Home button & Workspace Switcher */}
-      <div className="flex items-center justify-between pb-2 border-b border-white/5 gap-2">
+      <div className="flex items-center justify-between pb-2 border-b gap-2" style={{ borderColor: theme.borderSubtle }}>
         {onBack ? (
           <button
             type="button"
@@ -126,18 +128,23 @@ export default function ProfileTab({
               triggerHapticFeedback();
               onBack();
             }}
-            className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-2xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm border"
+            style={{
+              backgroundColor: theme.surfaceMuted,
+              borderColor: theme.borderSubtle,
+              color: theme.textPrimary
+            }}
           >
-            <ArrowLeft size={14} style={{ color: themePrimary }} />
+            <ArrowLeft size={14} style={{ color: theme.primary }} />
             <span>Back to Home</span>
           </button>
         ) : (
-          <div className="text-xs font-bold text-neutral-400 uppercase tracking-wider font-mono">
+          <div className="text-xs font-bold uppercase tracking-wider font-mono" style={{ color: theme.textSecondary }}>
             Profile Settings
           </div>
         )}
 
-        {/* Workspace Switcher Button directly on the place where text 'Preferences & Profile' was */}
+        {/* Workspace Switcher Button */}
         {onOpenWorkspaceSelector ? (
           <button
             type="button"
@@ -145,60 +152,69 @@ export default function ProfileTab({
               triggerHapticFeedback();
               onOpenWorkspaceSelector();
             }}
-            className={`px-3 py-1.5 min-h-[44px] rounded-xl border flex items-center gap-2 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95 ${
-              isBusinessMode
-                ? 'hover:opacity-90'
-                : 'bg-white/5 border-white/10 text-neutral-200 hover:bg-white/10'
-            }`}
-            style={
-              isBusinessMode
-                ? {
-                    backgroundColor: `${themePrimary}20`,
-                    borderColor: `${themePrimary}50`,
-                    color: themePrimary
-                  }
-                : undefined
-            }
+            className="px-3 py-1.5 min-h-[44px] rounded-xl border flex items-center gap-2 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+            style={{
+              backgroundColor: isBusinessMode ? `${theme.primary}18` : theme.surfaceMuted,
+              borderColor: isBusinessMode ? `${theme.primary}50` : theme.borderSubtle,
+              color: isBusinessMode ? theme.primary : theme.textPrimary
+            }}
             title="Switch Workspace Context"
           >
             {isBusinessMode ? (
-              <Building2 size={15} style={{ color: themePrimary }} className="shrink-0" />
+              <Building2 size={15} style={{ color: theme.primary }} className="shrink-0" />
             ) : (
-              <User size={15} style={{ color: themeSecondary || themePrimary }} className="shrink-0" />
+              <User size={15} style={{ color: theme.secondary || theme.primary }} className="shrink-0" />
             )}
             <div className="flex flex-col text-left">
-              <span className="text-[8px] uppercase font-mono tracking-wider text-neutral-400">Workspace</span>
-              <span className="max-w-[110px] truncate text-xs font-bold text-white">
+              <span className="text-[8px] uppercase font-mono tracking-wider opacity-70" style={{ color: theme.textSecondary }}>Workspace</span>
+              <span className="max-w-[110px] truncate text-xs font-bold" style={{ color: theme.textPrimary }}>
                 {activeWorkspaceName || 'Personal'}
               </span>
             </div>
-            <ChevronDown size={13} className="text-neutral-400 shrink-0" />
+            <ChevronDown size={13} style={{ color: theme.textSecondary }} className="shrink-0" />
           </button>
         ) : (
-          <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Preferences & Profile</span>
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold" style={{ color: theme.textSecondary }}>
+            Preferences & Profile
+          </span>
         )}
       </div>
 
       {/* Visual Avatar & Profile Photo Section */}
       <div 
-        className="w-full p-6 rounded-[28px] border bg-gradient-to-b from-neutral-900 to-neutral-950 flex flex-col items-center gap-4 relative overflow-hidden shadow-lg"
-        style={{ borderColor: themeBorder }}
+        className="w-full p-6 rounded-[28px] border flex flex-col items-center gap-4 relative overflow-hidden shadow-lg transition-colors"
+        style={{
+          backgroundColor: theme.surfaceElevated,
+          borderColor: theme.borderSubtle
+        }}
       >
-        <div className="absolute right-[-20px] top-[-20px] w-28 h-28 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+        <div 
+          className="absolute right-[-20px] top-[-20px] w-28 h-28 rounded-full blur-2xl pointer-events-none opacity-20"
+          style={{ backgroundColor: theme.primary }}
+        />
 
         {/* Large Avatar container */}
-        <div className="relative group w-28 h-28 rounded-full overflow-hidden border-2 border-dashed border-emerald-500/40 bg-neutral-900 shadow-xl flex items-center justify-center">
+        <div 
+          className="relative group w-28 h-28 rounded-full overflow-hidden border-2 border-dashed shadow-xl flex items-center justify-center transition-colors"
+          style={{
+            borderColor: `${theme.primary}60`,
+            backgroundColor: theme.surfaceMuted
+          }}
+        >
           {avatar ? (
             <img src={avatar} alt="Profile Avatar" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-neutral-800/80 flex items-center justify-center text-neutral-400">
+            <div className="w-full h-full flex items-center justify-center" style={{ color: theme.textSecondary }}>
               <User size={46} strokeWidth={1.5} />
             </div>
           )}
 
           {/* Quick upload overlay */}
-          <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity cursor-pointer text-white text-[10px] font-bold">
-            <Camera size={20} className="mb-1 text-emerald-400" />
+          <label 
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity cursor-pointer text-[10px] font-bold"
+            style={{ backgroundColor: theme.overlay, color: '#FFFFFF' }}
+          >
+            <Camera size={20} className="mb-1" style={{ color: theme.primary }} />
             Change Photo
             <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
           </label>
@@ -206,8 +222,15 @@ export default function ProfileTab({
 
         {/* Avatar Action Controls */}
         <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 active:bg-emerald-500/40 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-300 cursor-pointer transition-all active:scale-95 shadow-sm">
-            <Camera size={14} className="text-emerald-400" />
+          <label 
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm border"
+            style={{
+              backgroundColor: `${theme.primary}18`,
+              borderColor: `${theme.primary}40`,
+              color: theme.primary
+            }}
+          >
+            <Camera size={14} style={{ color: theme.primary }} />
             <span>Update Photo</span>
             <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
           </label>
@@ -216,7 +239,12 @@ export default function ProfileTab({
             <button
               type="button"
               onClick={handleRemoveAvatar}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm border"
+              style={{
+                backgroundColor: theme.dangerBg,
+                borderColor: `${theme.danger}40`,
+                color: theme.danger
+              }}
               title="Remove profile picture"
             >
               <Trash2 size={13} />
@@ -226,8 +254,10 @@ export default function ProfileTab({
         </div>
 
         <div className="text-center">
-          <h2 className="text-base font-bold text-white tracking-tight">{userName || 'User Profile'}</h2>
-          <span className="text-[10px] text-neutral-400 font-mono uppercase tracking-widest mt-0.5 block">
+          <h2 className="text-base font-bold tracking-tight" style={{ color: theme.textPrimary }}>
+            {userName || 'User Profile'}
+          </h2>
+          <span className="text-[10px] font-mono uppercase tracking-widest mt-0.5 block" style={{ color: theme.textSecondary }}>
             Offline Encrypted Account
           </span>
         </div>
@@ -235,22 +265,36 @@ export default function ProfileTab({
 
       {/* USER DETAILS EDITING FORM */}
       <div 
-        className={`p-5 border flex flex-col gap-4 shadow-md ${themeRadius} text-left`} 
-        style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+        className={`p-5 border flex flex-col gap-4 shadow-md ${themeRadius} text-left transition-colors`} 
+        style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
       >
-        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: theme.borderSubtle }}>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+            <div 
+              className="p-2 rounded-xl border"
+              style={{
+                backgroundColor: `${theme.primary}15`,
+                borderColor: `${theme.primary}30`,
+                color: theme.primary
+              }}
+            >
               <User size={16} />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-white">Personal Information</span>
-              <span className="text-[10px] text-neutral-400">Username, contact & address details</span>
+              <span className="text-sm font-bold" style={{ color: theme.textPrimary }}>Personal Information</span>
+              <span className="text-[10px]" style={{ color: theme.textSecondary }}>Username, contact & address details</span>
             </div>
           </div>
 
           {savedFeedback && (
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1 animate-fade-in">
+            <span 
+              className="text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 animate-fade-in border"
+              style={{
+                backgroundColor: theme.successBg,
+                borderColor: `${theme.success}50`,
+                color: theme.success
+              }}
+            >
               <Check size={12} strokeWidth={3} /> Saved
             </span>
           )}
@@ -259,64 +303,88 @@ export default function ProfileTab({
         <form onSubmit={handleSaveProfile} className="flex flex-col gap-3.5">
           {/* Username Field */}
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-bold text-neutral-300 flex items-center gap-1.5">
-              <User size={12} className="text-emerald-400" /> Full Name / Username
+            <label className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.textSecondary }}>
+              <User size={12} style={{ color: theme.primary }} /> Full Name / Username
             </label>
             <input
               type="text"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               placeholder="e.g. John Doe"
-              className="bg-neutral-900 border border-white/10 focus:border-emerald-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+              className="rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border"
+              style={{
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.textPrimary
+              }}
             />
           </div>
 
           {/* Email Field */}
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-bold text-neutral-300 flex items-center gap-1.5">
-              <Mail size={12} className="text-blue-400" /> Email Address
+            <label className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.textSecondary }}>
+              <Mail size={12} style={{ color: theme.primary }} /> Email Address
             </label>
             <input
               type="email"
               value={userEmail}
               onChange={(e) => setUserEmail(e.target.value)}
               placeholder="e.g. user@example.com"
-              className="bg-neutral-900 border border-white/10 focus:border-blue-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+              className="rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border"
+              style={{
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.textPrimary
+              }}
             />
           </div>
 
           {/* Mobile Number Field */}
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-bold text-neutral-300 flex items-center gap-1.5">
-              <Phone size={12} className="text-purple-400" /> Mobile Number
+            <label className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.textSecondary }}>
+              <Phone size={12} style={{ color: theme.primary }} /> Mobile Number
             </label>
             <input
               type="tel"
               value={userPhone}
               onChange={(e) => setUserPhone(e.target.value)}
               placeholder="e.g. +92 300 1234567"
-              className="bg-neutral-900 border border-white/10 focus:border-purple-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+              className="rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border"
+              style={{
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.textPrimary
+              }}
             />
           </div>
 
           {/* Physical Address Field */}
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-bold text-neutral-300 flex items-center gap-1.5">
-              <MapPin size={12} className="text-amber-400" /> Residential / Postal Address
+            <label className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.textSecondary }}>
+              <MapPin size={12} style={{ color: theme.primary }} /> Residential / Postal Address
             </label>
             <input
               type="text"
               value={userAddress}
               onChange={(e) => setUserAddress(e.target.value)}
               placeholder="e.g. Apartment 4B, Central Avenue, City"
-              className="bg-neutral-900 border border-white/10 focus:border-amber-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition-colors"
+              className="rounded-xl px-3.5 py-2.5 text-xs outline-none transition-colors border"
+              style={{
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.textPrimary
+              }}
             />
           </div>
 
           {/* Save Profile Button */}
           <button
             type="submit"
-            className="mt-1 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20 transition-all active:scale-95"
+            className="mt-1 w-full py-2.5 font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-95"
+            style={{
+              backgroundColor: theme.primary,
+              color: theme.textOnPrimary || '#FFFFFF'
+            }}
           >
             <Save size={14} />
             <span>Save Profile Details</span>
@@ -324,11 +392,92 @@ export default function ProfileTab({
         </form>
       </div>
 
+      {/* APPEARANCE MODE SWITCHER (System | Light | Dark) */}
+      <div 
+        className={`p-4 border flex flex-col gap-3 shadow-md ${themeRadius} text-left transition-colors`}
+        style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
+      >
+        <div className="flex items-center justify-between border-b pb-2.5" style={{ borderColor: theme.borderSubtle }}>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>Appearance Mode</span>
+            <span className="text-[10px]" style={{ color: theme.textSecondary }}>Match OS setting or force light/dark</span>
+          </div>
+          <span 
+            className="text-[10px] font-mono uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border"
+            style={{
+              backgroundColor: theme.surfaceMuted,
+              borderColor: theme.borderSubtle,
+              color: theme.primary
+            }}
+          >
+            {themeMode}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 p-1 rounded-2xl" style={{ backgroundColor: theme.surfaceMuted }}>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticFeedback();
+              setThemeMode('system');
+            }}
+            className="py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer"
+            style={{
+              backgroundColor: themeMode === 'system' ? theme.surfaceElevated : 'transparent',
+              color: themeMode === 'system' ? theme.primary : theme.textSecondary,
+              boxShadow: themeMode === 'system' ? '0 2px 8px rgba(0,0,0,0.12)' : 'none'
+            }}
+          >
+            <Laptop size={14} />
+            <span>System</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticFeedback();
+              setThemeMode('light');
+            }}
+            className="py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer"
+            style={{
+              backgroundColor: themeMode === 'light' ? theme.surfaceElevated : 'transparent',
+              color: themeMode === 'light' ? theme.primary : theme.textSecondary,
+              boxShadow: themeMode === 'light' ? '0 2px 8px rgba(0,0,0,0.12)' : 'none'
+            }}
+          >
+            <Sun size={14} />
+            <span>Light</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              triggerHapticFeedback();
+              setThemeMode('dark');
+            }}
+            className="py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer"
+            style={{
+              backgroundColor: themeMode === 'dark' ? theme.surfaceElevated : 'transparent',
+              color: themeMode === 'dark' ? theme.primary : theme.textSecondary,
+              boxShadow: themeMode === 'dark' ? '0 2px 8px rgba(0,0,0,0.12)' : 'none'
+            }}
+          >
+            <Moon size={14} />
+            <span>Dark</span>
+          </button>
+        </div>
+      </div>
+
       {/* DYNAMIC ACCENT / PRE-BUILT THEMES GRID */}
       <div className="flex flex-col gap-2.5">
-        <span className="text-xs font-semibold tracking-wider opacity-60 uppercase px-1 text-left">
-          Cocoon Themes & Palettes
-        </span>
+        <div className="flex justify-between items-center px-1">
+          <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: theme.textSecondary }}>
+            Color Palettes & Signatures
+          </span>
+          <span className="text-[10px] font-mono font-bold" style={{ color: theme.primary }}>
+            {PREBUILT_THEMES.length} Available
+          </span>
+        </div>
         <div className="grid grid-cols-4 gap-2.5">
           {PREBUILT_THEMES.map(t => {
             const isSelected = activeThemeId === t.id;
@@ -341,28 +490,31 @@ export default function ProfileTab({
                   triggerHapticFeedback();
                 }}
                 className={`relative p-2 h-22 flex flex-col items-center justify-between border rounded-xl cursor-pointer transition-all ${
-                  isSelected ? 'border-transparent shadow-xl scale-[1.02]' : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]'
+                  isSelected ? 'border-transparent shadow-xl scale-[1.02]' : 'hover:opacity-90'
                 }`}
                 style={
                   isSelected 
-                    ? { outline: `2px solid ${t.primary}`, boxShadow: `0 0 16px ${t.primary}50`, backgroundColor: `${t.primary}12` } 
-                    : undefined
+                    ? { outline: `2px solid ${t.primary}`, boxShadow: `0 0 16px ${t.primary}50`, backgroundColor: `${t.primary}15` } 
+                    : { borderColor: theme.borderSubtle, backgroundColor: theme.surfaceMuted }
                 }
               >
                 {/* Background swatch preview inside card */}
                 <div 
-                  className="w-full h-8 rounded-lg border border-white/15 flex items-center justify-center relative overflow-hidden"
-                  style={{ backgroundColor: t.background }}
+                  className="w-full h-8 rounded-lg border flex items-center justify-center relative overflow-hidden"
+                  style={{ backgroundColor: t.background, borderColor: t.borderSubtle || 'rgba(128,128,128,0.2)' }}
                 >
                   <div 
-                    className="w-5 h-4 rounded-sm border border-white/20 flex items-center justify-center" 
-                    style={{ backgroundColor: t.cardBg }}
+                    className="w-5 h-4 rounded-sm border flex items-center justify-center" 
+                    style={{ backgroundColor: t.cardBg, borderColor: t.borderSubtle || 'rgba(128,128,128,0.3)' }}
                   >
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.primary }} />
                   </div>
                 </div>
 
-                <span className="text-[9px] font-bold tracking-tight text-center text-neutral-200 truncate w-full mt-1">
+                <span 
+                  className="text-[9px] font-bold tracking-tight text-center truncate w-full mt-1"
+                  style={{ color: isSelected ? theme.primary : theme.textPrimary }}
+                >
                   {t.name.replace('Cocoon ', '')}
                 </span>
 
@@ -382,19 +534,29 @@ export default function ProfileTab({
 
       {/* TILE CARD SETTINGS SLIDES */}
       <div className="flex flex-col gap-2.5 text-left">
-        <span className="text-xs font-semibold tracking-wider opacity-60 uppercase px-1">
+        <span className="text-xs font-semibold tracking-wider uppercase px-1" style={{ color: theme.textSecondary }}>
           App Customization
         </span>
 
         {/* Currency setting */}
-        <div className={`p-4 border flex items-center justify-between shadow-md ${themeRadius}`} style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
+        <div 
+          className={`p-4 border flex items-center justify-between shadow-md ${themeRadius} transition-colors`} 
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
+        >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+            <div 
+              className="p-2 rounded-xl border"
+              style={{
+                backgroundColor: `${theme.primary}15`,
+                borderColor: `${theme.primary}30`,
+                color: theme.primary
+              }}
+            >
               <DollarSign size={16} />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-sm font-bold text-white">Preferred Currency</span>
-              <span className="text-[10px] text-neutral-400">Local numerical formats</span>
+              <span className="text-sm font-bold" style={{ color: theme.textPrimary }}>Preferred Currency</span>
+              <span className="text-[10px]" style={{ color: theme.textSecondary }}>Local numerical formats</span>
             </div>
           </div>
           <select
@@ -409,7 +571,12 @@ export default function ProfileTab({
                 triggerHapticFeedback();
               }
             }}
-            className="bg-neutral-900 border border-white/10 text-xs rounded-xl p-2 font-bold outline-none cursor-pointer text-white max-w-[140px] truncate"
+            className="border text-xs rounded-xl p-2 font-bold outline-none cursor-pointer max-w-[140px] truncate"
+            style={{
+              backgroundColor: theme.inputBg,
+              borderColor: theme.inputBorder,
+              color: theme.textPrimary
+            }}
           >
             {currencies.map(c => (
               <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>
@@ -418,14 +585,24 @@ export default function ProfileTab({
         </div>
 
         {/* First Day of Week */}
-        <div className={`p-4 border flex items-center justify-between shadow-md ${themeRadius}`} style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
+        <div 
+          className={`p-4 border flex items-center justify-between shadow-md ${themeRadius} transition-colors`} 
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
+        >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
+            <div 
+              className="p-2 rounded-xl border"
+              style={{
+                backgroundColor: `${theme.secondary || theme.primary}15`,
+                borderColor: `${theme.secondary || theme.primary}30`,
+                color: theme.secondary || theme.primary
+              }}
+            >
               <Calendar size={16} />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-sm font-bold text-white">First Day of Week</span>
-              <span className="text-[10px] text-neutral-400">Starts calendar segments</span>
+              <span className="text-sm font-bold" style={{ color: theme.textPrimary }}>First Day of Week</span>
+              <span className="text-[10px]" style={{ color: theme.textSecondary }}>Starts calendar segments</span>
             </div>
           </div>
           <select
@@ -434,7 +611,12 @@ export default function ProfileTab({
               onChangeSettings({ firstDayOfWeek: e.target.value as 'monday' | 'sunday' });
               triggerHapticFeedback();
             }}
-            className="bg-neutral-900 border border-white/10 text-xs rounded-xl p-2 font-bold outline-none cursor-pointer text-white"
+            className="border text-xs rounded-xl p-2 font-bold outline-none cursor-pointer"
+            style={{
+              backgroundColor: theme.inputBg,
+              borderColor: theme.inputBorder,
+              color: theme.textPrimary
+            }}
           >
             <option value="monday">Monday</option>
             <option value="sunday">Sunday</option>
@@ -444,3 +626,4 @@ export default function ProfileTab({
     </div>
   );
 }
+

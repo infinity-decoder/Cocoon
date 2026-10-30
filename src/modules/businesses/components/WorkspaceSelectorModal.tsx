@@ -60,7 +60,8 @@ export function WorkspaceSelectorModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+          className="absolute inset-0 backdrop-blur-sm cursor-pointer"
+          style={{ backgroundColor: theme.overlay }}
         />
 
         {/* Modal Sheet / Dialog */}
@@ -70,16 +71,16 @@ export function WorkspaceSelectorModal({
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
           className="relative w-full max-w-md max-h-[85vh] rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl border flex flex-col gap-5 overflow-hidden z-10"
-          style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
+          style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.border }}>
+          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.borderSubtle }}>
             <div className="flex flex-col text-left">
-              <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">
+              <span className="text-[10px] font-mono tracking-widest font-bold uppercase" style={{ color: theme.primary }}>
                 Isolated Environments
               </span>
-              <h2 className="text-lg font-black text-white mt-0.5 flex items-center gap-2">
-                <Briefcase size={18} className="text-emerald-400" />
+              <h2 className="text-lg font-black mt-0.5 flex items-center gap-2" style={{ color: theme.textPrimary }}>
+                <Briefcase size={18} style={{ color: theme.primary }} />
                 Workspaces
               </h2>
             </div>
@@ -88,7 +89,8 @@ export function WorkspaceSelectorModal({
                 triggerHapticFeedback();
                 onClose();
               }}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl transition-colors cursor-pointer"
+              style={{ backgroundColor: theme.surfaceMuted, color: theme.textPrimary }}
             >
               <X size={18} />
             </button>
@@ -98,7 +100,7 @@ export function WorkspaceSelectorModal({
           <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-none">
             {/* 1. PERSONAL WORKSPACE CARD */}
             <div className="space-y-1.5 text-left">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">
+              <span className="text-[11px] font-mono uppercase tracking-wider font-semibold" style={{ color: theme.textMuted }}>
                 Personal Finance
               </span>
               <button
@@ -110,15 +112,16 @@ export function WorkspaceSelectorModal({
                 className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer text-left ${
                   activeWorkspaceId === personalWorkspace.id
                     ? 'border-emerald-500 bg-emerald-500/10'
-                    : 'border-white/5 bg-white/[0.03] hover:bg-white/[0.06]'
+                    : 'hover:opacity-90'
                 }`}
+                style={activeWorkspaceId === personalWorkspace.id ? undefined : { backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
                     <User size={20} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-white flex items-center gap-2">
+                    <span className="text-sm font-bold flex items-center gap-2" style={{ color: theme.textPrimary }}>
                       {personalWorkspace.name}
                       {activeWorkspaceId === personalWorkspace.id && (
                         <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -126,7 +129,7 @@ export function WorkspaceSelectorModal({
                         </span>
                       )}
                     </span>
-                    <span className="text-xs text-neutral-400">
+                    <span className="text-xs" style={{ color: theme.textSecondary }}>
                       Personal income, expenses, wallets & vault
                     </span>
                   </div>
@@ -134,7 +137,7 @@ export function WorkspaceSelectorModal({
                 {activeWorkspaceId === personalWorkspace.id ? (
                   <Check size={18} className="text-emerald-400" />
                 ) : (
-                  <ChevronRight size={16} className="text-neutral-500" />
+                  <ChevronRight size={16} style={{ color: theme.textMuted }} />
                 )}
               </button>
             </div>
@@ -142,7 +145,7 @@ export function WorkspaceSelectorModal({
             {/* 2. BUSINESS WORKSPACES LIST */}
             <div className="space-y-2 text-left">
               <div className="flex justify-between items-center">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">
+                <span className="text-[11px] font-mono uppercase tracking-wider font-semibold" style={{ color: theme.textMuted }}>
                   Business Profiles ({businessWorkspaces.length})
                 </span>
                 <button
@@ -150,16 +153,17 @@ export function WorkspaceSelectorModal({
                     triggerHapticFeedback();
                     onOpenCreateBusiness();
                   }}
-                  className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  style={{ color: theme.primary }}
                 >
                   <Plus size={14} /> New Business
                 </button>
               </div>
 
               {businessWorkspaces.length === 0 ? (
-                <div className="p-4 rounded-2xl border border-dashed border-white/10 text-center flex flex-col items-center gap-2">
-                  <Building2 size={24} className="text-neutral-500" />
-                  <span className="text-xs text-neutral-400">No business workspaces created yet.</span>
+                <div className="p-4 rounded-2xl border border-dashed text-center flex flex-col items-center gap-2" style={{ borderColor: theme.borderSubtle, backgroundColor: theme.surfaceMuted }}>
+                  <Building2 size={24} style={{ color: theme.textMuted }} />
+                  <span className="text-xs" style={{ color: theme.textSecondary }}>No business workspaces created yet.</span>
                   <button
                     onClick={() => {
                       triggerHapticFeedback();
@@ -182,9 +186,10 @@ export function WorkspaceSelectorModal({
                         isActive
                           ? 'border-emerald-500 bg-emerald-500/10'
                           : isArchived
-                          ? 'border-white/5 bg-white/[0.01] opacity-60'
-                          : 'border-white/5 bg-white/[0.03] hover:bg-white/[0.06]'
+                          ? 'opacity-60'
+                          : 'hover:opacity-90'
                       }`}
+                      style={isActive ? undefined : { backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}
                     >
                       <button
                         onClick={() => {
@@ -198,7 +203,7 @@ export function WorkspaceSelectorModal({
                           <Building2 size={20} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-white flex items-center gap-2">
+                          <span className="text-sm font-bold flex items-center gap-2" style={{ color: theme.textPrimary }}>
                             {biz.name}
                             {isActive && (
                               <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -211,7 +216,7 @@ export function WorkspaceSelectorModal({
                               </span>
                             )}
                           </span>
-                          <span className="text-xs text-neutral-400 flex items-center gap-2">
+                          <span className="text-xs flex items-center gap-2" style={{ color: theme.textSecondary }}>
                             <span className="capitalize">{biz.profile?.businessType || 'General'}</span>
                             <span>·</span>
                             <span>{biz.currencyCode}</span>
@@ -236,7 +241,8 @@ export function WorkspaceSelectorModal({
                                 onArchiveWorkspace(biz.id);
                               }
                             }}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-amber-400 cursor-pointer"
+                            className="p-1.5 rounded-lg border text-neutral-400 hover:text-amber-400 cursor-pointer"
+                            style={{ backgroundColor: theme.inputBg, borderColor: theme.borderSubtle }}
                           >
                             <Archive size={14} />
                           </button>
@@ -249,7 +255,8 @@ export function WorkspaceSelectorModal({
                               triggerHapticFeedback();
                               onUnarchiveWorkspace(biz.id);
                             }}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-emerald-400 cursor-pointer"
+                            className="p-1.5 rounded-lg border text-neutral-400 hover:text-emerald-400 cursor-pointer"
+                            style={{ backgroundColor: theme.inputBg, borderColor: theme.borderSubtle }}
                           >
                             <RefreshCw size={14} />
                           </button>
@@ -264,7 +271,7 @@ export function WorkspaceSelectorModal({
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-2 border-t flex flex-col gap-2" style={{ borderColor: theme.border }}>
+          <div className="pt-2 border-t flex flex-col gap-2" style={{ borderColor: theme.borderSubtle }}>
             <button
               onClick={() => {
                 triggerHapticFeedback();

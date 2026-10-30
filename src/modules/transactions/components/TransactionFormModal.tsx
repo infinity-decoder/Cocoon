@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Category, Wallet, Transaction, TransactionType } from '../../../core/types';
 import { CATEGORY_ICONS_MAP } from '../../categories';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
+import { useTheme } from '../../../core/theme';
 
 interface TransactionFormModalProps {
   isOpen: boolean;
@@ -70,6 +71,7 @@ export default function TransactionFormModal({
   themeCardBg,
   isInline = false
 }: TransactionFormModalProps) {
+  const { theme } = useTheme();
   // Local form state
   const [amountStr, setAmountStr] = useState('0');
   const [note, setNote] = useState('');
@@ -223,15 +225,15 @@ export default function TransactionFormModal({
   const formElement = (
     <div
       className={`w-full ${isInline ? 'p-1' : 'h-[92vh] overflow-y-auto rounded-t-[32px] p-6 shadow-2xl relative'}`}
-      style={{ backgroundColor: isInline ? 'transparent' : themeCardBg, color: '#FFF' }}
+      style={{ backgroundColor: isInline ? 'transparent' : theme.surfaceElevated, color: theme.textPrimary }}
     >
       {/* Header */}
-      <div className="flex justify-between items-center pb-2 border-b border-white/5">
+      <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
         <div className="flex flex-col text-left">
-          <span className="text-[10px] text-emerald-400 font-mono tracking-widest uppercase font-semibold">
+          <span className="text-[10px] font-mono tracking-widest uppercase font-semibold" style={{ color: theme.primary }}>
             Workspace Context: Personal Finance
           </span>
-          <span className="text-xl font-bold tracking-tight mt-0.5 capitalize">
+          <span className="text-xl font-bold tracking-tight mt-0.5 capitalize" style={{ color: theme.textPrimary }}>
             Add {type}
           </span>
         </div>
@@ -253,11 +255,12 @@ export default function TransactionFormModal({
       <div className="flex flex-col gap-4 py-4 scrollbar-none text-left">
         {/* LARGE AMOUNT INPUT CONTAINER */}
         <div 
-          className="flex flex-col items-center justify-center p-5 bg-white/3 border border-white/5 rounded-2xl relative"
+          className="flex flex-col items-center justify-center p-5 rounded-2xl relative border"
+          style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}
         >
-          <span className="text-xs text-neutral-400 uppercase tracking-wider font-mono mb-2">Amount Entry</span>
+          <span className="text-xs uppercase tracking-wider font-mono mb-2" style={{ color: theme.textMuted }}>Amount Entry</span>
           <div className="flex items-center justify-center gap-1.5 w-full">
-            <span className="text-3xl font-light text-neutral-300 font-mono">{currencySymbol}</span>
+            <span className="text-3xl font-light font-mono" style={{ color: theme.textSecondary }}>{currencySymbol}</span>
             <input
               type="number"
               inputMode="decimal"
@@ -278,7 +281,8 @@ export default function TransactionFormModal({
                   }
                 }
               }}
-              className="text-4xl md:text-5xl font-extrabold font-mono tracking-tight text-white bg-transparent outline-none border-none text-center w-full max-w-[240px] placeholder:text-neutral-600 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="text-4xl md:text-5xl font-extrabold font-mono tracking-tight bg-transparent outline-none border-none text-center w-full max-w-[240px] focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              style={{ color: theme.textPrimary }}
               autoFocus
             />
           </div>
@@ -293,15 +297,16 @@ export default function TransactionFormModal({
 
         {/* DESCRIPTION/NOTE */}
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-400 font-medium">Description Note</span>
-          <div className="flex items-center gap-2 bg-white/3 border border-white/5 rounded-xl px-3 py-2.5">
-            <FileText size={16} className="text-neutral-400" />
+          <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Description Note</span>
+          <div className="flex items-center gap-2 border rounded-xl px-3 py-2.5" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+            <FileText size={16} style={{ color: theme.textMuted }} />
             <input
               type="text"
               placeholder={type === 'income' ? "e.g. Monthly salary, Freelance client deposit..." : "e.g. Weekly organic groceries..."}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="bg-transparent flex-1 text-sm outline-none placeholder:text-neutral-500 text-white"
+              className="bg-transparent flex-1 text-sm outline-none"
+              style={{ color: theme.textPrimary }}
             />
           </div>
         </div>
@@ -310,14 +315,15 @@ export default function TransactionFormModal({
         <div className="grid grid-cols-2 gap-3">
           {/* Main Category */}
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-400 font-medium">Category</span>
+            <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Category</span>
             <button
               type="button"
               onClick={() => {
                 triggerHapticFeedback();
                 setShowCategorySheet(true);
               }}
-              className="flex items-center justify-between bg-white/3 border border-white/5 hover:bg-white/5 transition-colors rounded-xl px-3 py-2.5 text-left cursor-pointer"
+              className="flex items-center justify-between border transition-colors rounded-xl px-3 py-2.5 text-left cursor-pointer"
+              style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
             >
               <div className="flex items-center gap-2 truncate">
                 {activeCategory && (() => {
@@ -331,25 +337,26 @@ export default function TransactionFormModal({
                     </div>
                   );
                 })()}
-                <span className="text-sm font-medium text-white truncate">
+                <span className="text-sm font-medium truncate" style={{ color: theme.textPrimary }}>
                   {activeCategory ? activeCategory.name : 'Select'}
                 </span>
               </div>
-              <ChevronRight size={14} className="text-neutral-400 shrink-0" />
+              <ChevronRight size={14} style={{ color: theme.textMuted }} className="shrink-0" />
             </button>
           </div>
 
           {/* Sub-Category with Custom Bottom Sheet trigger */}
           <div className="flex flex-col gap-1">
             <div className="flex justify-between items-center">
-              <span className="text-xs text-neutral-400 font-medium">Sub-Category</span>
+              <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Sub-Category</span>
               <button
                 type="button"
                 onClick={() => {
                   triggerHapticFeedback();
                   setShowAddSubCatModal(true);
                 }}
-                className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5 cursor-pointer transition-colors"
+                className="text-[10px] font-bold flex items-center gap-0.5 cursor-pointer transition-colors"
+                style={{ color: theme.primary }}
                 title="Add new subcategory"
               >
                 <Plus size={11} /> Add Sub
@@ -361,17 +368,18 @@ export default function TransactionFormModal({
                 triggerHapticFeedback();
                 setShowSubCategorySheet(true);
               }}
-              className="flex items-center justify-between bg-white/3 border border-white/5 hover:bg-white/5 transition-colors rounded-xl px-3 py-2.5 text-left cursor-pointer"
+              className="flex items-center justify-between border transition-colors rounded-xl px-3 py-2.5 text-left cursor-pointer"
+              style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
             >
               <div className="flex items-center gap-2 truncate">
-                <div className="p-1 rounded-lg bg-white/10 text-neutral-300 shrink-0">
+                <div className="p-1 rounded-lg shrink-0" style={{ backgroundColor: theme.surfaceMuted, color: theme.textSecondary }}>
                   <Tag size={14} />
                 </div>
-                <span className="text-sm font-medium text-white truncate">
+                <span className="text-sm font-medium truncate" style={{ color: theme.textPrimary }}>
                   {selectedSubCategoryName || 'None (General)'}
                 </span>
               </div>
-              <ChevronRight size={14} className="text-neutral-400 shrink-0" />
+              <ChevronRight size={14} style={{ color: theme.textMuted }} className="shrink-0" />
             </button>
           </div>
         </div>
@@ -380,46 +388,49 @@ export default function TransactionFormModal({
         {type === 'transfer' ? (
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-400 font-medium">Source Wallet</span>
-              <div className="flex items-center gap-2 bg-white/3 border border-white/5 rounded-xl px-3 py-2">
-                <Landmark size={14} className="text-neutral-400 shrink-0" />
+              <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Source Wallet</span>
+              <div className="flex items-center gap-2 border rounded-xl px-3 py-2" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+                <Landmark size={14} style={{ color: theme.textMuted }} className="shrink-0" />
                 <select
                   value={selectedWalletId}
                   onChange={(e) => setSelectedWalletId(e.target.value)}
-                  className="bg-transparent flex-1 text-xs outline-none text-white cursor-pointer"
+                  className="bg-transparent flex-1 text-xs outline-none cursor-pointer"
+                  style={{ color: theme.textPrimary }}
                 >
                   {wallets.map(w => (
-                    <option key={w.id} value={w.id} className="bg-neutral-900">{w.name}</option>
+                    <option key={w.id} value={w.id} style={{ backgroundColor: theme.surfaceElevated, color: theme.textPrimary }}>{w.name}</option>
                   ))}
                 </select>
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-400 font-medium">Payment Method</span>
+              <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Payment Method</span>
               <button
                 type="button"
                 onClick={() => {
                   triggerHapticFeedback();
                   setShowPaymentMethodSheet(true);
                 }}
-                className="flex items-center justify-between bg-white/3 border border-white/5 hover:bg-white/5 transition-colors rounded-xl px-3 py-2 text-left cursor-pointer"
+                className="flex items-center justify-between border transition-colors rounded-xl px-3 py-2 text-left cursor-pointer"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
               >
-                <span className="text-xs font-medium text-white truncate">{paymentMethod}</span>
-                <ChevronRight size={12} className="text-neutral-400 shrink-0" />
+                <span className="text-xs font-medium truncate" style={{ color: theme.textPrimary }}>{paymentMethod}</span>
+                <ChevronRight size={12} style={{ color: theme.textMuted }} className="shrink-0" />
               </button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-400 font-medium">Payment Method</span>
+            <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Payment Method</span>
             <button
               type="button"
               onClick={() => {
                 triggerHapticFeedback();
                 setShowPaymentMethodSheet(true);
               }}
-              className="flex items-center justify-between bg-white/3 border border-white/5 hover:bg-white/5 transition-colors rounded-xl px-3 py-2.5 text-left cursor-pointer"
+              className="flex items-center justify-between border transition-colors rounded-xl px-3 py-2.5 text-left cursor-pointer"
+              style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}
             >
               <div className="flex items-center gap-2 truncate">
                 {(() => {
@@ -431,34 +442,35 @@ export default function TransactionFormModal({
                     </div>
                   );
                 })()}
-                <span className="text-sm font-medium text-white truncate">
+                <span className="text-sm font-medium truncate" style={{ color: theme.textPrimary }}>
                   {paymentMethod}
                 </span>
               </div>
-              <ChevronRight size={14} className="text-neutral-400 shrink-0" />
+              <ChevronRight size={14} style={{ color: theme.textMuted }} className="shrink-0" />
             </button>
           </div>
         )}
 
         {/* DATE & TIME CONTROLLER */}
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-400 font-medium">Date & Time</span>
-          <div className="flex items-center gap-2 bg-white/3 border border-white/5 rounded-xl px-3 py-2.5">
-            <Calendar size={16} className="text-neutral-400 shrink-0" />
+          <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Date & Time</span>
+          <div className="flex items-center gap-2 border rounded-xl px-3 py-2.5" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+            <Calendar size={16} style={{ color: theme.textMuted }} className="shrink-0" />
             <input
               type="datetime-local"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="bg-transparent text-sm outline-none text-white cursor-pointer w-full text-left"
+              className="bg-transparent text-sm outline-none cursor-pointer w-full text-left"
+              style={{ color: theme.textPrimary }}
             />
           </div>
         </div>
 
         {/* ATTACHMENT RECEIPTS */}
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-400 font-medium">Receipt Image (Attachment)</span>
-          <div className="flex items-center gap-4 bg-white/3 border border-white/5 rounded-xl p-3">
-            <label className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs cursor-pointer text-neutral-200">
+          <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Receipt Image (Attachment)</span>
+          <div className="flex items-center gap-4 border rounded-xl p-3" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+            <label className="flex items-center gap-2 px-3 py-1.5 border rounded-lg text-xs cursor-pointer" style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textPrimary }}>
               <Image size={14} />
               Choose photo / Capture
               <input
@@ -469,7 +481,7 @@ export default function TransactionFormModal({
               />
             </label>
             {attachmentBase64 ? (
-              <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/20">
+              <div className="relative w-12 h-12 rounded-lg overflow-hidden border" style={{ borderColor: theme.borderSubtle }}>
                 <img src={attachmentBase64} alt="Receipt thumbnail" className="w-full h-full object-cover" />
                 <button 
                   type="button"
@@ -480,14 +492,14 @@ export default function TransactionFormModal({
                 </button>
               </div>
             ) : (
-              <span className="text-[10px] text-neutral-500">No attachment added yet</span>
+              <span className="text-[10px]" style={{ color: theme.textMuted }}>No attachment added yet</span>
             )}
           </div>
         </div>
       </div>
 
       {/* Button controls: Cancel is friendly, reddish with red cross */}
-      <div className="pt-4 border-t border-white/5 flex gap-3.5 w-full">
+      <div className="pt-4 border-t flex gap-3.5 w-full" style={{ borderColor: theme.borderSubtle }}>
         <button
           type="button"
           onClick={() => {
@@ -520,14 +532,14 @@ export default function TransactionFormModal({
         {isInline ? (
           formElement
         ) : (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center">
+          <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-end justify-center" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
               className="w-full max-w-md h-[92vh] overflow-y-auto rounded-t-[32px] p-6 flex flex-col justify-between shadow-2xl relative"
-              style={{ backgroundColor: themeCardBg, color: '#FFF' }}
+              style={{ backgroundColor: theme.surfaceElevated, color: theme.textPrimary }}
             >
               {formElement}
             </motion.div>
@@ -536,20 +548,21 @@ export default function TransactionFormModal({
 
         {/* --- FULL SCREEN BOTTOM SHEET CATEGORY PICKER --- */}
         {showCategorySheet && (
-          <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[85] flex items-end justify-center">
+          <div className="fixed inset-0 backdrop-blur-md z-[85] flex items-end justify-center" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              className="w-full max-w-md bg-neutral-900 border-t border-white/10 rounded-t-[32px] p-6 max-h-[85vh] overflow-y-auto flex flex-col text-left"
+              className="w-full max-w-md border-t rounded-t-[32px] p-6 max-h-[85vh] overflow-y-auto flex flex-col text-left"
+              style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
             >
               {/* Header: Reddish Cancel button in place of the old Add Custom button */}
-              <div className="flex justify-between items-center pb-4 border-b border-white/5">
+              <div className="flex justify-between items-center pb-4 border-b" style={{ borderColor: theme.borderSubtle }}>
                 <div className="flex flex-col">
-                  <span className="text-xs text-neutral-400 font-mono tracking-wider">
+                  <span className="text-xs font-mono tracking-wider uppercase" style={{ color: theme.textMuted }}>
                     SELECT {categoryType === 'income' ? 'INCOME' : 'EXPENSE'} CATEGORY
                   </span>
-                  <span className="text-base font-bold text-white mt-0.5">Category Directory</span>
+                  <span className="text-base font-bold mt-0.5" style={{ color: theme.textPrimary }}>Category Directory</span>
                 </div>
                 {/* Red colored Cancel button with red cross */}
                 <button
@@ -583,13 +596,13 @@ export default function TransactionFormModal({
                     >
                       <div 
                         className={`w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shadow-md ${
-                          isSelected ? 'ring-4 ring-white scale-110' : 'opacity-80 hover:opacity-100'
+                          isSelected ? 'ring-4 ring-offset-2 scale-110' : 'opacity-85 hover:opacity-100'
                         }`}
                         style={{ backgroundColor: cat.color }}
                       >
                         <IconComp size={24} />
                       </div>
-                      <span className="text-[11px] font-medium text-center truncate w-24 text-neutral-300">
+                      <span className="text-[11px] font-medium text-center truncate w-24" style={{ color: theme.textSecondary }}>
                         {cat.name}
                       </span>
                     </button>
@@ -631,15 +644,16 @@ export default function TransactionFormModal({
 
         {/* --- ADD CUSTOM CATEGORY SUB-SHEET --- */}
         {showCustomCatSheet && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[90] flex items-end justify-center">
+          <div className="fixed inset-0 backdrop-blur-md z-[90] flex items-end justify-center" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              className="w-full max-w-md bg-neutral-900 border-t border-white/15 rounded-t-[32px] p-6 flex flex-col gap-4 text-left"
+              className="w-full max-w-md border-t rounded-t-[32px] p-6 flex flex-col gap-4 text-left"
+              style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
             >
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-sm font-bold text-white">
+              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
+                <span className="text-sm font-bold" style={{ color: theme.textPrimary }}>
                   Add Custom {categoryType === 'income' ? 'Income' : 'Expense'} Category
                 </span>
                 <button 
@@ -660,27 +674,28 @@ export default function TransactionFormModal({
               )}
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Category Name</span>
+                <span className="text-xs" style={{ color: theme.textSecondary }}>Category Name</span>
                 <input
                   type="text"
                   placeholder={categoryType === 'income' ? "e.g. Consulting, Rental, Dividends..." : "e.g. Golf Membership, Subscriptions..."}
                   value={customCatName}
                   onChange={(e) => setCustomCatName(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  className="border rounded-xl px-3 py-2 text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                   autoFocus
                 />
               </div>
 
               {/* Color list */}
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Theme Color</span>
+                <span className="text-xs" style={{ color: theme.textSecondary }}>Theme Color</span>
                 <div className="flex gap-2 flex-wrap">
                   {['#EF4444', '#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#06B6D4'].map(color => (
                     <button
                       key={color}
                       type="button"
                       onClick={() => setCustomCatColor(color)}
-                      className={`w-7 h-7 rounded-full border border-white/20 transition-transform ${customCatColor === color ? 'scale-125 ring-2 ring-white' : ''}`}
+                      className={`w-7 h-7 rounded-full border border-white/20 transition-transform ${customCatColor === color ? 'scale-125 ring-2 ring-offset-2 ring-emerald-500' : ''}`}
                       style={{ backgroundColor: color }}
                     />
                   ))}
@@ -689,8 +704,8 @@ export default function TransactionFormModal({
 
               {/* Icon selector list */}
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Select Icon</span>
-                <div className="flex gap-3 flex-wrap p-2 bg-white/5 rounded-xl max-h-36 overflow-y-auto">
+                <span className="text-xs" style={{ color: theme.textSecondary }}>Select Icon</span>
+                <div className="flex gap-3 flex-wrap p-2 border rounded-xl max-h-36 overflow-y-auto" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
                   {['Heart', 'Gamepad', 'Coffee', 'Music', 'Tv', 'TrendingUp', 'Gift', 'Smile', 'Briefcase', 'Laptop', 'Award', 'DollarSign', 'Home', 'Tag'].map(iconName => {
                     const IconObj = CATEGORY_ICONS_MAP[iconName] || HelpCircle;
                     return (
@@ -698,7 +713,8 @@ export default function TransactionFormModal({
                         key={iconName}
                         type="button"
                         onClick={() => setCustomCatIcon(iconName)}
-                        className={`p-2 rounded-lg border text-white ${customCatIcon === iconName ? 'bg-white/20 border-white' : 'bg-transparent border-transparent'}`}
+                        className={`p-2 rounded-lg border transition-colors ${customCatIcon === iconName ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'border-transparent'}`}
+                        style={{ color: customCatIcon === iconName ? undefined : theme.textSecondary }}
                       >
                         <IconObj size={18} />
                       </button>
@@ -729,20 +745,21 @@ export default function TransactionFormModal({
 
         {/* --- ADD NEW SUBCATEGORY MODAL --- */}
         {showAddSubCatModal && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[90] flex items-end justify-center p-4">
+          <div className="fixed inset-0 backdrop-blur-md z-[90] flex items-end justify-center p-4" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
-              className="w-full max-w-md bg-neutral-900 border border-white/15 rounded-3xl p-5 flex flex-col gap-4 text-left shadow-2xl"
+              className="w-full max-w-md border rounded-3xl p-5 flex flex-col gap-4 text-left shadow-2xl"
+              style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
             >
-              <div className="flex justify-between items-center pb-2 border-b border-white/10">
+              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-mono tracking-widest uppercase text-emerald-400">
                     New {categoryType === 'income' ? 'Income' : 'Expense'} Sub-Category
                   </span>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-sm font-bold text-white">Under:</span>
+                    <span className="text-sm font-bold" style={{ color: theme.textPrimary }}>Under:</span>
                     {activeCategory && (
                       <span 
                         className="px-2 py-0.5 rounded-lg text-xs font-bold text-white shadow-sm flex items-center gap-1"
@@ -771,7 +788,7 @@ export default function TransactionFormModal({
               )}
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-neutral-400 font-medium">Sub-Category Name</label>
+                <label className="text-xs font-medium" style={{ color: theme.textSecondary }}>Sub-Category Name</label>
                 <input
                   type="text"
                   placeholder={categoryType === 'income' ? "e.g. Bonus, Upwork, Consulting, Dividend" : "e.g. Groceries, Snacks, Fuel, WiFi"}
@@ -783,7 +800,8 @@ export default function TransactionFormModal({
                       handleAddSubCategorySubmit();
                     }
                   }}
-                  className="bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  className="border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                   autoFocus
                 />
               </div>
@@ -814,20 +832,21 @@ export default function TransactionFormModal({
 
         {/* --- CUSTOM SUBCATEGORY DIRECTORY SHEET (Matching Category Modal Design) --- */}
         {showSubCategorySheet && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[85] flex items-end justify-center">
+          <div className="fixed inset-0 backdrop-blur-sm z-[85] flex items-end justify-center" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              className="w-full max-w-md bg-neutral-900 border-t border-white/10 rounded-t-[32px] p-6 max-h-[85vh] overflow-y-auto flex flex-col text-left"
+              className="w-full max-w-md border-t rounded-t-[32px] p-6 max-h-[85vh] overflow-y-auto flex flex-col text-left"
+              style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
             >
               {/* Header */}
-              <div className="flex justify-between items-center pb-4 border-b border-white/5">
+              <div className="flex justify-between items-center pb-4 border-b" style={{ borderColor: theme.borderSubtle }}>
                 <div className="flex flex-col">
-                  <span className="text-xs text-neutral-400 font-mono tracking-wider uppercase">
+                  <span className="text-xs font-mono tracking-wider uppercase" style={{ color: theme.textMuted }}>
                     {activeCategory?.name || 'CATEGORY'} SUBCATEGORIES
                   </span>
-                  <span className="text-base font-bold text-white mt-0.5">Subcategory Directory</span>
+                  <span className="text-base font-bold mt-0.5" style={{ color: theme.textPrimary }}>Subcategory Directory</span>
                 </div>
                 <button
                   type="button"
@@ -854,10 +873,11 @@ export default function TransactionFormModal({
                   className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
                     selectedSubCategoryName === ''
                       ? 'bg-emerald-500/20 border-emerald-500/50 text-white ring-2 ring-emerald-500/40 shadow-lg'
-                      : 'bg-white/5 hover:bg-white/10 border-white/10 text-neutral-300'
+                      : 'hover:opacity-90'
                   }`}
+                  style={selectedSubCategoryName === '' ? undefined : { backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textSecondary }}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-neutral-200">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: theme.inputBg, color: theme.textSecondary }}>
                     <Tag size={18} />
                   </div>
                   <span className="text-xs font-bold text-center truncate w-full">
@@ -880,8 +900,9 @@ export default function TransactionFormModal({
                       className={`p-3.5 rounded-2xl border flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
                         isSelected
                           ? 'bg-emerald-500/20 border-emerald-500/50 text-white ring-2 ring-emerald-500/40 shadow-lg'
-                          : 'bg-white/5 hover:bg-white/10 border-white/10 text-neutral-300'
+                          : 'hover:opacity-90'
                       }`}
+                      style={isSelected ? undefined : { backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textSecondary }}
                     >
                       <div 
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
@@ -933,20 +954,21 @@ export default function TransactionFormModal({
 
         {/* --- CUSTOM PAYMENT METHOD SHEET (Matching Category Modal Design) --- */}
         {showPaymentMethodSheet && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[85] flex items-end justify-center">
+          <div className="fixed inset-0 backdrop-blur-sm z-[85] flex items-end justify-center" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              className="w-full max-w-md bg-neutral-900 border-t border-white/10 rounded-t-[32px] p-6 max-h-[85vh] overflow-y-auto flex flex-col text-left"
+              className="w-full max-w-md border-t rounded-t-[32px] p-6 max-h-[85vh] overflow-y-auto flex flex-col text-left"
+              style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
             >
               {/* Header */}
-              <div className="flex justify-between items-center pb-4 border-b border-white/5">
+              <div className="flex justify-between items-center pb-4 border-b" style={{ borderColor: theme.borderSubtle }}>
                 <div className="flex flex-col">
-                  <span className="text-xs text-neutral-400 font-mono tracking-wider uppercase">
+                  <span className="text-xs font-mono tracking-wider uppercase" style={{ color: theme.textMuted }}>
                     SELECT PAYMENT CHANNEL
                   </span>
-                  <span className="text-base font-bold text-white mt-0.5">Payment Method</span>
+                  <span className="text-base font-bold mt-0.5" style={{ color: theme.textPrimary }}>Payment Method</span>
                 </div>
                 <button
                   type="button"
@@ -978,9 +1000,10 @@ export default function TransactionFormModal({
                       }}
                       className={`p-3 rounded-2xl border flex items-center gap-3 cursor-pointer transition-all text-left ${
                         isSelected
-                          ? 'bg-emerald-500/20 border-emerald-500/50 text-white ring-2 ring-emerald-500/40 shadow-lg'
-                          : 'bg-white/5 hover:bg-white/10 border-white/10 text-neutral-300'
+                          ? 'bg-emerald-500/20 border-emerald-500/50 ring-2 ring-emerald-500/40 shadow-lg'
+                          : 'hover:opacity-90'
                       }`}
+                      style={isSelected ? { color: theme.textPrimary } : { backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                     >
                       <div 
                         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${info.bg} ${info.text} border ${info.border} transition-transform ${

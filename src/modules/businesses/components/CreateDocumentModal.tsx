@@ -194,13 +194,13 @@ export function CreateDocumentModal({
           style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.border }}>
+          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.borderSubtle }}>
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">
+              <span className="text-[10px] font-mono tracking-widest font-bold uppercase" style={{ color: theme.primary }}>
                 Workspace Context: {workspaceName}
               </span>
-              <h2 className="text-lg font-black text-white mt-0.5 flex items-center gap-2">
-                <FileText size={18} className="text-emerald-400" />
+              <h2 className="text-lg font-black mt-0.5 flex items-center gap-2" style={{ color: theme.textPrimary }}>
+                <FileText size={18} style={{ color: theme.primary }} />
                 {documentType === 'sales_invoice' ? 'Create Sales Invoice' : documentType === 'purchase_bill' ? 'Record Purchase Bill' : 'Record Receipt'}
               </h2>
             </div>
@@ -209,7 +209,8 @@ export function CreateDocumentModal({
                 triggerHapticFeedback();
                 onClose();
               }}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl transition-colors cursor-pointer"
+              style={{ backgroundColor: theme.surfaceMuted, color: theme.textMuted }}
             >
               <X size={18} />
             </button>
@@ -228,33 +229,36 @@ export function CreateDocumentModal({
               <button
                 type="button"
                 onClick={() => setDocumentType('sales_invoice')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
-                  documentType === 'sales_invoice'
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                    : 'bg-white/5 text-neutral-400 border-white/5 hover:bg-white/10'
-                }`}
+                className="py-2 px-3 rounded-xl text-xs font-bold transition-colors cursor-pointer border"
+                style={{
+                  backgroundColor: documentType === 'sales_invoice' ? `${theme.primary}25` : theme.surfaceMuted,
+                  color: documentType === 'sales_invoice' ? theme.primary : theme.textSecondary,
+                  borderColor: documentType === 'sales_invoice' ? theme.primary : theme.borderSubtle
+                }}
               >
                 Sales Invoice
               </button>
               <button
                 type="button"
                 onClick={() => setDocumentType('purchase_bill')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
-                  documentType === 'purchase_bill'
-                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
-                    : 'bg-white/5 text-neutral-400 border-white/5 hover:bg-white/10'
-                }`}
+                className="py-2 px-3 rounded-xl text-xs font-bold transition-colors cursor-pointer border"
+                style={{
+                  backgroundColor: documentType === 'purchase_bill' ? `${theme.secondary}25` : theme.surfaceMuted,
+                  color: documentType === 'purchase_bill' ? theme.secondary : theme.textSecondary,
+                  borderColor: documentType === 'purchase_bill' ? theme.secondary : theme.borderSubtle
+                }}
               >
                 Purchase Bill
               </button>
               <button
                 type="button"
                 onClick={() => setDocumentType('receipt')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
-                  documentType === 'receipt'
-                    ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
-                    : 'bg-white/5 text-neutral-400 border-white/5 hover:bg-white/10'
-                }`}
+                className="py-2 px-3 rounded-xl text-xs font-bold transition-colors cursor-pointer border"
+                style={{
+                  backgroundColor: documentType === 'receipt' ? `${theme.accent}25` : theme.surfaceMuted,
+                  color: documentType === 'receipt' ? theme.accent : theme.textSecondary,
+                  borderColor: documentType === 'receipt' ? theme.accent : theme.borderSubtle
+                }}
               >
                 Cash Receipt
               </button>
@@ -262,7 +266,7 @@ export function CreateDocumentModal({
 
             {/* Party Selection (Scoped to this business!) */}
             <div>
-              <label className="block text-xs font-bold text-neutral-300 mb-1">
+              <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                 {documentType === 'sales_invoice' ? 'Customer' : 'Supplier'} <span className="text-rose-400">*</span>
               </label>
               {relevantParties.length > 0 ? (
@@ -273,7 +277,8 @@ export function CreateDocumentModal({
                       setSelectedPartyId(e.target.value);
                       if (e.target.value) setCustomPartyName('');
                     }}
-                    className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                    style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                   >
                     <option value="">-- Select from {workspaceName} Contacts --</option>
                     {relevantParties.map(p => (
@@ -288,7 +293,8 @@ export function CreateDocumentModal({
                       value={customPartyName}
                       onChange={e => setCustomPartyName(e.target.value)}
                       placeholder="Or enter walk-in party name..."
-                      className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-emerald-500"
+                      className="w-full px-4 py-2 rounded-xl border text-xs focus:outline-none"
+                      style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                     />
                   )}
                 </div>
@@ -299,7 +305,8 @@ export function CreateDocumentModal({
                   value={customPartyName}
                   onChange={e => setCustomPartyName(e.target.value)}
                   placeholder="e.g. Walk-in Customer"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               )}
             </div>
@@ -307,7 +314,7 @@ export function CreateDocumentModal({
             {/* Dates */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Issue Date
                 </label>
                 <input
@@ -315,12 +322,13 @@ export function CreateDocumentModal({
                   required
                   value={issueDate}
                   onChange={e => setIssueDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full px-3 py-2 rounded-xl border text-xs focus:outline-none font-mono"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Due Date
                 </label>
                 <input
@@ -328,34 +336,37 @@ export function CreateDocumentModal({
                   required
                   value={dueDate}
                   onChange={e => setDueDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full px-3 py-2 rounded-xl border text-xs focus:outline-none font-mono"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
             </div>
 
             {/* Line Items Section */}
-            <div className="space-y-3 pt-2 border-t" style={{ borderColor: theme.border }}>
+            <div className="space-y-3 pt-2 border-t" style={{ borderColor: theme.borderSubtle }}>
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                <span className="text-xs font-bold uppercase tracking-wider font-mono" style={{ color: theme.textPrimary }}>
                   Line Items ({lines.length})
                 </span>
                 <button
                   type="button"
                   onClick={handleAddLine}
-                  className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  style={{ color: theme.primary }}
                 >
                   <Plus size={14} /> Add Line
                 </button>
               </div>
 
               {lines.map((line, idx) => (
-                <div key={idx} className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
+                <div key={idx} className="p-3 rounded-2xl border space-y-2" style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}>
                   <div className="flex gap-2">
                     {products.length > 0 && (
                       <select
                         value={line.itemId || ''}
                         onChange={e => handleSelectProduct(idx, e.target.value)}
-                        className="w-1/3 px-2 py-1.5 rounded-lg bg-neutral-900 border border-white/10 text-white text-xs focus:outline-none focus:border-emerald-500"
+                        className="w-1/3 px-2 py-1.5 rounded-lg border text-xs focus:outline-none"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       >
                         <option value="">-- Product --</option>
                         {products.map(p => (
@@ -376,14 +387,15 @@ export function CreateDocumentModal({
                         copy[idx].description = e.target.value;
                         setLines(copy);
                       }}
-                      className="flex-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-emerald-500"
+                      className="flex-1 px-3 py-1.5 rounded-lg border text-xs focus:outline-none"
+                      style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                     />
 
                     {lines.length > 1 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveLine(idx)}
-                        className="p-1.5 text-neutral-500 hover:text-rose-400 cursor-pointer"
+                        className="p-1.5 text-neutral-400 hover:text-rose-400 cursor-pointer"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -392,7 +404,7 @@ export function CreateDocumentModal({
 
                   <div className="grid grid-cols-4 gap-2">
                     <div>
-                      <span className="text-[10px] text-neutral-400">Qty</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>Qty</span>
                       <input
                         type="number"
                         min="0.01"
@@ -403,12 +415,13 @@ export function CreateDocumentModal({
                           copy[idx].quantity = Number(e.target.value);
                           setLines(copy);
                         }}
-                        className="w-full px-2 py-1 rounded bg-white/5 border border-white/10 text-white text-xs text-center"
+                        className="w-full px-2 py-1 rounded border text-xs text-center"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       />
                     </div>
 
                     <div>
-                      <span className="text-[10px] text-neutral-400">Unit Price</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>Unit Price</span>
                       <input
                         type="number"
                         min="0"
@@ -420,12 +433,13 @@ export function CreateDocumentModal({
                           copy[idx].unitPrice = e.target.value;
                           setLines(copy);
                         }}
-                        className="w-full px-2 py-1 rounded bg-white/5 border border-white/10 text-white text-xs text-center"
+                        className="w-full px-2 py-1 rounded border text-xs text-center"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       />
                     </div>
 
                     <div>
-                      <span className="text-[10px] text-neutral-400">Disc ({currencySymbol})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>Disc ({currencySymbol})</span>
                       <input
                         type="number"
                         min="0"
@@ -437,12 +451,13 @@ export function CreateDocumentModal({
                           copy[idx].discount = e.target.value;
                           setLines(copy);
                         }}
-                        className="w-full px-2 py-1 rounded bg-white/5 border border-white/10 text-white text-xs text-center"
+                        className="w-full px-2 py-1 rounded border text-xs text-center"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       />
                     </div>
 
                     <div>
-                      <span className="text-[10px] text-neutral-400">Tax %</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>Tax %</span>
                       <input
                         type="number"
                         min="0"
@@ -455,7 +470,8 @@ export function CreateDocumentModal({
                           copy[idx].taxRate = e.target.value;
                           setLines(copy);
                         }}
-                        className="w-full px-2 py-1 rounded bg-white/5 border border-white/10 text-white text-xs text-center"
+                        className="w-full px-2 py-1 rounded border text-xs text-center"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       />
                     </div>
                   </div>
@@ -464,16 +480,16 @@ export function CreateDocumentModal({
             </div>
 
             {/* Total Calculation Display */}
-            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex justify-between items-center">
-              <span className="text-xs font-bold text-neutral-300">Calculated Total</span>
-              <span className="text-base font-black text-emerald-400 font-mono">
+            <div className="p-3 rounded-2xl border flex justify-between items-center" style={{ backgroundColor: `${theme.primary}15`, borderColor: `${theme.primary}35` }}>
+              <span className="text-xs font-bold" style={{ color: theme.textSecondary }}>Calculated Total</span>
+              <span className="text-base font-black font-mono" style={{ color: theme.primary }}>
                 {currencySymbol} {calculatedTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-xs font-bold text-neutral-300 mb-1">
+              <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                 Internal Remarks / Notes
               </label>
               <textarea
@@ -481,7 +497,8 @@ export function CreateDocumentModal({
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 placeholder="Payment terms, delivery instructions..."
-                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 rounded-xl border text-xs focus:outline-none"
+                style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
               />
             </div>
 
@@ -490,7 +507,8 @@ export function CreateDocumentModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 rounded-2xl bg-emerald-500 text-neutral-950 font-bold text-sm flex items-center justify-center gap-2 hover:bg-emerald-400 transition-colors cursor-pointer shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                className="w-full py-3.5 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-lg disabled:opacity-50"
+                style={{ backgroundColor: theme.primary }}
               >
                 <CheckCircle2 size={18} />
                 {isSubmitting ? 'Posting Document...' : 'Issue & Post Document'}

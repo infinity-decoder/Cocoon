@@ -2,9 +2,10 @@ name: Hardened Build & Release Pipeline
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "**" ]
+    tags: [ "v*" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "**" ]
   workflow_dispatch:
 
 permissions:
@@ -99,7 +100,7 @@ jobs:
     name: Android Packaging, Signing & Provenance
     needs: verify-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
 
     steps:
       - name: Checkout repository with full history
@@ -338,6 +339,8 @@ jobs:
 
       - name: Create GitHub Release & Upload Assets
         uses: softprops/action-gh-release@v2
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) && github.event_name == 'push'
+        continue-on-error: true
         with:
           tag_name: ${{ steps.semver.outputs.tag }}
           name: Release ${{ steps.semver.outputs.tag }}

@@ -60,6 +60,67 @@
   --cocoon-accent-blue-hover: #FF6B4A;
   --cocoon-accent-soft-blue: #FDF2F3;
   --cocoon-active-lime: #E74425;
+
+  /* Universal Semantic Tokens applied dynamically by applyThemeToDocument */
+  --app-bg: #0D1726;
+  --app-card-bg: #111F49;
+  --app-surface-elevated: #172758;
+  --app-surface-muted: #15224D;
+  --app-overlay: rgba(13, 23, 38, 0.78);
+  --app-text-primary: #FFFFFF;
+  --app-text-secondary: #E5CFB4;
+  --app-text-muted: #9E9FA0;
+  --app-text-inverse: #0D1726;
+  --app-text-on-primary: #FFFFFF;
+  --app-border: rgba(198, 119, 100, 0.22);
+  --app-border-subtle: rgba(198, 119, 100, 0.12);
+  --app-border-focus: #E74425;
+  --app-input-bg: #0F1A3B;
+  --app-input-border: rgba(198, 119, 100, 0.28);
+  --app-primary: #E74425;
+  --app-primary-hover: #FF6B4A;
+  --app-secondary: #C67764;
+  --app-success: #10B981;
+  --app-warning: #F59E0B;
+  --app-danger: #EF4444;
+  --app-info: #3B82F6;
+}
+
+/* Universal semantic theme utilities */
+.app-surface {
+  background-color: var(--app-card-bg);
+  border-color: var(--app-border);
+  color: var(--app-text-primary);
+}
+
+.app-surface-elevated {
+  background-color: var(--app-surface-elevated);
+  border-color: var(--app-border);
+  color: var(--app-text-primary);
+}
+
+.app-surface-muted {
+  background-color: var(--app-surface-muted);
+  border-color: var(--app-border-subtle);
+  color: var(--app-text-secondary);
+}
+
+.app-input {
+  background-color: var(--app-input-bg);
+  border-color: var(--app-input-border);
+  color: var(--app-text-primary);
+}
+
+.app-text-primary {
+  color: var(--app-text-primary);
+}
+
+.app-text-secondary {
+  color: var(--app-text-secondary);
+}
+
+.app-text-muted {
+  color: var(--app-text-muted);
 }
 
 html, body {

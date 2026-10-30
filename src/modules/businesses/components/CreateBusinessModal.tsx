@@ -76,7 +76,8 @@ export function CreateBusinessModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+          className="absolute inset-0 backdrop-blur-sm cursor-pointer"
+          style={{ backgroundColor: theme.overlay }}
         />
 
         {/* Modal Sheet */}
@@ -86,16 +87,16 @@ export function CreateBusinessModal({
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
           className="relative w-full max-w-md max-h-[90vh] rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl border flex flex-col gap-4 overflow-hidden z-10 text-left"
-          style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
+          style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.border }}>
+          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.borderSubtle }}>
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">
+              <span className="text-[10px] font-mono tracking-widest font-bold uppercase" style={{ color: theme.primary }}>
                 New Workspace Setup
               </span>
-              <h2 className="text-lg font-black text-white mt-0.5 flex items-center gap-2">
-                <Building2 size={18} className="text-emerald-400" />
+              <h2 className="text-lg font-black mt-0.5 flex items-center gap-2" style={{ color: theme.textPrimary }}>
+                <Building2 size={18} style={{ color: theme.primary }} />
                 Register Business
               </h2>
             </div>
@@ -104,7 +105,8 @@ export function CreateBusinessModal({
                 triggerHapticFeedback();
                 onClose();
               }}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl transition-colors cursor-pointer"
+              style={{ backgroundColor: theme.surfaceMuted, color: theme.textPrimary }}
             >
               <X size={18} />
             </button>
@@ -119,7 +121,7 @@ export function CreateBusinessModal({
             )}
 
             {/* Explainer Box */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 flex gap-3 text-xs text-neutral-300">
+            <div className="p-3.5 rounded-2xl border flex gap-3 text-xs" style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textSecondary }}>
               <ShieldCheck size={20} className="text-emerald-400 shrink-0 mt-0.5" />
               <span>
                 Creates an independent, fully isolated business environment with its own Chart of Accounts, customers, suppliers, inventory, and invoices.
@@ -128,7 +130,7 @@ export function CreateBusinessModal({
 
             {/* Business Name */}
             <div>
-              <label className="block text-xs font-bold text-neutral-300 mb-1">
+              <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                 Business Name <span className="text-rose-400">*</span>
               </label>
               <input
@@ -137,32 +139,34 @@ export function CreateBusinessModal({
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. Apex Supermarket"
-                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
               />
             </div>
 
             {/* Business Type */}
             <div>
-              <label className="block text-xs font-bold text-neutral-300 mb-1">
+              <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                 Business Model / Type <span className="text-rose-400">*</span>
               </label>
               <select
                 value={businessType}
                 onChange={e => setBusinessType(e.target.value as BusinessType)}
-                className="w-full px-4 py-2.5 rounded-xl bg-neutral-900 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
               >
-                <option value="retail">Retail (POS / Storefront)</option>
-                <option value="wholesale">Wholesale (B2B Bulk)</option>
-                <option value="services">Services & Consulting</option>
-                <option value="distributor">Distribution & Supply</option>
-                <option value="general">General Commercial</option>
+                <option value="retail" style={{ backgroundColor: theme.surfaceElevated, color: theme.textPrimary }}>Retail (POS / Storefront)</option>
+                <option value="wholesale" style={{ backgroundColor: theme.surfaceElevated, color: theme.textPrimary }}>Wholesale (B2B Bulk)</option>
+                <option value="services" style={{ backgroundColor: theme.surfaceElevated, color: theme.textPrimary }}>Services & Consulting</option>
+                <option value="distributor" style={{ backgroundColor: theme.surfaceElevated, color: theme.textPrimary }}>Distribution & Supply</option>
+                <option value="general" style={{ backgroundColor: theme.surfaceElevated, color: theme.textPrimary }}>General Commercial</option>
               </select>
             </div>
 
             {/* Currency & Invoice Prefix */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Base Currency
                 </label>
                 <input
@@ -171,12 +175,13 @@ export function CreateBusinessModal({
                   onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
                   placeholder="PKR"
                   maxLength={5}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Invoice Prefix
                 </label>
                 <input
@@ -185,14 +190,15 @@ export function CreateBusinessModal({
                   onChange={e => setInvoicePrefix(e.target.value.toUpperCase())}
                   placeholder="INV"
                   maxLength={8}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
             </div>
 
             {/* Tax ID */}
             <div>
-              <label className="block text-xs font-bold text-neutral-300 mb-1">
+              <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                 Tax / NTN Registration (Optional)
               </label>
               <input
@@ -200,14 +206,15 @@ export function CreateBusinessModal({
                 value={taxId}
                 onChange={e => setTaxId(e.target.value)}
                 placeholder="e.g. 1234567-8"
-                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
               />
             </div>
 
             {/* Contact Phone & Email */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Phone (Optional)
                 </label>
                 <input
@@ -215,12 +222,13 @@ export function CreateBusinessModal({
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder="0300-1234567"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Email (Optional)
                 </label>
                 <input
@@ -228,14 +236,15 @@ export function CreateBusinessModal({
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="shop@example.com"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
             </div>
 
             {/* Address */}
             <div>
-              <label className="block text-xs font-bold text-neutral-300 mb-1">
+              <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                 Store / Office Address (Optional)
               </label>
               <input
@@ -243,7 +252,8 @@ export function CreateBusinessModal({
                 value={address}
                 onChange={e => setAddress(e.target.value)}
                 placeholder="Market Plaza, Lahore"
-                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
               />
             </div>
 

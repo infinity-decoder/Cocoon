@@ -31,6 +31,7 @@ import {
 import { Transaction, Category } from '../../../core/types';
 import { CATEGORY_ICONS_MAP } from '../../categories';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
+import { useTheme } from '../../../core/theme';
 
 interface AnalysisTabProps {
   transactions: Transaction[];
@@ -66,6 +67,7 @@ export default function AnalysisTab({
   onEditTransaction,
   onBack
 }: AnalysisTabProps) {
+  const { theme } = useTheme();
   // Time scope: 'month' | 'yearly' | 'all'
   const [timeScope, setTimeScope] = useState<'month' | 'yearly' | 'all'>('month');
   
@@ -318,11 +320,18 @@ export default function AnalysisTab({
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-neutral-950/90 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-xl text-left text-xs font-mono">
-          <p className="text-white font-extrabold mb-1.5 uppercase tracking-wider text-[9px] text-neutral-400">{label}</p>
+        <div 
+          className="backdrop-blur-md border p-3 rounded-2xl shadow-xl text-left text-xs font-mono"
+          style={{
+            backgroundColor: theme.surfaceElevated,
+            borderColor: theme.borderSubtle,
+            color: theme.textPrimary
+          }}
+        >
+          <p className="font-extrabold mb-1.5 uppercase tracking-wider text-[9px]" style={{ color: theme.textSecondary }}>{label}</p>
           {payload.map((p) => (
             <div key={p.name} className="flex items-center gap-5 justify-between py-0.5">
-              <span className="flex items-center gap-1.5 text-neutral-300 font-sans font-medium">
+              <span className="flex items-center gap-1.5 font-sans font-medium" style={{ color: theme.textSecondary }}>
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
                 {p.name === 'income' ? 'Income' : 'Expense'}:
               </span>
@@ -338,24 +347,36 @@ export default function AnalysisTab({
   };
 
   return (
-    <div className="flex flex-col gap-5 w-full max-w-xl mx-auto pb-24 text-white">
+    <div className="flex flex-col gap-5 w-full max-w-xl mx-auto pb-24" style={{ color: theme.textPrimary }}>
       {/* Top Header with Back to Home button */}
       {onBack && (
-        <div className="flex items-center justify-between pb-1 border-b border-white/5 gap-2">
+        <div className="flex items-center justify-between pb-1 border-b gap-2" style={{ borderColor: theme.borderSubtle }}>
           <button
             type="button"
             onClick={() => {
               triggerHapticFeedback();
               onBack();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 border rounded-2xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
+            style={{
+              backgroundColor: theme.surfaceMuted,
+              borderColor: theme.borderSubtle,
+              color: theme.textPrimary
+            }}
           >
-            <ArrowLeft size={14} className="text-emerald-400" />
+            <ArrowLeft size={14} style={{ color: theme.primary }} />
             <span>Back to Home</span>
           </button>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold hidden sm:inline">Reports & Analysis</span>
-            <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20 font-bold capitalize">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold hidden sm:inline" style={{ color: theme.textSecondary }}>Reports & Analysis</span>
+            <span 
+              className="text-[10px] font-mono px-2 py-0.5 rounded-full border font-bold capitalize"
+              style={{
+                backgroundColor: `${theme.primary}18`,
+                borderColor: `${theme.primary}35`,
+                color: theme.primary
+              }}
+            >
               {timeScope} view
             </span>
           </div>
@@ -364,29 +385,30 @@ export default function AnalysisTab({
 
       {/* 1. GLASSY SCOPE CONTROL PANEL AT THE TOP */}
       <div 
-        className="p-4 border rounded-[24px] flex flex-col gap-4 text-left shadow-lg backdrop-blur-md relative"
-        style={{ backgroundColor: `${themeCardBg}D0`, borderColor: themeBorder, borderRadius: themeRadius }}
+        className="p-4 border rounded-[24px] flex flex-col gap-4 text-left shadow-lg backdrop-blur-md relative transition-colors"
+        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, borderRadius: themeRadius }}
       >
         <div className="flex justify-between items-center">
           <div className="flex flex-col">
-            <h3 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-2 font-display">
-              <TrendingUp size={16} className="text-emerald-400" />
+            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2 font-display" style={{ color: theme.textPrimary }}>
+              <TrendingUp size={16} style={{ color: theme.primary }} />
               Dynamic Analysis
             </h3>
-            <p className="text-[10px] text-neutral-400 font-mono mt-0.5">Overlapping Cashflow Comparison</p>
+            <p className="text-[10px] font-mono mt-0.5" style={{ color: theme.textSecondary }}>Overlapping Cashflow Comparison</p>
           </div>
 
           {/* Scope selection buttons: Month, Yearly, All */}
-          <div className="flex items-center gap-1 bg-neutral-950/50 p-1 rounded-xl border border-white/5">
+          <div className="flex items-center gap-1 p-1 rounded-xl border" style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}>
             {(['month', 'yearly', 'all'] as const).map((scope) => (
               <button
                 key={scope}
                 onClick={() => handleTimeScopeChange(scope)}
-                className={`px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
-                  timeScope === scope
-                    ? 'bg-white/10 text-emerald-400 font-bold border border-white/5'
-                    : 'text-neutral-400 hover:text-white bg-transparent'
-                }`}
+                className="px-3 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                style={{
+                  backgroundColor: timeScope === scope ? theme.surfaceElevated : 'transparent',
+                  color: timeScope === scope ? theme.primary : theme.textSecondary,
+                  boxShadow: timeScope === scope ? '0 2px 6px rgba(0,0,0,0.1)' : 'none'
+                }}
               >
                 {scope}
               </button>
@@ -395,19 +417,24 @@ export default function AnalysisTab({
         </div>
 
         {/* Dynamic Context Selector based on timeScope */}
-        <div className="flex items-center justify-between py-1 px-1 border-t border-white/5 pt-3">
+        <div className="flex items-center justify-between py-1 px-1 border-t pt-3" style={{ borderColor: theme.borderSubtle }}>
           {timeScope === 'month' && (
             <div className="flex items-center gap-2 w-full justify-between">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400 font-bold">
+              <span className="text-[10px] uppercase font-mono tracking-widest font-bold" style={{ color: theme.textSecondary }}>
                 Select Month
               </span>
               <div className="relative flex items-center gap-2">
-                <CalendarDays size={14} className="text-emerald-400 absolute left-2.5 pointer-events-none" />
+                <CalendarDays size={14} className="absolute left-2.5 pointer-events-none" style={{ color: theme.primary }} />
                 <input
                   type="month"
                   value={selectedMonth}
                   onChange={handleMonthChange}
-                  className="bg-neutral-900 border border-white/10 text-xs rounded-xl pl-8 pr-2.5 py-1.5 font-bold outline-none cursor-pointer text-white text-right"
+                  className="border text-xs rounded-xl pl-8 pr-2.5 py-1.5 font-bold outline-none cursor-pointer text-right transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 />
               </div>
             </div>
@@ -415,22 +442,39 @@ export default function AnalysisTab({
 
           {timeScope === 'yearly' && (
             <div className="flex items-center justify-between w-full">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400 font-bold">
+              <span className="text-[10px] uppercase font-mono tracking-widest font-bold" style={{ color: theme.textSecondary }}>
                 Select Year
               </span>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => handleYearChange(-1)}
-                  className="p-1.5 bg-white/5 hover:bg-white/10 active:scale-90 rounded-lg text-neutral-400 hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 border active:scale-90 rounded-lg transition-all cursor-pointer"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
                   <ChevronLeft size={14} />
                 </button>
-                <span className="text-xs font-black font-mono px-3 py-1 bg-neutral-900 rounded-lg border border-white/5 text-emerald-400 tracking-wider">
+                <span 
+                  className="text-xs font-black font-mono px-3 py-1 rounded-lg border tracking-wider"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.primary
+                  }}
+                >
                   {selectedYear}
                 </span>
                 <button
                   onClick={() => handleYearChange(1)}
-                  className="p-1.5 bg-white/5 hover:bg-white/10 active:scale-90 rounded-lg text-neutral-400 hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 border active:scale-90 rounded-lg transition-all cursor-pointer"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
                   <ChevronRight size={14} />
                 </button>
@@ -440,10 +484,17 @@ export default function AnalysisTab({
 
           {timeScope === 'all' && (
             <div className="flex justify-between w-full items-center">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400 font-bold">
+              <span className="text-[10px] uppercase font-mono tracking-widest font-bold" style={{ color: theme.textSecondary }}>
                 Total Account Lifespan
               </span>
-              <span className="text-[10px] font-mono text-neutral-400 bg-neutral-900 px-2.5 py-1 rounded-lg border border-white/5">
+              <span 
+                className="text-[10px] font-mono px-2.5 py-1 rounded-lg border font-bold"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textSecondary
+                }}
+              >
                 All Logs Combined
               </span>
             </div>
@@ -451,7 +502,7 @@ export default function AnalysisTab({
         </div>
 
         {/* Three Column Cashflow Box */}
-        <div className="grid grid-cols-3 gap-1 p-3 bg-neutral-950/25 border border-white/5 rounded-2xl">
+        <div className="grid grid-cols-3 gap-1 p-3 border rounded-2xl" style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}>
           <div className="flex flex-col pl-1">
             <span className="text-[8px] uppercase tracking-widest font-mono font-black text-rose-400 flex items-center gap-1">
               <ArrowDownRight size={8} /> Expense
@@ -460,7 +511,7 @@ export default function AnalysisTab({
               {currencySymbol} {totalExpense.toLocaleString()}
             </span>
           </div>
-          <div className="flex flex-col border-x border-white/5 px-2">
+          <div className="flex flex-col border-x px-2" style={{ borderColor: theme.borderSubtle }}>
             <span className="text-[8px] uppercase tracking-widest font-mono font-black text-emerald-400 flex items-center gap-1">
               <ArrowUpRight size={8} /> Income
             </span>
@@ -469,7 +520,7 @@ export default function AnalysisTab({
             </span>
           </div>
           <div className="flex flex-col pl-2">
-            <span className="text-[8px] uppercase tracking-widest font-mono font-black text-neutral-400">
+            <span className="text-[8px] uppercase tracking-widest font-mono font-black" style={{ color: theme.textSecondary }}>
               Net Saving
             </span>
             <span className={`text-xs font-black font-mono mt-1 truncate ${totalIncome - totalExpense >= 0 ? 'text-teal-400' : 'text-rose-400'}`}>
@@ -482,14 +533,17 @@ export default function AnalysisTab({
       {/* 2. SPLINE AREA CHART MODULE */}
       <div 
         className="p-5 border rounded-[24px] shadow-lg flex flex-col gap-3 backdrop-blur-md relative"
-        style={{ backgroundColor: `${themeCardBg}C8`, borderColor: themeBorder, borderRadius: themeRadius }}
+        style={{ 
+          backgroundColor: theme.surfaceElevated, 
+          borderColor: theme.borderSubtle 
+        }}
       >
         <div className="flex justify-between items-center mb-1 text-left">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400 font-bold">
+            <span className="text-[10px] uppercase font-mono tracking-widest font-bold" style={{ color: theme.textSecondary }}>
               Spline Area Cashflow Chart
             </span>
-            <span className="text-[9px] text-neutral-500 font-mono mt-0.5">
+            <span className="text-[9px] font-mono mt-0.5" style={{ color: theme.textMuted }}>
               Click any point below to filter the transaction list
             </span>
           </div>
@@ -506,9 +560,12 @@ export default function AnalysisTab({
         {/* The Recharts smooth area graph */}
         <div className="h-56 w-full select-none">
           {chartData.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center border border-dashed border-white/5 rounded-2xl bg-neutral-950/20">
+            <div 
+              className="h-full flex flex-col items-center justify-center border border-dashed rounded-2xl"
+              style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}
+            >
               <span className="text-2xl mb-1">📈</span>
-              <span className="text-[10px] font-mono text-neutral-400">No sufficient cashflow data to plot.</span>
+              <span className="text-[10px] font-mono" style={{ color: theme.textSecondary }}>No sufficient cashflow data to plot.</span>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -527,23 +584,23 @@ export default function AnalysisTab({
                     <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.isDark ? '#ffffff10' : '#00000010'} vertical={false} />
                 <XAxis 
                   dataKey="label" 
-                  stroke="#ffffff40" 
+                  stroke={theme.textMuted} 
                   fontSize={8} 
                   tickLine={false}
                   axisLine={false}
                   dy={10}
                 />
                 <YAxis 
-                  stroke="#ffffff40" 
+                  stroke={theme.textMuted} 
                   fontSize={8} 
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#ffffff15', strokeWidth: 1 }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ stroke: theme.isDark ? '#ffffff20' : '#00000020', strokeWidth: 1 }} />
                 
                 {/* Income Area Curve */}
                 <Area 
@@ -554,7 +611,7 @@ export default function AnalysisTab({
                   strokeWidth={2}
                   fillOpacity={1} 
                   fill="url(#colorIncome)" 
-                  activeDot={{ r: 5, stroke: '#10b981', strokeWidth: 2, fill: '#060a0a' }}
+                  activeDot={{ r: 5, stroke: '#10b981', strokeWidth: 2, fill: theme.surfaceElevated }}
                 />
 
                 {/* Expense Area Curve */}
@@ -566,7 +623,7 @@ export default function AnalysisTab({
                   strokeWidth={2}
                   fillOpacity={1} 
                   fill="url(#colorExpense)" 
-                  activeDot={{ r: 5, stroke: '#f43f5e', strokeWidth: 2, fill: '#0a0606' }}
+                  activeDot={{ r: 5, stroke: '#f43f5e', strokeWidth: 2, fill: theme.surfaceElevated }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -578,7 +635,7 @@ export default function AnalysisTab({
       <div className="flex flex-col gap-3.5 text-left">
         <div className="flex justify-between items-center px-1">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.textSecondary }}>
               {chartClickedItem ? 'Filtered ledger' : 'Ledger summary'}
             </span>
             {chartClickedItem && (
@@ -587,26 +644,29 @@ export default function AnalysisTab({
               </span>
             )}
           </div>
-          <span className="text-[10px] font-mono text-neutral-400">
+          <span className="text-[10px] font-mono" style={{ color: theme.textSecondary }}>
             {directoryTransactions.length} logs
           </span>
         </div>
 
         {directoryTransactions.length === 0 ? (
-          <div className="text-center py-12 bg-neutral-950/20 rounded-[24px] border border-dashed border-white/5">
+          <div 
+            className="text-center py-12 rounded-[24px] border border-dashed"
+            style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}
+          >
             <span className="text-3xl block mb-2">📒</span>
-            <p className="text-xs font-mono text-neutral-500">No logs logged for this specific period selection.</p>
+            <p className="text-xs font-mono" style={{ color: theme.textSecondary }}>No logs logged for this specific period selection.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             {Object.keys(groupedTransactions).map((dateHeader) => (
               <div key={dateHeader} className="flex flex-col gap-2">
                 {/* Date header banner */}
-                <div className="py-1 px-1 flex justify-between items-center border-b border-white/5">
-                  <span className="text-xs font-bold tracking-wide text-neutral-400">
+                <div className="py-1 px-1 flex justify-between items-center border-b" style={{ borderColor: theme.borderSubtle }}>
+                  <span className="text-xs font-bold tracking-wide" style={{ color: theme.textSecondary }}>
                     {dateHeader}
                   </span>
-                  <span className="text-[9px] font-mono opacity-50">
+                  <span className="text-[9px] font-mono" style={{ color: theme.textMuted }}>
                     {groupedTransactions[dateHeader].length} logs
                   </span>
                 </div>
@@ -686,25 +746,29 @@ export default function AnalysisTab({
                               setSwipedTx(null);
                             }
                           }}
-                          className="absolute inset-0 w-full h-full flex items-center justify-between p-3.5 bg-neutral-900 border border-white/5 cursor-grab active:cursor-grabbing rounded-2xl z-10 hover:border-white/10 transition-colors select-none"
+                          className="absolute inset-0 w-full h-full flex items-center justify-between p-3.5 border cursor-grab active:cursor-grabbing rounded-2xl z-10 transition-colors select-none"
+                          style={{
+                            backgroundColor: theme.surfaceElevated,
+                            borderColor: theme.borderSubtle
+                          }}
                         >
                           <div className="flex items-center gap-3 truncate">
                             <div 
-                              className="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 animate-fade-in"
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 animate-fade-in shadow-sm"
                               style={{ backgroundColor: catColor }}
                             >
                               <IconComponent size={20} />
                             </div>
                             
                             <div className="flex flex-col truncate text-left">
-                              <span className="text-sm font-semibold text-white truncate leading-tight">
+                              <span className="text-sm font-semibold truncate leading-tight" style={{ color: theme.textPrimary }}>
                                 {tx.note || tx.category}
                               </span>
-                              <span className="text-[10px] text-neutral-400 mt-0.5 flex items-center gap-1">
+                              <span className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: theme.textSecondary }}>
                                 <span className="font-semibold uppercase tracking-wider text-[9px] opacity-75">{tx.category}</span>
                                 {tx.subCategory && (
                                   <>
-                                    <ChevronRight size={10} className="text-neutral-500" />
+                                    <ChevronRight size={10} style={{ color: theme.textMuted }} />
                                     <span className="opacity-90">{tx.subCategory}</span>
                                   </>
                                 )}
@@ -713,10 +777,10 @@ export default function AnalysisTab({
                           </div>
 
                           <div className="flex flex-col items-end text-right font-mono">
-                            <span className={`text-sm font-extrabold ${isIncome(tx) ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <span className={`text-sm font-extrabold ${isIncome(tx) ? 'text-emerald-500' : 'text-rose-500'}`}>
                               {isIncome(tx) ? '+' : '-'} {currencySymbol} {tx.amount.toLocaleString()}
                             </span>
-                            <span className="text-[9px] text-neutral-500 mt-0.5">
+                            <span className="text-[9px] mt-0.5" style={{ color: theme.textSecondary }}>
                               {tx.paymentMethod}
                             </span>
                           </div>
@@ -734,36 +798,42 @@ export default function AnalysisTab({
       {/* Inline transactional editing modal portal */}
       <AnimatePresence>
         {editingTx && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[99] flex items-center justify-center p-4" style={{ backgroundColor: theme.overlay }}>
             <div className="absolute inset-0" onClick={() => setEditingTx(null)} />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-3xl relative z-10 text-white text-left"
+              className="w-full max-w-sm p-6 border rounded-3xl relative z-10 text-left shadow-2xl"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/5">
-                <span className="text-xs font-black uppercase tracking-widest text-emerald-400">Edit Log Entry</span>
+              <div className="flex justify-between items-center mb-4 pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-500">Edit Log Entry</span>
                 <button 
                   onClick={() => {
                     setEditingTx(null);
                     setEditError('');
                   }} 
-                  className="text-neutral-500 hover:text-white cursor-pointer"
+                  className="cursor-pointer transition-colors"
+                  style={{ color: theme.textMuted }}
                 >
                   <X size={16} />
                 </button>
               </div>
 
               {editError && (
-                <div className="p-2.5 mb-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-medium">
+                <div className="p-2.5 mb-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-500 text-xs font-medium">
                   {editError}
                 </div>
               )}
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-mono uppercase tracking-widest text-neutral-400">Notes / Description</label>
+                  <label className="text-[9px] font-mono uppercase tracking-widest" style={{ color: theme.textSecondary }}>Notes / Description</label>
                   <input
                     type="text"
                     value={editNote}
@@ -771,12 +841,17 @@ export default function AnalysisTab({
                       setEditNote(e.target.value);
                       setEditError('');
                     }}
-                    className="bg-neutral-950 border border-white/10 rounded-xl p-2.5 text-xs outline-none text-white font-semibold"
+                    className="border rounded-xl p-2.5 text-xs outline-none font-semibold transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-mono uppercase tracking-widest text-neutral-400">Amount ({currencySymbol})</label>
+                  <label className="text-[9px] font-mono uppercase tracking-widest" style={{ color: theme.textSecondary }}>Amount ({currencySymbol})</label>
                   <input
                     type="number"
                     value={editAmount}
@@ -784,7 +859,12 @@ export default function AnalysisTab({
                       setEditAmount(e.target.value);
                       setEditError('');
                     }}
-                    className="bg-neutral-950 border border-white/10 rounded-xl p-2.5 text-xs outline-none text-white font-mono font-black"
+                    className="border rounded-xl p-2.5 text-xs outline-none font-mono font-black transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
 
@@ -805,7 +885,11 @@ export default function AnalysisTab({
                       setEditError('');
                     }
                   }}
-                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-bold text-xs tracking-wide transition-all text-white mt-2 cursor-pointer active:scale-95"
+                  className="w-full py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all mt-2 cursor-pointer active:scale-95 shadow-md"
+                  style={{
+                    backgroundColor: theme.primary,
+                    color: theme.primaryContent
+                  }}
                 >
                   Save Modifications
                 </button>

@@ -3,20 +3,63 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+
+export type ThemeMode = 'system' | 'light' | 'dark' | string;
+
 export interface AppTheme {
   id: string;
   name: string;
   isDark: boolean;
-  background: string;
-  cardBg: string;
-  primary: string; // Accent primary
-  secondary: string; // Accent secondary
-  textPrimary: string;
-  textSecondary: string;
-  border: string;
-  radius: string; // tailwind rounded class
-  fontFamily: string; // tailwind font class
-  accentGlow: string; // shadow class
+
+  // Surfaces
+  background: string;       // Primary canvas
+  cardBg: string;           // Content cards & surfaces
+  surfaceElevated: string;  // Modal dialogs, dropdowns, floating sheets
+  surfaceMuted: string;     // Inner panels, table headers, search boxes
+  overlay: string;          // Modal backdrop scrim
+
+  // Typography
+  textPrimary: string;      // Headings & primary legible text
+  textSecondary: string;    // Subheadings, labels, dates
+  textMuted: string;        // Inactive tabs, disabled, placeholders
+  textInverse: string;      // Inverted contrast text
+  textOnPrimary: string;    // Text on primary buttons
+
+  // Borders
+  border: string;           // Standard container border
+  borderSubtle: string;     // Subtle inner divider
+  borderFocus: string;      // Focus rings
+
+  // Interactive & Form Inputs
+  primary: string;          // Primary action & active indicator
+  primaryHover: string;     // Primary hover state
+  secondary: string;        // Secondary brand accent
+  primaryContent?: string;  // Contrast text color for primary actions
+  accent?: string;          // Accent highlight alias
+  inputBg: string;          // Form input background
+  inputBorder: string;      // Form input border
+
+  // Semantic Status
+  success: string;
+  successBg: string;
+  warning: string;
+  warningBg: string;
+  danger: string;
+  dangerBg: string;
+  info: string;
+  infoBg: string;
+
+  // Data Visualization
+  chartGrid: string;
+  chartText: string;
+  chartSeries: string[];
+
+  // Presentation & Legacy Compatibility
+  radius: string;           // tailwind rounded class
+  fontFamily: string;       // tailwind font class
+  accentGlow: string;       // shadow class
   glassmorphic: string;
   badgeBg: string;
   iconStrokeWidth: number;
@@ -52,11 +95,33 @@ export const PREBUILT_THEMES: AppTheme[] = [
     isDark: true,
     background: '#0D1726', // Ebony
     cardBg: '#111F49', // DigiKhata Navy
-    primary: '#E74425', // Cinnabar (punchy warm orange)
-    secondary: '#C67764', // Contessa (warm terracotta)
-    textPrimary: '#FFFFFF', // White
-    textSecondary: '#9E9FA0', // Spanish Gray
-    border: 'rgba(198, 119, 100, 0.22)', // Contessa-tinted soft border
+    surfaceElevated: '#172758',
+    surfaceMuted: '#15224D',
+    overlay: 'rgba(13, 23, 38, 0.78)',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#E5CFB4', // Double Spanish White
+    textMuted: '#9E9FA0', // Spanish Gray
+    textInverse: '#0D1726',
+    textOnPrimary: '#FFFFFF',
+    border: 'rgba(198, 119, 100, 0.22)',
+    borderSubtle: 'rgba(198, 119, 100, 0.12)',
+    borderFocus: '#E74425',
+    primary: '#E74425', // Cinnabar
+    primaryHover: '#FF6B4A', // Tangerine Glow
+    secondary: '#C67764', // Contessa
+    inputBg: '#0F1A3B',
+    inputBorder: 'rgba(198, 119, 100, 0.28)',
+    success: '#10B981',
+    successBg: 'rgba(16, 185, 129, 0.15)',
+    warning: '#F59E0B',
+    warningBg: 'rgba(245, 158, 11, 0.15)',
+    danger: '#EF4444',
+    dangerBg: 'rgba(239, 68, 68, 0.15)',
+    info: '#3B82F6',
+    infoBg: 'rgba(59, 130, 246, 0.15)',
+    chartGrid: 'rgba(255, 255, 255, 0.08)',
+    chartText: '#9E9FA0',
+    chartSeries: ['#E74425', '#C67764', '#E5CFB4', '#3B82F6', '#10B981', '#A855F7'],
     radius: 'rounded-[24px]',
     fontFamily: 'font-sans',
     accentGlow: 'shadow-[0_0_24px_rgba(231,68,37,0.35)]',
@@ -71,11 +136,33 @@ export const PREBUILT_THEMES: AppTheme[] = [
     isDark: false,
     background: '#FDF2F3', // Wisp Pink
     cardBg: '#FFFFFF', // Pure White
-    primary: '#E74425', // Cinnabar
-    secondary: '#C67764', // Contessa
+    surfaceElevated: '#FFFFFF',
+    surfaceMuted: '#F8ECED',
+    overlay: 'rgba(13, 23, 38, 0.45)',
     textPrimary: '#0D1726', // Ebony
-    textSecondary: '#9E9FA0', // Spanish Gray
-    border: 'rgba(198, 119, 100, 0.2)',
+    textSecondary: '#4B5563',
+    textMuted: '#9E9FA0',
+    textInverse: '#FFFFFF',
+    textOnPrimary: '#FFFFFF',
+    border: 'rgba(198, 119, 100, 0.22)',
+    borderSubtle: 'rgba(198, 119, 100, 0.12)',
+    borderFocus: '#E74425',
+    primary: '#E74425',
+    primaryHover: '#C8371B',
+    secondary: '#C67764',
+    inputBg: '#FFFFFF',
+    inputBorder: 'rgba(198, 119, 100, 0.25)',
+    success: '#059669',
+    successBg: 'rgba(5, 150, 105, 0.12)',
+    warning: '#D97706',
+    warningBg: 'rgba(217, 119, 6, 0.12)',
+    danger: '#DC2626',
+    dangerBg: 'rgba(220, 38, 38, 0.12)',
+    info: '#2563EB',
+    infoBg: 'rgba(37, 99, 235, 0.12)',
+    chartGrid: 'rgba(13, 23, 38, 0.08)',
+    chartText: '#4B5563',
+    chartSeries: ['#E74425', '#C67764', '#D97706', '#2563EB', '#059669', '#7C3AED'],
     radius: 'rounded-[24px]',
     fontFamily: 'font-sans',
     accentGlow: 'shadow-[0_4px_20px_rgba(231,68,37,0.15)]',
@@ -90,11 +177,33 @@ export const PREBUILT_THEMES: AppTheme[] = [
     isDark: true,
     background: '#101E37',
     cardBg: '#142038',
-    primary: '#168FE0', // Electric blue
-    secondary: '#A9E547', // Distinctive lime-green active indicator
+    surfaceElevated: '#20314D',
+    surfaceMuted: '#1A2844',
+    overlay: 'rgba(16, 30, 55, 0.78)',
     textPrimary: '#FFFFFF',
     textSecondary: '#CBD5E1',
+    textMuted: '#94A3B8',
+    textInverse: '#101E37',
+    textOnPrimary: '#FFFFFF',
     border: '#23334F',
+    borderSubtle: '#1C2940',
+    borderFocus: '#168FE0',
+    primary: '#168FE0', // Electric blue
+    primaryHover: '#2196E8',
+    secondary: '#A9E547', // Distinctive lime-green active indicator
+    inputBg: '#0E192E',
+    inputBorder: '#23334F',
+    success: '#10B981',
+    successBg: 'rgba(16, 185, 129, 0.15)',
+    warning: '#F59E0B',
+    warningBg: 'rgba(245, 158, 11, 0.15)',
+    danger: '#EF4444',
+    dangerBg: 'rgba(239, 68, 68, 0.15)',
+    info: '#168FE0',
+    infoBg: 'rgba(22, 143, 224, 0.15)',
+    chartGrid: 'rgba(255, 255, 255, 0.08)',
+    chartText: '#CBD5E1',
+    chartSeries: ['#168FE0', '#A9E547', '#38BDF8', '#818CF8', '#F472B6', '#FBBF24'],
     radius: 'rounded-[24px]',
     fontFamily: 'font-sans',
     accentGlow: 'shadow-[0_0_20px_rgba(22,143,224,0.35)]',
@@ -109,11 +218,33 @@ export const PREBUILT_THEMES: AppTheme[] = [
     isDark: true,
     background: '#121826',
     cardBg: '#1E293B',
-    primary: '#10B981', // Emerald green
-    secondary: '#14B8A6', // Teal
-    textPrimary: '#FFFFFF', // High contrast white
-    textSecondary: '#94A3B8', // High contrast slate-400
+    surfaceElevated: '#28364F',
+    surfaceMuted: '#182234',
+    overlay: 'rgba(18, 24, 38, 0.78)',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#94A3B8',
+    textMuted: '#64748B',
+    textInverse: '#121826',
+    textOnPrimary: '#FFFFFF',
     border: 'rgba(255, 255, 255, 0.08)',
+    borderSubtle: 'rgba(255, 255, 255, 0.04)',
+    borderFocus: '#10B981',
+    primary: '#10B981', // Emerald green
+    primaryHover: '#059669',
+    secondary: '#14B8A6', // Teal
+    inputBg: '#151E2E',
+    inputBorder: 'rgba(255, 255, 255, 0.12)',
+    success: '#10B981',
+    successBg: 'rgba(16, 185, 129, 0.15)',
+    warning: '#F59E0B',
+    warningBg: 'rgba(245, 158, 11, 0.15)',
+    danger: '#EF4444',
+    dangerBg: 'rgba(239, 68, 68, 0.15)',
+    info: '#14B8A6',
+    infoBg: 'rgba(20, 184, 166, 0.15)',
+    chartGrid: 'rgba(255, 255, 255, 0.08)',
+    chartText: '#94A3B8',
+    chartSeries: ['#10B981', '#14B8A6', '#06B6D4', '#3B82F6', '#8B5CF6', '#F59E0B'],
     radius: 'rounded-[24px]',
     fontFamily: 'font-sans',
     accentGlow: 'shadow-[0_0_20px_rgba(16,185,129,0.3)]',
@@ -128,11 +259,33 @@ export const PREBUILT_THEMES: AppTheme[] = [
     isDark: false,
     background: '#FEF3C7', // Warm Beige
     cardBg: '#FFFFFF', // Soft White
+    surfaceElevated: '#FFFFFF',
+    surfaceMuted: '#FFFBEB',
+    overlay: 'rgba(69, 26, 3, 0.45)',
+    textPrimary: '#451A03', // Dark Brown
+    textSecondary: '#78350F', // Warm brown clay
+    textMuted: '#A16207',
+    textInverse: '#FFFFFF',
+    textOnPrimary: '#FFFFFF',
+    border: 'rgba(234, 88, 12, 0.18)',
+    borderSubtle: 'rgba(234, 88, 12, 0.08)',
+    borderFocus: '#EA580C',
     primary: '#EA580C', // Terracotta
+    primaryHover: '#C2410C',
     secondary: '#FB7185', // Rose
-    textPrimary: '#451A03', // Dark Brown (Superb contrast on white/beige)
-    textSecondary: '#78350F', // Warm brown clay (readable)
-    border: 'rgba(234, 88, 12, 0.15)',
+    inputBg: '#FFFFFF',
+    inputBorder: 'rgba(234, 88, 12, 0.2)',
+    success: '#059669',
+    successBg: 'rgba(5, 150, 105, 0.12)',
+    warning: '#D97706',
+    warningBg: 'rgba(217, 119, 6, 0.12)',
+    danger: '#DC2626',
+    dangerBg: 'rgba(220, 38, 38, 0.12)',
+    info: '#2563EB',
+    infoBg: 'rgba(37, 99, 235, 0.12)',
+    chartGrid: 'rgba(69, 26, 3, 0.08)',
+    chartText: '#78350F',
+    chartSeries: ['#EA580C', '#FB7185', '#F59E0B', '#E11D48', '#8B5CF6', '#10B981'],
     radius: 'rounded-[32px]',
     fontFamily: 'font-sans font-medium',
     accentGlow: 'shadow-[0_4px_20px_rgba(234,88,12,0.15)]',
@@ -147,13 +300,35 @@ export const PREBUILT_THEMES: AppTheme[] = [
     isDark: true,
     background: '#000000', // True Black
     cardBg: '#1C1C1E', // Dark Gray
-    primary: '#A855F7', // Neon Purple
-    secondary: '#06B6D4', // Cyan
+    surfaceElevated: '#2C2C2E',
+    surfaceMuted: '#141416',
+    overlay: 'rgba(0, 0, 0, 0.85)',
     textPrimary: '#FFFFFF',
-    textSecondary: '#CBD5E1', // High contrast gray
+    textSecondary: '#CBD5E1',
+    textMuted: '#71717A',
+    textInverse: '#000000',
+    textOnPrimary: '#FFFFFF',
     border: 'rgba(168, 85, 247, 0.25)',
-    radius: 'rounded-lg', // Sharp sleek edges
-    fontFamily: 'font-mono', // Techy monospace
+    borderSubtle: 'rgba(168, 85, 247, 0.12)',
+    borderFocus: '#A855F7',
+    primary: '#A855F7', // Neon Purple
+    primaryHover: '#9333EA',
+    secondary: '#06B6D4', // Cyan
+    inputBg: '#121214',
+    inputBorder: 'rgba(168, 85, 247, 0.3)',
+    success: '#10B981',
+    successBg: 'rgba(16, 185, 129, 0.15)',
+    warning: '#F59E0B',
+    warningBg: 'rgba(245, 158, 11, 0.15)',
+    danger: '#EF4444',
+    dangerBg: 'rgba(239, 68, 68, 0.15)',
+    info: '#06B6D4',
+    infoBg: 'rgba(6, 182, 212, 0.15)',
+    chartGrid: 'rgba(255, 255, 255, 0.08)',
+    chartText: '#CBD5E1',
+    chartSeries: ['#A855F7', '#06B6D4', '#EC4899', '#3B82F6', '#10B981', '#EAB308'],
+    radius: 'rounded-lg',
+    fontFamily: 'font-mono',
     accentGlow: 'shadow-[0_0_20px_rgba(168,85,247,0.4)]',
     glassmorphic: 'bg-black/90 backdrop-blur-md border border-purple-500/30',
     badgeBg: 'bg-purple-950 text-purple-300 border border-purple-800',
@@ -166,11 +341,33 @@ export const PREBUILT_THEMES: AppTheme[] = [
     isDark: true,
     background: '#0F172A', // Deep Navy
     cardBg: '#1E293B', // Slate Blue
-    primary: '#2DD4BF', // Bright Teal
-    secondary: '#FBBF24', // Soft Gold
-    textPrimary: '#F8FAFC', // Slate-50
-    textSecondary: '#94A3B8', // Slate-400
+    surfaceElevated: '#293850',
+    surfaceMuted: '#152238',
+    overlay: 'rgba(15, 23, 42, 0.78)',
+    textPrimary: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    textMuted: '#64748B',
+    textInverse: '#0F172A',
+    textOnPrimary: '#0F172A',
     border: 'rgba(45, 212, 191, 0.15)',
+    borderSubtle: 'rgba(45, 212, 191, 0.08)',
+    borderFocus: '#2DD4BF',
+    primary: '#2DD4BF', // Bright Teal
+    primaryHover: '#14B8A6',
+    secondary: '#FBBF24', // Soft Gold
+    inputBg: '#131F33',
+    inputBorder: 'rgba(45, 212, 191, 0.2)',
+    success: '#10B981',
+    successBg: 'rgba(16, 185, 129, 0.15)',
+    warning: '#F59E0B',
+    warningBg: 'rgba(245, 158, 11, 0.15)',
+    danger: '#EF4444',
+    dangerBg: 'rgba(239, 68, 68, 0.15)',
+    info: '#38BDF8',
+    infoBg: 'rgba(56, 189, 248, 0.15)',
+    chartGrid: 'rgba(255, 255, 255, 0.08)',
+    chartText: '#94A3B8',
+    chartSeries: ['#2DD4BF', '#FBBF24', '#38BDF8', '#818CF8', '#34D399', '#FB7185'],
     radius: 'rounded-[24px]',
     fontFamily: 'font-sans',
     accentGlow: 'shadow-[0_0_20px_rgba(45,212,191,0.25)]',
@@ -185,11 +382,33 @@ export const PREBUILT_THEMES: AppTheme[] = [
     isDark: false,
     background: '#F3E8FF', // Soft Lavender
     cardBg: '#FFF1F2', // Pinkish White
-    primary: '#EC4899', // Bubblegum Pink
-    secondary: '#34D399', // Mint
-    textPrimary: '#4C1D95', // Deep Purple (Excellent contrast on pink/lavender)
+    surfaceElevated: '#FFFFFF',
+    surfaceMuted: '#FAF5FF',
+    overlay: 'rgba(76, 29, 149, 0.45)',
+    textPrimary: '#4C1D95', // Deep Purple
     textSecondary: '#6D28D9', // Medium purple
+    textMuted: '#8B5CF6',
+    textInverse: '#FFFFFF',
+    textOnPrimary: '#FFFFFF',
     border: 'rgba(236, 72, 153, 0.15)',
+    borderSubtle: 'rgba(236, 72, 153, 0.08)',
+    borderFocus: '#EC4899',
+    primary: '#EC4899', // Bubblegum Pink
+    primaryHover: '#DB2777',
+    secondary: '#34D399', // Mint
+    inputBg: '#FFFFFF',
+    inputBorder: 'rgba(236, 72, 153, 0.2)',
+    success: '#059669',
+    successBg: 'rgba(5, 150, 105, 0.12)',
+    warning: '#D97706',
+    warningBg: 'rgba(217, 119, 6, 0.12)',
+    danger: '#DC2626',
+    dangerBg: 'rgba(220, 38, 38, 0.12)',
+    info: '#2563EB',
+    infoBg: 'rgba(37, 99, 235, 0.12)',
+    chartGrid: 'rgba(76, 29, 149, 0.08)',
+    chartText: '#6D28D9',
+    chartSeries: ['#EC4899', '#34D399', '#A855F7', '#38BDF8', '#F59E0B', '#10B981'],
     radius: 'rounded-[28px]',
     fontFamily: 'font-sans font-medium',
     accentGlow: 'shadow-[0_4px_16px_rgba(236,72,153,0.12)]',
@@ -201,5 +420,113 @@ export const PREBUILT_THEMES: AppTheme[] = [
 ];
 
 export function getThemeById(themeId: string): AppTheme {
-  return PREBUILT_THEMES.find(t => t.id === themeId) || PREBUILT_THEMES[0];
+  const t = PREBUILT_THEMES.find(th => th.id === themeId) || PREBUILT_THEMES[0];
+  return {
+    ...t,
+    primaryContent: t.primaryContent || t.textOnPrimary,
+    accent: t.accent || t.secondary || t.primary
+  };
 }
+
+/**
+ * Resolves theme based on selected mode ('system' | 'light' | 'dark' | themeId).
+ * Preserves the distinction between the user's selected preference and the resolved palette.
+ */
+export function resolveTheme(themeMode: ThemeMode, systemIsDark: boolean): AppTheme {
+  if (themeMode === 'system') {
+    return systemIsDark ? getThemeById('cocoon') : getThemeById('cocoon-light');
+  }
+  if (themeMode === 'dark') {
+    return getThemeById('cocoon');
+  }
+  if (themeMode === 'light') {
+    return getThemeById('cocoon-light');
+  }
+  return getThemeById(themeMode);
+}
+
+/**
+ * Applies all semantic CSS custom properties to the document root element.
+ * Guarantees zero-flicker and immediate reactivity across CSS and native layers.
+ */
+export function applyThemeToDocument(theme: AppTheme) {
+  if (typeof document === 'undefined') return;
+
+  const root = document.documentElement;
+
+  // Semantic surfaces
+  root.style.setProperty('--app-bg', theme.background);
+  root.style.setProperty('--app-card-bg', theme.cardBg);
+  root.style.setProperty('--app-surface-elevated', theme.surfaceElevated);
+  root.style.setProperty('--app-surface-muted', theme.surfaceMuted);
+  root.style.setProperty('--app-overlay', theme.overlay);
+
+  // Semantic typography
+  root.style.setProperty('--app-text-primary', theme.textPrimary);
+  root.style.setProperty('--app-text-secondary', theme.textSecondary);
+  root.style.setProperty('--app-text-muted', theme.textMuted);
+  root.style.setProperty('--app-text-inverse', theme.textInverse);
+  root.style.setProperty('--app-text-on-primary', theme.textOnPrimary);
+
+  // Semantic borders
+  root.style.setProperty('--app-border', theme.border);
+  root.style.setProperty('--app-border-subtle', theme.borderSubtle);
+  root.style.setProperty('--app-border-focus', theme.borderFocus);
+
+  // Form inputs
+  root.style.setProperty('--app-input-bg', theme.inputBg);
+  root.style.setProperty('--app-input-border', theme.inputBorder);
+
+  // Brand accents
+  root.style.setProperty('--app-primary', theme.primary);
+  root.style.setProperty('--app-primary-hover', theme.primaryHover);
+  root.style.setProperty('--app-secondary', theme.secondary);
+
+  // Status tokens
+  root.style.setProperty('--app-success', theme.success);
+  root.style.setProperty('--app-warning', theme.warning);
+  root.style.setProperty('--app-danger', theme.danger);
+  root.style.setProperty('--app-info', theme.info);
+
+  // Native color-scheme & data attributes
+  root.style.setProperty('color-scheme', theme.isDark ? 'dark' : 'light');
+  root.setAttribute('data-theme', theme.id);
+  root.setAttribute('data-color-scheme', theme.isDark ? 'dark' : 'light');
+
+  if (theme.isDark) {
+    root.classList.add('dark');
+    root.classList.remove('light');
+  } else {
+    root.classList.add('light');
+    root.classList.remove('dark');
+  }
+
+  // Also update body background
+  if (document.body) {
+    document.body.style.backgroundColor = theme.background;
+    document.body.style.color = theme.textPrimary;
+  }
+}
+
+/**
+ * Synchronizes Android status bar and system navigation bar with active theme.
+ */
+export async function syncNativeSystemBars(theme: AppTheme): Promise<void> {
+  if (typeof window === 'undefined') return;
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await StatusBar.setStyle({
+        style: theme.isDark ? Style.Dark : Style.Light
+      });
+      await StatusBar.setBackgroundColor({
+        color: theme.background
+      });
+    } catch {
+      // Graceful fallback on web or unsupported platform
+    }
+  }
+}
+
+export * from './ThemeContext';
+

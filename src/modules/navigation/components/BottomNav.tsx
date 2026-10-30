@@ -32,7 +32,7 @@ export default function BottomNav({
   return (
     <div 
       className="absolute bottom-4 inset-x-4 max-w-sm sm:max-w-md mx-auto h-[60px] rounded-[24px] border flex items-center justify-between px-6 z-[45] select-none shadow-2xl backdrop-blur-xl transition-all"
-      style={{ backgroundColor: `${theme.cardBg}CC`, borderColor: `${theme.border}40` }}
+      style={{ backgroundColor: `${theme.surfaceElevated}E6`, borderColor: theme.borderSubtle }}
     >
       {/* Button 1: Home */}
       <button 
@@ -41,9 +41,9 @@ export default function BottomNav({
           onSelectTab(0);
         }}
         className={`min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
-          activeTab === 0 ? 'scale-105 font-black' : 'text-neutral-400 hover:text-white'
+          activeTab === 0 ? 'scale-105 font-black' : 'opacity-70 hover:opacity-100'
         }`}
-        style={{ color: activeTab === 0 ? theme.primary : undefined }}
+        style={{ color: activeTab === 0 ? theme.primary : theme.textSecondary }}
       >
         <HomeIcon size={18} strokeWidth={theme.iconStrokeWidth} />
         <span className="text-[8px] uppercase font-mono tracking-widest font-black">Home</span>
@@ -62,9 +62,9 @@ export default function BottomNav({
           onSelectTab(5);
         }}
         className={`min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
-          activeTab === 5 ? 'scale-105 font-black' : 'text-neutral-400 hover:text-white'
+          activeTab === 5 ? 'scale-105 font-black' : 'opacity-70 hover:opacity-100'
         }`}
-        style={{ color: activeTab === 5 ? theme.primary : undefined }}
+        style={{ color: activeTab === 5 ? theme.primary : theme.textSecondary }}
       >
         <Landmark size={18} strokeWidth={theme.iconStrokeWidth} />
         <span className="text-[8px] uppercase font-mono tracking-widest font-black">Budget</span>
@@ -84,7 +84,8 @@ export default function BottomNav({
               {/* Backdrop mask */}
               <div 
                 onClick={onToggleRadial}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 cursor-pointer"
+                className="fixed inset-0 backdrop-blur-sm z-40 cursor-pointer"
+                style={{ backgroundColor: theme.overlay }}
               />
               
               {/* EXPENSE Radial option */}
@@ -100,11 +101,22 @@ export default function BottomNav({
                     triggerHapticFeedback();
                     onSelectRadialAction(6);
                   }}
-                  className="w-10 h-10 rounded-full bg-rose-500 hover:bg-rose-600 flex items-center justify-center text-white shadow-lg border border-white/10 cursor-pointer transform active:scale-90 transition-transform"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg border cursor-pointer transform active:scale-90 transition-transform"
+                  style={{
+                    backgroundColor: theme.danger,
+                    borderColor: `${theme.danger}60`
+                  }}
                 >
                   <Minus size={18} strokeWidth={3} />
                 </button>
-                <span className="text-[8px] font-black text-white bg-neutral-900/95 px-2 py-0.5 rounded-full border border-white/10 tracking-widest font-mono shadow-md">
+                <span 
+                  className="text-[8px] font-black px-2 py-0.5 rounded-full border tracking-widest font-mono shadow-md"
+                  style={{
+                    backgroundColor: theme.surfaceElevated,
+                    borderColor: theme.borderSubtle,
+                    color: theme.danger
+                  }}
+                >
                   EXPENSE
                 </span>
               </motion.div>
@@ -122,11 +134,22 @@ export default function BottomNav({
                     triggerHapticFeedback();
                     onSelectRadialAction(7);
                   }}
-                  className="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white shadow-lg border border-white/10 cursor-pointer transform active:scale-90 transition-transform"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg border cursor-pointer transform active:scale-90 transition-transform"
+                  style={{
+                    backgroundColor: theme.success,
+                    borderColor: `${theme.success}60`
+                  }}
                 >
                   <Plus size={18} strokeWidth={3} />
                 </button>
-                <span className="text-[8px] font-black text-white bg-neutral-900/95 px-2 py-0.5 rounded-full border border-white/10 tracking-widest font-mono shadow-md">
+                <span 
+                  className="text-[8px] font-black px-2 py-0.5 rounded-full border tracking-widest font-mono shadow-md"
+                  style={{
+                    backgroundColor: theme.surfaceElevated,
+                    borderColor: theme.borderSubtle,
+                    color: theme.success
+                  }}
+                >
                   INCOME
                 </span>
               </motion.div>
@@ -139,14 +162,16 @@ export default function BottomNav({
             triggerHapticFeedback();
             onToggleRadial();
           }}
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg cursor-pointer relative z-50 border border-white/10 transform transition-all active:scale-95 duration-200 ${
+          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg cursor-pointer relative z-50 border transform transition-all active:scale-95 duration-200 ${
             isRadialOpen 
-              ? 'bg-rose-500 text-white shadow-[0_4px_16px_rgba(244,63,94,0.4)] animate-[pulse_2s_infinite]' 
-              : 'text-white'
+              ? 'animate-[pulse_2s_infinite]' 
+              : ''
           }`}
           style={{ 
-            backgroundColor: isRadialOpen ? undefined : theme.primary,
-            boxShadow: isRadialOpen ? undefined : `0 4px 18px ${theme.primary}60`,
+            backgroundColor: isRadialOpen ? theme.danger : theme.primary,
+            borderColor: theme.borderSubtle,
+            color: '#FFFFFF',
+            boxShadow: isRadialOpen ? `0 4px 16px ${theme.danger}60` : `0 4px 18px ${theme.primary}60`,
             transform: isRadialOpen ? 'rotate(135deg)' : 'none' 
           }}
         >
@@ -161,9 +186,9 @@ export default function BottomNav({
           onSelectTab(4);
         }}
         className={`min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
-          activeTab === 4 ? 'scale-105 font-black' : 'text-neutral-400 hover:text-white'
+          activeTab === 4 ? 'scale-105 font-black' : 'opacity-70 hover:opacity-100'
         }`}
-        style={{ color: activeTab === 4 ? theme.primary : undefined }}
+        style={{ color: activeTab === 4 ? theme.primary : theme.textSecondary }}
       >
         <BarChart2 size={18} strokeWidth={theme.iconStrokeWidth} />
         <span className="text-[8px] uppercase font-mono tracking-widest font-black">Analysis</span>
@@ -182,13 +207,13 @@ export default function BottomNav({
           onSelectTab(3);
         }}
         className={`min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
-          activeTab === 3 ? 'scale-105 font-black' : 'text-neutral-400 hover:text-white'
+          activeTab === 3 ? 'scale-105 font-black' : 'opacity-70 hover:opacity-100'
         }`}
-        style={{ color: activeTab === 3 ? theme.primary : undefined }}
+        style={{ color: activeTab === 3 ? theme.primary : theme.textSecondary }}
       >
         <div 
           className="w-5 h-5 rounded-full overflow-hidden border transition-all shrink-0"
-          style={{ borderColor: activeTab === 3 ? theme.primary : 'rgba(255,255,255,0.3)' }}
+          style={{ borderColor: activeTab === 3 ? theme.primary : theme.borderSubtle }}
         >
           <img 
             src={avatar || DEFAULT_AVATAR} 

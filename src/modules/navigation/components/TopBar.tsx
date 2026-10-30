@@ -31,7 +31,7 @@ export default function TopBar({
   return (
     <div className="pt-6 px-4.5 flex justify-between items-center z-10" style={{ color: theme.textPrimary }}>
       <div className="cursor-pointer" onClick={onHomeClick}>
-        <CocoonLogo size={36} showText={true} />
+        <CocoonLogo size={36} showText={true} theme={theme} />
       </div>
 
       <div className="flex items-center gap-2.5">
@@ -40,8 +40,12 @@ export default function TopBar({
             triggerHapticFeedback();
             onToggleNotifications();
           }}
-          className="p-2.5 min-w-[44px] min-h-[44px] bg-white/5 border rounded-2xl hover:bg-white/10 active:bg-white/15 cursor-pointer relative transition-all flex items-center justify-center shadow-sm"
-          style={{ borderColor: theme.border, color: theme.textPrimary }}
+          className="p-2.5 min-w-[44px] min-h-[44px] border rounded-2xl cursor-pointer relative transition-all flex items-center justify-center shadow-sm active:scale-95"
+          style={{ 
+            backgroundColor: theme.surfaceMuted, 
+            borderColor: theme.borderSubtle, 
+            color: theme.textPrimary 
+          }}
           title="In-App Notifications"
         >
           <Bell size={18} />
@@ -59,8 +63,12 @@ export default function TopBar({
             triggerHapticFeedback();
             onOpenSidebar();
           }}
-          className="p-2.5 min-w-[44px] min-h-[44px] bg-white/5 border rounded-2xl hover:bg-white/10 active:bg-white/15 cursor-pointer transition-all flex items-center justify-center shadow-sm"
-          style={{ borderColor: theme.border, color: theme.textPrimary }}
+          className="p-2.5 min-w-[44px] min-h-[44px] border rounded-2xl cursor-pointer transition-all flex items-center justify-center shadow-sm active:scale-95"
+          style={{ 
+            backgroundColor: theme.surfaceMuted, 
+            borderColor: theme.borderSubtle, 
+            color: theme.textPrimary 
+          }}
           title="Navigation Menu"
         >
           <Menu size={18} />

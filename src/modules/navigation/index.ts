@@ -11,4 +11,5 @@ export { default as NotificationsModal } from './components/NotificationsModal';
 export { default as BalancePinModal } from './components/BalancePinModal';
 export { default as HelpSupportModal } from './components/HelpSupportModal';
 export { DatabaseRecoveryModal } from './components/DatabaseRecoveryModal';
+export { default as AboutAuthorModal } from './components/AboutAuthorModal';
 

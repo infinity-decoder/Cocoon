@@ -128,7 +128,8 @@ export function CreatePartyModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-pointer"
+          className="absolute inset-0 backdrop-blur-sm cursor-pointer"
+          style={{ backgroundColor: theme.overlay }}
         />
 
         {/* Modal Sheet */}
@@ -138,16 +139,16 @@ export function CreatePartyModal({
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
           className="relative w-full max-w-lg max-h-[90vh] rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl border flex flex-col gap-4 overflow-hidden z-10 text-left"
-          style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
+          style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.border }}>
+          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.borderSubtle }}>
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono tracking-widest text-emerald-400 font-bold uppercase">
+              <span className="text-[10px] font-mono tracking-widest font-bold uppercase" style={{ color: theme.primary }}>
                 Workspace Context: {workspaceName}
               </span>
-              <h2 className="text-lg font-black text-white mt-0.5 flex items-center gap-2">
-                <Users size={18} className="text-emerald-400" />
+              <h2 className="text-lg font-black mt-0.5 flex items-center gap-2" style={{ color: theme.textPrimary }}>
+                <Users size={18} style={{ color: theme.primary }} />
                 Add Customer / Supplier / Distributor
               </h2>
             </div>
@@ -156,7 +157,8 @@ export function CreatePartyModal({
                 triggerHapticFeedback();
                 onClose();
               }}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl transition-colors cursor-pointer"
+              style={{ backgroundColor: theme.surfaceMuted, color: theme.textPrimary }}
             >
               <X size={18} />
             </button>
@@ -176,7 +178,7 @@ export function CreatePartyModal({
                 <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
                 <div className="flex flex-col gap-1">
                   <span className="font-bold text-white">Possible Duplicate Contact Found:</span>
-                  <span className="text-neutral-300 font-mono text-[11px]">
+                  <span className="font-mono text-[11px]" style={{ color: theme.textPrimary }}>
                     "{potentialDuplicate.name}" (Role: {potentialDuplicate.type}, Phone: {potentialDuplicate.phone || 'N/A'}) already exists.
                   </span>
                   <span className="text-[10px] text-amber-200/80">
@@ -188,7 +190,7 @@ export function CreatePartyModal({
 
             {/* Type selector */}
             <div>
-              <label className="block text-xs font-bold text-neutral-300 mb-1">
+              <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                 Party Role
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -204,8 +206,9 @@ export function CreatePartyModal({
                     className={`py-2 px-3 rounded-xl text-xs font-bold capitalize transition-colors cursor-pointer border ${
                       type === t
                         ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                        : 'bg-white/5 text-neutral-400 border-white/5 hover:bg-white/10'
+                        : 'hover:opacity-80'
                     }`}
+                    style={type === t ? undefined : { backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textSecondary }}
                   >
                     {t === 'both' ? 'Both (B2B / Distributor)' : t}
                   </button>
@@ -216,7 +219,7 @@ export function CreatePartyModal({
             {/* Name & Company */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Contact / Trade Title <span className="text-rose-400">*</span>
                 </label>
                 <input
@@ -225,12 +228,13 @@ export function CreatePartyModal({
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Tariq Traders"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Company / Organization
                 </label>
                 <input
@@ -238,7 +242,8 @@ export function CreatePartyModal({
                   value={companyName}
                   onChange={e => setCompanyName(e.target.value)}
                   placeholder="e.g. Tariq Goods Co."
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
             </div>
@@ -246,7 +251,7 @@ export function CreatePartyModal({
             {/* Contact Person Details */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Contact Person Name
                 </label>
                 <input
@@ -254,12 +259,13 @@ export function CreatePartyModal({
                   value={contactPersonName}
                   onChange={e => setContactPersonName(e.target.value)}
                   placeholder="e.g. Muhammad Aslam"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Contact Person Phone
                 </label>
                 <input
@@ -267,7 +273,8 @@ export function CreatePartyModal({
                   value={contactPersonPhone}
                   onChange={e => setContactPersonPhone(e.target.value)}
                   placeholder="0321-7654321"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
             </div>
@@ -275,7 +282,7 @@ export function CreatePartyModal({
             {/* Phone & Email */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Main Phone / Mobile
                 </label>
                 <input
@@ -283,12 +290,13 @@ export function CreatePartyModal({
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder="0300-1234567"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Email
                 </label>
                 <input
@@ -296,7 +304,8 @@ export function CreatePartyModal({
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="client@mail.com"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
             </div>
@@ -304,7 +313,7 @@ export function CreatePartyModal({
             {/* Credit Limit & Address */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Credit Limit ({currencySymbol})
                 </label>
                 <input
@@ -314,12 +323,13 @@ export function CreatePartyModal({
                   value={creditLimit}
                   onChange={e => setCreditLimit(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">
+                <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                   Business Address
                 </label>
                 <input
@@ -327,20 +337,21 @@ export function CreatePartyModal({
                   value={address}
                   onChange={e => setAddress(e.target.value)}
                   placeholder="Shop 12, Wholesale Market"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                 />
               </div>
             </div>
 
             {/* OPENING BALANCE PROCESS SECTION */}
-            <div className="pt-2 border-t border-white/10">
+            <div className="pt-2 border-t" style={{ borderColor: theme.borderSubtle }}>
               <div className="flex items-center justify-between mb-2">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-neutral-200">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold" style={{ color: theme.textPrimary }}>
                   <input
                     type="checkbox"
                     checked={hasOpeningBalance}
                     onChange={e => setHasOpeningBalance(e.target.checked)}
-                    className="w-4 h-4 rounded text-emerald-500 focus:ring-0 bg-white/5 border-white/10"
+                    className="w-4 h-4 rounded text-emerald-500 focus:ring-0"
                   />
                   <span>Record Initial Opening Balance</span>
                 </label>
@@ -350,7 +361,7 @@ export function CreatePartyModal({
               </div>
 
               {hasOpeningBalance && (
-                <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 space-y-3">
+                <div className="p-3.5 rounded-2xl border space-y-3" style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -358,11 +369,12 @@ export function CreatePartyModal({
                       className={`p-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer text-left ${
                         openingBalanceType === 'receivable'
                           ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
-                          : 'bg-white/5 border-white/5 text-neutral-400'
+                          : 'hover:opacity-80'
                       }`}
+                      style={openingBalanceType === 'receivable' ? undefined : { backgroundColor: theme.inputBg, borderColor: theme.borderSubtle, color: theme.textSecondary }}
                     >
                       <div className="font-bold">Receivable</div>
-                      <div className="text-[9px] text-neutral-400">Customer owes us</div>
+                      <div className="text-[9px]" style={{ color: theme.textMuted }}>Customer owes us</div>
                     </button>
 
                     <button
@@ -371,17 +383,18 @@ export function CreatePartyModal({
                       className={`p-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer text-left ${
                         openingBalanceType === 'payable'
                           ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                          : 'bg-white/5 border-white/5 text-neutral-400'
+                          : 'hover:opacity-80'
                       }`}
+                      style={openingBalanceType === 'payable' ? undefined : { backgroundColor: theme.inputBg, borderColor: theme.borderSubtle, color: theme.textSecondary }}
                     >
                       <div className="font-bold">Payable</div>
-                      <div className="text-[9px] text-neutral-400">We owe supplier</div>
+                      <div className="text-[9px]" style={{ color: theme.textMuted }}>We owe supplier</div>
                     </button>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-bold text-neutral-300 mb-1">
+                      <label className="block text-[11px] font-bold mb-1" style={{ color: theme.textSecondary }}>
                         Amount ({currencySymbol})
                       </label>
                       <input
@@ -391,24 +404,26 @@ export function CreatePartyModal({
                         value={openingBalanceAmount}
                         onChange={e => setOpeningBalanceAmount(e.target.value)}
                         placeholder="0.00"
-                        className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-purple-400"
+                        className="w-full px-3 py-2 rounded-xl border font-mono text-sm focus:outline-none"
+                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-neutral-300 mb-1">
+                      <label className="block text-[11px] font-bold mb-1" style={{ color: theme.textSecondary }}>
                         As-of Date
                       </label>
                       <input
                         type="date"
                         value={openingBalanceDate}
                         onChange={e => setOpeningBalanceDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-purple-400"
+                        className="w-full px-3 py-2 rounded-xl border text-xs focus:outline-none"
+                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                       />
                     </div>
                   </div>
 
-                  <p className="text-[10px] text-neutral-400 leading-relaxed font-sans">
+                  <p className="text-[10px] leading-relaxed font-sans" style={{ color: theme.textMuted }}>
                     Documented opening-balance process: Creates corresponding double-entry accounting entries against Owner Equity (offset) without distorting current-period sales or purchases.
                   </p>
                 </div>
@@ -417,7 +432,7 @@ export function CreatePartyModal({
 
             {/* Notes */}
             <div>
-              <label className="block text-xs font-bold text-neutral-300 mb-1">
+              <label className="block text-xs font-bold mb-1" style={{ color: theme.textSecondary }}>
                 Notes
               </label>
               <textarea
@@ -425,7 +440,8 @@ export function CreatePartyModal({
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 placeholder="Optional notes or terms..."
-                className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-emerald-500 resize-none"
+                className="w-full px-4 py-2 rounded-xl border text-xs focus:outline-none resize-none"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
               />
             </div>
 

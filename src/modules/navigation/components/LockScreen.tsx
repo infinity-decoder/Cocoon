@@ -6,6 +6,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, Delete } from 'lucide-react';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
+import { useTheme } from '../../../core/theme';
 
 interface LockScreenProps {
   isLocked: boolean;
@@ -26,6 +27,7 @@ export default function LockScreen({
   lockoutSeconds = 0,
   errorMessage
 }: LockScreenProps) {
+  const { theme } = useTheme();
   const isLockedOut = lockoutSeconds > 0;
 
   return (
@@ -35,28 +37,42 @@ export default function LockScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-[#0D1726] z-[99] flex flex-col justify-between p-8 text-white select-none"
+          className="absolute inset-0 z-[99] flex flex-col justify-between p-8 select-none transition-colors"
+          style={{ backgroundColor: theme.background, color: theme.textPrimary }}
         >
           <div className="flex flex-col items-center mt-8 gap-2 text-center">
-            <div className={`p-4 rounded-full border transition-all ${
-              isLockedOut ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-[#E74425]/15 border-[#E74425]/30 text-[#E74425]'
-            }`}>
+            <div 
+              className="p-4 rounded-full border transition-all"
+              style={{
+                backgroundColor: isLockedOut ? theme.dangerBg : `${theme.primary}18`,
+                borderColor: isLockedOut ? `${theme.danger}40` : `${theme.primary}35`,
+                color: isLockedOut ? theme.danger : theme.primary
+              }}
+            >
               <Lock size={32} className={isLockedOut ? 'animate-bounce' : 'animate-pulse'} />
             </div>
-            <span className="text-lg font-black mt-2 tracking-tight">Cocoon Secure Lock</span>
-            <span className="text-xs text-neutral-400 font-mono">
+            <span className="text-lg font-black mt-2 tracking-tight" style={{ color: theme.textPrimary }}>
+              Cocoon Secure Lock
+            </span>
+            <span className="text-xs font-mono" style={{ color: theme.textSecondary }}>
               {isLockedOut ? 'Rate limit cooldown enforced' : 'PBKDF2 Cryptographic Validation'}
             </span>
 
             {isLockedOut ? (
-              <div className="mt-3 px-4 py-2 bg-rose-500/20 border border-rose-500/40 rounded-2xl flex flex-col items-center">
-                <span className="text-xs font-bold text-rose-300">Too many failed attempts</span>
-                <span className="text-sm font-black font-mono text-white mt-0.5">
+              <div 
+                className="mt-3 px-4 py-2 border rounded-2xl flex flex-col items-center"
+                style={{
+                  backgroundColor: theme.dangerBg,
+                  borderColor: `${theme.danger}40`
+                }}
+              >
+                <span className="text-xs font-bold" style={{ color: theme.danger }}>Too many failed attempts</span>
+                <span className="text-sm font-black font-mono mt-0.5" style={{ color: theme.textPrimary }}>
                   Try again in {lockoutSeconds}s
                 </span>
               </div>
             ) : errorMessage ? (
-              <div className="mt-2 text-xs font-bold text-rose-400 animate-shake">
+              <div className="mt-2 text-xs font-bold animate-shake" style={{ color: theme.danger }}>
                 {errorMessage}
               </div>
             ) : null}
@@ -67,13 +83,22 @@ export default function LockScreen({
               {[0, 1, 2, 3].map((idx) => (
                 <div 
                   key={idx} 
-                  className={`w-4 h-4 rounded-full border transition-all ${
+                  className="w-4 h-4 rounded-full border transition-all"
+                  style={
                     isLockedOut
-                      ? 'border-neutral-700 bg-neutral-800'
+                      ? { backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }
                       : enteredPin.length > idx
-                        ? 'bg-[#E74425] border-[#E74425] scale-125 shadow-[0_0_12px_#E74425]'
-                        : 'border-white/30 bg-transparent'
-                  }`} 
+                        ? {
+                            backgroundColor: theme.primary,
+                            borderColor: theme.primary,
+                            transform: 'scale(1.25)',
+                            boxShadow: `0 0 12px ${theme.primary}80`
+                          }
+                        : {
+                            backgroundColor: 'transparent',
+                            borderColor: theme.borderSubtle
+                          }
+                  } 
                 />
               ))}
             </div>
@@ -87,7 +112,12 @@ export default function LockScreen({
                 key={key}
                 disabled={isLockedOut}
                 onClick={() => onKeyPress(key)}
-                className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-bold flex items-center justify-center cursor-pointer select-none transition-all"
+                className="w-16 h-16 rounded-full text-lg font-bold flex items-center justify-center cursor-pointer select-none transition-all border active:scale-90 shadow-sm"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textPrimary
+                }}
               >
                 {key}
               </button>
@@ -99,7 +129,12 @@ export default function LockScreen({
                 triggerHapticFeedback();
                 onClear();
               }}
-              className="w-16 h-16 rounded-full bg-white/2 hover:bg-white/5 text-xs font-bold flex items-center justify-center cursor-pointer transition-all"
+              className="w-16 h-16 rounded-full text-xs font-bold flex items-center justify-center cursor-pointer transition-all border active:scale-90"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.textSecondary
+              }}
             >
               Clear
             </button>
@@ -107,7 +142,12 @@ export default function LockScreen({
             <button
               disabled={isLockedOut}
               onClick={() => onKeyPress('0')}
-              className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-bold flex items-center justify-center cursor-pointer select-none transition-all"
+              className="w-16 h-16 rounded-full text-lg font-bold flex items-center justify-center cursor-pointer select-none transition-all border active:scale-90 shadow-sm"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
               0
             </button>
@@ -115,7 +155,12 @@ export default function LockScreen({
             <button
               disabled={isLockedOut}
               onClick={onBackspace}
-              className="w-16 h-16 rounded-full bg-white/2 hover:bg-white/5 flex items-center justify-center text-rose-400 cursor-pointer transition-all"
+              className="w-16 h-16 rounded-full flex items-center justify-center cursor-pointer transition-all border active:scale-90"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.danger
+              }}
             >
               <Delete size={20} />
             </button>

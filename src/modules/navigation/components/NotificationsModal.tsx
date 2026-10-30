@@ -37,7 +37,8 @@ export default function NotificationsModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+          className="absolute inset-0 backdrop-blur-sm cursor-pointer"
+          style={{ backgroundColor: theme.overlay }}
         />
 
         {/* Panel Content */}
@@ -45,21 +46,26 @@ export default function NotificationsModal({
           initial={{ scale: 0.95, y: 15, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.95, y: 15, opacity: 0 }}
-          className="w-full max-w-sm rounded-3xl border p-5 shadow-2xl z-10 flex flex-col max-h-[480px] overflow-hidden select-none text-left"
-          style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}
+          className="w-full max-w-sm rounded-3xl border p-5 shadow-2xl z-10 flex flex-col max-h-[480px] overflow-hidden select-none text-left transition-colors"
+          style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle }}
         >
           {/* Header */}
-          <div className="flex justify-between items-center pb-3.5 border-b" style={{ borderColor: theme.border }}>
+          <div className="flex justify-between items-center pb-3.5 border-b" style={{ borderColor: theme.borderSubtle }}>
             <div className="flex flex-col">
-              <span className="text-xs font-black uppercase text-emerald-400 font-mono tracking-widest">Vault Messages</span>
-              <span className="text-[10px] text-neutral-400 font-mono mt-0.5">Secure offline ledger logs</span>
+              <span className="text-xs font-black uppercase font-mono tracking-widest" style={{ color: theme.primary }}>
+                Vault Messages
+              </span>
+              <span className="text-[10px] font-mono mt-0.5" style={{ color: theme.textSecondary }}>
+                Secure offline ledger logs
+              </span>
             </div>
             <button
               onClick={() => {
                 triggerHapticFeedback();
                 onClose();
               }}
-              className="p-1.5 rounded-lg bg-white/5 text-neutral-400 hover:text-white cursor-pointer hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg cursor-pointer transition-colors"
+              style={{ color: theme.textSecondary, backgroundColor: theme.surfaceMuted }}
             >
               <X size={15} />
             </button>
@@ -69,11 +75,14 @@ export default function NotificationsModal({
           <div className="flex-1 overflow-y-auto py-3 space-y-2 scrollbar-none">
             {notifications.length === 0 ? (
               <div className="h-44 flex flex-col items-center justify-center text-center gap-2">
-                <div className="p-3 bg-white/3 rounded-full text-neutral-500 border border-white/5">
-                  <Bell size={24} className="opacity-40" />
+                <div 
+                  className="p-3 rounded-full border"
+                  style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textMuted }}
+                >
+                  <Bell size={24} className="opacity-60" />
                 </div>
-                <span className="text-xs font-bold text-neutral-400">All Quiet Here</span>
-                <span className="text-[10px] text-neutral-500 leading-normal max-w-[200px]">
+                <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>All Quiet Here</span>
+                <span className="text-[10px] leading-normal max-w-[200px]" style={{ color: theme.textSecondary }}>
                   Notifications about offline backups, restores, and printable exports will appear here.
                 </span>
               </div>
@@ -99,19 +108,22 @@ export default function NotificationsModal({
                   <div 
                     key={notif.id}
                     className={`p-3 rounded-2xl border flex gap-3 transition-all ${
-                      notif.unread ? 'bg-white/[0.04]' : 'bg-transparent opacity-75'
+                      notif.unread ? 'shadow-sm' : 'opacity-80'
                     }`}
-                    style={{ borderColor: theme.border }}
+                    style={{
+                      borderColor: theme.borderSubtle,
+                      backgroundColor: notif.unread ? theme.surfaceMuted : 'transparent'
+                    }}
                   >
                     <div className={`p-2 rounded-xl border flex-shrink-0 h-9 w-9 flex items-center justify-center ${iconColor}`}>
                       <IconComponent size={16} />
                     </div>
                     <div className="flex flex-col text-left flex-1 min-w-0">
                       <div className="flex justify-between items-baseline gap-2">
-                        <span className="text-xs font-bold text-neutral-200 truncate">{notif.title}</span>
-                        <span className="text-[9px] font-mono text-neutral-500 whitespace-nowrap">{notif.timestamp}</span>
+                        <span className="text-xs font-bold truncate" style={{ color: theme.textPrimary }}>{notif.title}</span>
+                        <span className="text-[9px] font-mono whitespace-nowrap" style={{ color: theme.textMuted }}>{notif.timestamp}</span>
                       </div>
-                      <span className="text-[10px] text-neutral-400 leading-relaxed mt-0.5">{notif.message}</span>
+                      <span className="text-[10px] leading-relaxed mt-0.5" style={{ color: theme.textSecondary }}>{notif.message}</span>
                     </div>
                   </div>
                 );
@@ -121,13 +133,18 @@ export default function NotificationsModal({
 
           {/* Footer Controls */}
           {notifications.length > 0 && (
-            <div className="pt-3 border-t flex justify-between gap-3 mt-1" style={{ borderColor: theme.border }}>
+            <div className="pt-3 border-t flex justify-between gap-3 mt-1" style={{ borderColor: theme.borderSubtle }}>
               <button
                 onClick={() => {
                   triggerHapticFeedback();
                   onMarkAllRead();
                 }}
-                className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 text-neutral-300 font-bold text-center text-[10px] rounded-xl cursor-pointer transition-colors border border-white/5"
+                className="flex-1 py-2 px-3 font-bold text-center text-[10px] rounded-xl cursor-pointer transition-colors border"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textPrimary
+                }}
               >
                 Mark all read
               </button>
@@ -136,7 +153,12 @@ export default function NotificationsModal({
                   triggerHapticFeedback();
                   onClearAll();
                 }}
-                className="py-2 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-center text-[10px] rounded-xl cursor-pointer transition-colors border border-rose-500/20 flex items-center gap-1.5"
+                className="py-2 px-3 font-bold text-center text-[10px] rounded-xl cursor-pointer transition-colors border flex items-center gap-1.5"
+                style={{
+                  backgroundColor: theme.dangerBg,
+                  borderColor: `${theme.danger}35`,
+                  color: theme.danger
+                }}
               >
                 <Trash2 size={12} />
                 Clear all
@@ -148,3 +170,4 @@ export default function NotificationsModal({
     </AnimatePresence>
   );
 }
+

@@ -18,6 +18,7 @@ import { CATEGORY_ICONS_MAP } from '../../categories';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
 import CocoonLogo from '../../../shared/components/CocoonLogo';
 import CocoonStatementSeal from '../../../shared/components/CocoonStatementSeal';
+import { useTheme } from '../../../core/theme';
 
 interface TransactionsTabProps {
   transactions: Transaction[];
@@ -59,6 +60,8 @@ export default function TransactionsTab({
   onUpdateProfile,
   themeCardBg
 }: TransactionsTabProps) {
+  const { theme } = useTheme();
+
   // Active swiped item state: { id: string; action: 'edit' | 'delete' } | null
   const [swipedTx, setSwipedTx] = useState<{ id: string; action: 'edit' | 'delete' } | null>(null);
 
@@ -439,21 +442,26 @@ export default function TransactionsTab({
     <div className="w-full flex flex-col gap-4 select-none">
       {/* Top Header with Back to Home button */}
       {onBack && (
-        <div className="flex items-center justify-between pb-1 border-b border-white/5 gap-2">
+        <div className="flex items-center justify-between pb-1 border-b gap-2" style={{ borderColor: theme.borderSubtle }}>
           <button
             type="button"
             onClick={() => {
               triggerHapticFeedback();
               onBack();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 border rounded-2xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
+            style={{
+              backgroundColor: theme.surfaceMuted,
+              borderColor: theme.borderSubtle,
+              color: theme.textPrimary
+            }}
           >
-            <ArrowLeft size={14} className="text-emerald-400" />
+            <ArrowLeft size={14} className="text-emerald-500" />
             <span>Back to Home</span>
           </button>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold hidden sm:inline">Ledger Book</span>
-            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold hidden sm:inline" style={{ color: theme.textSecondary }}>Ledger Book</span>
+            <span className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">
               {filteredTransactions.length} entries
             </span>
           </div>
@@ -462,20 +470,28 @@ export default function TransactionsTab({
 
       {/* Search Bar & Primary Filters Button */}
       <div className="flex items-center gap-2 w-full">
-        <div className="flex-1 min-w-0 flex items-center gap-2 bg-white/4 border border-white/5 rounded-2xl px-3 py-2.5 sm:px-3.5 sm:py-3 transition-colors focus-within:border-emerald-500/40">
-          <Search size={16} className="text-neutral-400 shrink-0" />
+        <div 
+          className="flex-1 min-w-0 flex items-center gap-2 border rounded-2xl px-3 py-2.5 sm:px-3.5 sm:py-3 transition-colors focus-within:border-emerald-500/40"
+          style={{
+            backgroundColor: theme.surfaceElevated,
+            borderColor: theme.borderSubtle
+          }}
+        >
+          <Search size={16} className="shrink-0" style={{ color: theme.textSecondary }} />
           <input
             type="text"
             placeholder="Search notes, amounts..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent w-full min-w-0 text-xs sm:text-sm outline-none placeholder:text-neutral-500 text-white truncate"
+            className="bg-transparent w-full min-w-0 text-xs sm:text-sm outline-none truncate"
+            style={{ color: theme.textPrimary }}
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => setSearchTerm('')}
-              className="text-neutral-500 hover:text-white p-0.5 shrink-0"
+              className="p-0.5 shrink-0 transition-colors"
+              style={{ color: theme.textMuted }}
               title="Clear search"
             >
               <X size={14} />
@@ -491,16 +507,21 @@ export default function TransactionsTab({
           }}
           className={`w-11 h-11 shrink-0 border rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
             showFilters 
-              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' 
-              : 'bg-white/4 border-white/5 text-neutral-300 hover:bg-white/10 hover:text-white'
+              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-500' 
+              : 'hover:opacity-90'
           }`}
+          style={!showFilters ? {
+            backgroundColor: theme.surfaceElevated,
+            borderColor: theme.borderSubtle,
+            color: theme.textSecondary
+          } : undefined}
           title="Toggle Filters"
           aria-label="Filter transactions"
         >
           <div className="relative flex items-center justify-center">
             <Filter size={17} />
-            {(filterType !== 'all' || filterCategory || startDate || endDate || filterPayment !== 'all') && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-black" />
+            {(filterType !== 'all' || filterCategory !== 'all' || startDate || endDate || filterPayment !== 'all') && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-black" />
             )}
           </div>
         </button>
@@ -511,7 +532,12 @@ export default function TransactionsTab({
             triggerHapticFeedback();
             setShowExportPanel(true);
           }}
-          className="w-11 h-11 shrink-0 bg-blue-500/10 hover:bg-blue-500/20 active:bg-blue-500/25 border border-blue-500/25 rounded-2xl flex items-center justify-center text-blue-300 hover:text-blue-200 transition-all cursor-pointer active:scale-95 shadow-sm"
+          className="w-11 h-11 shrink-0 border rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm"
+          style={{
+            backgroundColor: theme.surfaceElevated,
+            borderColor: theme.borderSubtle,
+            color: theme.textSecondary
+          }}
           title="Save PDF / Export Ledger"
           aria-label="Save PDF or Export Ledger"
         >
@@ -526,7 +552,11 @@ export default function TransactionsTab({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-white/3 border border-white/5 rounded-2xl p-4 flex flex-col gap-4 overflow-hidden"
+            className="border rounded-2xl p-4 flex flex-col gap-4 overflow-hidden"
+            style={{
+              backgroundColor: theme.surfaceElevated,
+              borderColor: theme.borderSubtle
+            }}
           >
             <div className="grid grid-cols-3 gap-2">
               {/* Type Filter Buttons */}
@@ -534,11 +564,16 @@ export default function TransactionsTab({
                 <button
                   key={t}
                   onClick={() => setFilterType(t)}
-                  className={`py-1.5 rounded-xl border text-xs capitalize font-bold cursor-pointer ${
+                  className={`py-1.5 rounded-xl border text-xs capitalize font-bold cursor-pointer transition-colors ${
                     filterType === t 
-                      ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' 
-                      : 'bg-neutral-800/40 border-white/5 text-neutral-400'
+                      ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-500' 
+                      : ''
                   }`}
+                  style={filterType !== t ? {
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  } : undefined}
                 >
                   {t}
                 </button>
@@ -548,11 +583,16 @@ export default function TransactionsTab({
             <div className="grid grid-cols-2 gap-3">
               {/* Category Filter */}
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] text-neutral-400">Category</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>Category</span>
                 <select 
                   value={filterCategory} 
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="bg-neutral-900 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white"
+                  className="border rounded-xl px-2 py-1.5 text-xs outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 >
                   <option value="all">All Categories</option>
                   {categories.map(c => (
@@ -563,11 +603,16 @@ export default function TransactionsTab({
 
               {/* Payment Method Filter */}
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] text-neutral-400">Payment</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>Payment</span>
                 <select 
                   value={filterPayment} 
                   onChange={(e) => setFilterPayment(e.target.value)}
-                  className="bg-neutral-900 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white"
+                  className="border rounded-xl px-2 py-1.5 text-xs outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 >
                   <option value="all">All Methods</option>
                   {paymentMethods.map(m => (
@@ -580,24 +625,34 @@ export default function TransactionsTab({
             <div className="grid grid-cols-2 gap-3">
               {/* Amount Range Filter */}
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] text-neutral-400">Min Amount ({currencySymbol})</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>Min Amount ({currencySymbol})</span>
                 <input 
                   type="number" 
                   placeholder="Min" 
                   value={filterMinAmount} 
                   onChange={(e) => setFilterMinAmount(e.target.value)}
-                  className="bg-neutral-900 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white font-mono"
+                  className="border rounded-xl px-2 py-1.5 text-xs font-mono outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] text-neutral-400">Max Amount ({currencySymbol})</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>Max Amount ({currencySymbol})</span>
                 <input 
                   type="number" 
                   placeholder="Max" 
                   value={filterMaxAmount} 
                   onChange={(e) => setFilterMaxAmount(e.target.value)}
-                  className="bg-neutral-900 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white font-mono"
+                  className="border rounded-xl px-2 py-1.5 text-xs font-mono outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 />
               </div>
             </div>
@@ -605,21 +660,31 @@ export default function TransactionsTab({
             {/* Date Range Filter */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] text-neutral-400">From Date</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>From Date</span>
                 <input 
                   type="date" 
                   value={startDate} 
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-neutral-900 border border-white/10 rounded-xl px-2 py-1 text-xs text-white"
+                  className="border rounded-xl px-2 py-1 text-xs outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] text-neutral-400">To Date</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>To Date</span>
                 <input 
                   type="date" 
                   value={endDate} 
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-neutral-900 border border-white/10 rounded-xl px-2 py-1 text-xs text-white"
+                  className="border rounded-xl px-2 py-1 text-xs outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 />
               </div>
             </div>
@@ -636,7 +701,7 @@ export default function TransactionsTab({
                 setEndDate('');
                 setSearchTerm('');
               }}
-              className="text-xs text-rose-400 font-bold self-end hover:underline cursor-pointer"
+              className="text-xs text-rose-500 font-bold self-end hover:underline cursor-pointer"
             >
               Reset Filters
             </button>
@@ -647,34 +712,48 @@ export default function TransactionsTab({
       {/* --- EXPORT REPORT CONFIGURATION PANEL --- */}
       <AnimatePresence>
         {showExportPanel && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-[28px] flex flex-col gap-4 text-white text-left"
+              className="w-full max-w-sm p-6 border rounded-[28px] flex flex-col gap-4 text-left shadow-2xl"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-base font-bold flex items-center gap-1.5">
-                  <FileSpreadsheet size={18} className="text-emerald-400" />
+              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
+                <span className="text-base font-bold flex items-center gap-1.5" style={{ color: theme.textPrimary }}>
+                  <FileSpreadsheet size={18} className="text-emerald-500" />
                   Custom Ledger Export
                 </span>
-                <button onClick={() => setShowExportPanel(false)} className="text-neutral-400 hover:text-white cursor-pointer">
+                <button 
+                  onClick={() => setShowExportPanel(false)} 
+                  className="transition-colors cursor-pointer"
+                  style={{ color: theme.textMuted }}
+                >
                   <X size={18} />
                 </button>
               </div>
 
               {/* Time Range scope */}
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-neutral-400">Time Range Scope</span>
+                <span className="text-xs font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>Time Range Scope</span>
                 <div className="grid grid-cols-3 gap-2">
                   {(['monthly', 'yearly', 'all'] as const).map(s => (
                     <button
                       key={s}
                       onClick={() => setExportScope(s)}
                       className={`py-1.5 rounded-xl border text-xs font-bold capitalize transition-colors cursor-pointer ${
-                        exportScope === s ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-neutral-800/40 border-white/5 text-neutral-400'
+                        exportScope === s ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-500' : ''
                       }`}
+                      style={exportScope !== s ? {
+                        backgroundColor: theme.surfaceMuted,
+                        borderColor: theme.borderSubtle,
+                        color: theme.textSecondary
+                      } : undefined}
                     >
                       {s}
                     </button>
@@ -684,15 +763,20 @@ export default function TransactionsTab({
 
               {/* Transaction Scope Type */}
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-neutral-400">Transactions to Include</span>
+                <span className="text-xs font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>Transactions to Include</span>
                 <div className="grid grid-cols-3 gap-2">
                   {(['combined', 'expense', 'income'] as const).map(f => (
                     <button
                       key={f}
                       onClick={() => setExportFilter(f)}
                       className={`py-1.5 rounded-xl border text-xs font-bold capitalize transition-colors cursor-pointer ${
-                        exportFilter === f ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-neutral-800/40 border-white/5 text-neutral-400'
+                        exportFilter === f ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-500' : ''
                       }`}
+                      style={exportFilter !== f ? {
+                        backgroundColor: theme.surfaceMuted,
+                        borderColor: theme.borderSubtle,
+                        color: theme.textSecondary
+                      } : undefined}
                     >
                       {f}
                     </button>
@@ -701,10 +785,16 @@ export default function TransactionsTab({
               </div>
 
               {/* Security / Password simulation toggle */}
-              <div className="flex flex-col gap-2 p-3 bg-neutral-950/40 border border-white/5 rounded-2xl">
+              <div 
+                className="flex flex-col gap-2 p-3 border rounded-2xl"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle
+                }}
+              >
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
-                    <ShieldCheck size={14} className="text-emerald-400" />
+                  <span className="text-xs font-semibold flex items-center gap-1.5" style={{ color: theme.textPrimary }}>
+                    <ShieldCheck size={14} className="text-emerald-500" />
                     Protect PDF with Password
                   </span>
                   <input
@@ -721,7 +811,12 @@ export default function TransactionsTab({
                     placeholder="Enter document unlock password"
                     value={pdfPassword}
                     onChange={(e) => setPdfPassword(e.target.value)}
-                    className="bg-neutral-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white"
+                    className="border rounded-xl px-2.5 py-1.5 text-xs outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 )}
               </div>
@@ -730,7 +825,12 @@ export default function TransactionsTab({
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <button
                   onClick={handleExportCSV}
-                  className="py-2.5 bg-neutral-800 hover:bg-neutral-700/80 border border-white/10 rounded-xl text-xs font-bold text-neutral-200 flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2.5 border rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textPrimary
+                  }}
                 >
                   <FileSpreadsheet size={15} />
                   Download CSV
@@ -738,7 +838,11 @@ export default function TransactionsTab({
 
                 <button
                   onClick={handlePrintPDF}
-                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                  className="py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.primary,
+                    color: theme.primaryContent
+                  }}
                 >
                   <Download size={15} />
                   Save PDF
@@ -751,18 +855,24 @@ export default function TransactionsTab({
 
       {/* --- INTERACTIVE SWIPE GESTURE TUTORIAL / ANIMATION BANNER --- */}
       {!isGuideDismissed && (
-        <div className="bg-gradient-to-r from-blue-950/40 via-neutral-900/60 to-rose-950/40 border border-white/10 rounded-2xl p-3.5 flex flex-col gap-2.5 shadow-md">
+        <div 
+          className="border rounded-2xl p-3.5 flex flex-col gap-2.5 shadow-md"
+          style={{
+            backgroundColor: theme.surfaceMuted,
+            borderColor: theme.borderSubtle
+          }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 <Sparkles size={14} />
               </div>
-              <span className="text-xs font-bold text-white tracking-wide">
+              <span className="text-xs font-bold tracking-wide" style={{ color: theme.textPrimary }}>
                 Quick Action Gestures
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-widest hidden sm:inline">
+              <span className="text-[9px] font-mono uppercase tracking-widest hidden sm:inline" style={{ color: theme.textMuted }}>
                 Swipe cards to act
               </span>
               <button
@@ -772,7 +882,12 @@ export default function TransactionsTab({
                   setIsGuideDismissed(true);
                   localStorage.setItem('cocoon_dismiss_swipe_guide', 'true');
                 }}
-                className="p-1 rounded-lg bg-white/5 hover:bg-white/10 active:bg-white/20 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 rounded-lg border transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: theme.surfaceElevated,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textMuted
+                }}
                 title="Dismiss guide"
                 aria-label="Dismiss guide"
               >
@@ -782,15 +897,21 @@ export default function TransactionsTab({
           </div>
 
           {/* Looping sliding gesture demo card */}
-          <div className="relative h-11 bg-black/40 rounded-xl overflow-hidden border border-white/5 flex items-center justify-between px-3 text-[10px]">
+          <div 
+            className="relative h-11 rounded-xl overflow-hidden border flex items-center justify-between px-3 text-[10px]"
+            style={{
+              backgroundColor: theme.surfaceElevated,
+              borderColor: theme.borderSubtle
+            }}
+          >
             {/* Left track hint (Slide Right to Edit) */}
-            <div className="flex items-center gap-1.5 text-blue-400 font-bold z-0">
+            <div className="flex items-center gap-1.5 text-blue-500 font-bold z-0">
               <Pencil size={12} />
               <span>Slide Right to Edit</span>
             </div>
 
             {/* Right track hint (Slide Left to Delete) */}
-            <div className="flex items-center gap-1.5 text-rose-400 font-bold z-0">
+            <div className="flex items-center gap-1.5 text-rose-500 font-bold z-0">
               <span>Slide Left to Delete</span>
               <Trash2 size={12} />
             </div>
@@ -805,22 +926,27 @@ export default function TransactionsTab({
                 repeat: Infinity,
                 ease: 'easeInOut'
               }}
-              className="absolute inset-y-1 inset-x-10 bg-neutral-800/90 border border-white/15 rounded-lg flex items-center justify-center gap-2 shadow-lg z-10 pointer-events-none select-none text-neutral-200"
+              className="absolute inset-y-1 inset-x-10 border rounded-lg flex items-center justify-center gap-2 shadow-lg z-10 pointer-events-none select-none"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
-              <ChevronLeft size={13} className="text-rose-400 animate-pulse" />
-              <span className="text-[10px] font-semibold text-white">👈 Drag Card 👉</span>
-              <ChevronRight size={13} className="text-blue-400 animate-pulse" />
+              <ChevronLeft size={13} className="text-rose-500 animate-pulse" />
+              <span className="text-[10px] font-semibold" style={{ color: theme.textPrimary }}>👈 Drag Card 👉</span>
+              <ChevronRight size={13} className="text-blue-500 animate-pulse" />
             </motion.div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-[10px] font-medium pt-0.5">
-            <div className="flex items-center gap-1.5 text-neutral-300 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2.5 py-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+            <div className="flex items-center gap-1.5 text-blue-500 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2.5 py-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
               <span>Slide <strong>Right</strong> to Edit</span>
             </div>
-            <div className="flex items-center gap-1.5 text-neutral-300 bg-rose-500/10 border border-rose-500/20 rounded-lg px-2.5 py-1.5 justify-end text-right">
+            <div className="flex items-center gap-1.5 text-rose-500 bg-rose-500/10 border border-rose-500/20 rounded-lg px-2.5 py-1.5 justify-end text-right">
               <span>Slide <strong>Left</strong> to Delete</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
             </div>
           </div>
         </div>
@@ -830,7 +956,7 @@ export default function TransactionsTab({
       <div className="flex flex-col gap-5">
         {Object.keys(groupedTransactions).map((dateHeader) => (
           <div key={dateHeader} className="flex flex-col gap-2">
-            <span className="text-xs font-bold text-neutral-400 px-1 text-left">
+            <span className="text-xs font-bold px-1 text-left" style={{ color: theme.textSecondary }}>
               {dateHeader}
             </span>
 
@@ -908,26 +1034,29 @@ export default function TransactionsTab({
                           setSwipedTx(null);
                         }
                       }}
-                      className="absolute inset-0 w-full h-full flex items-center justify-between p-3.5 bg-neutral-900 border border-white/5 cursor-grab active:cursor-grabbing rounded-2xl z-10 hover:border-white/10 transition-colors select-none"
-                      style={{ backgroundColor: themeCardBg }}
+                      className="absolute inset-0 w-full h-full flex items-center justify-between p-3.5 border cursor-grab active:cursor-grabbing rounded-2xl z-10 transition-colors select-none"
+                      style={{
+                        backgroundColor: theme.surfaceElevated,
+                        borderColor: theme.borderSubtle
+                      }}
                     >
                       <div className="flex items-center gap-3 truncate">
                         <div 
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0"
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-sm"
                           style={{ backgroundColor: catColor }}
                         >
                           <IconComponent size={20} />
                         </div>
                         
                         <div className="flex flex-col truncate text-left">
-                          <span className="text-sm font-semibold text-white truncate leading-tight">
+                          <span className="text-sm font-semibold truncate leading-tight" style={{ color: theme.textPrimary }}>
                             {tx.note || tx.category}
                           </span>
-                          <span className="text-[10px] text-neutral-400 mt-0.5 flex items-center gap-1">
+                          <span className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: theme.textSecondary }}>
                             <span className="font-semibold uppercase tracking-wider text-[9px] opacity-75">{tx.category}</span>
                             {tx.subCategory && (
                               <>
-                                <ChevronRight size={10} className="text-neutral-500" />
+                                <ChevronRight size={10} style={{ color: theme.textMuted }} />
                                 <span className="opacity-90">{tx.subCategory}</span>
                               </>
                             )}
@@ -936,16 +1065,23 @@ export default function TransactionsTab({
                       </div>
 
                       <div className="flex flex-col items-end text-right font-mono">
-                        <span className={`text-sm font-extrabold ${tx.type === 'income' || tx.type === 'savings_withdraw' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        <span className={`text-sm font-extrabold ${tx.type === 'income' || tx.type === 'savings_withdraw' ? 'text-emerald-500' : 'text-rose-500'}`}>
                           {tx.type === 'income' || tx.type === 'savings_withdraw' ? '+' : '-'} {currencySymbol} {tx.amount.toLocaleString()}
                         </span>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {tx.isRecurring && (
-                            <span className="text-[8px] bg-white/10 text-neutral-300 px-1.5 py-0.2 rounded font-sans uppercase font-bold">
+                            <span 
+                              className="text-[8px] px-1.5 py-0.5 rounded font-sans uppercase font-bold border"
+                              style={{
+                                backgroundColor: theme.surfaceMuted,
+                                borderColor: theme.borderSubtle,
+                                color: theme.textSecondary
+                              }}
+                            >
                               Recurring
                             </span>
                           )}
-                          <span className="text-[9px] text-neutral-500 font-mono">
+                          <span className="text-[9px] font-mono" style={{ color: theme.textMuted }}>
                             {new Date(tx.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -961,7 +1097,7 @@ export default function TransactionsTab({
         {/* --- PAGINATION LOAD MORE CONTROLS --- */}
         {visibleCount < filteredTransactions.length && (
           <div className="pt-2 pb-4 flex flex-col items-center gap-2">
-            <span className="text-[11px] text-neutral-400 font-mono">
+            <span className="text-[11px] font-mono" style={{ color: theme.textSecondary }}>
               Showing {paginatedTransactions.length} of {filteredTransactions.length} transactions
             </span>
             <button
@@ -970,7 +1106,12 @@ export default function TransactionsTab({
                 triggerHapticFeedback();
                 setVisibleCount(prev => prev + 25);
               }}
-              className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700/80 border border-white/10 rounded-xl text-xs font-bold text-white transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 shadow-md"
+              className="px-4 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 shadow-md"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
               Load More Transactions
             </button>
@@ -978,10 +1119,10 @@ export default function TransactionsTab({
         )}
 
         {filteredTransactions.length === 0 && (
-          <div className="text-center py-12 text-neutral-500 flex flex-col items-center gap-3">
+          <div className="text-center py-12 flex flex-col items-center gap-3">
             <div>
-              <span className="text-sm font-semibold text-neutral-400 block">No matching transactions found</span>
-              <span className="text-xs opacity-60">Adjust your filters or search keywords</span>
+              <span className="text-sm font-semibold block" style={{ color: theme.textPrimary }}>No matching transactions found</span>
+              <span className="text-xs" style={{ color: theme.textSecondary }}>Adjust your filters or search keywords</span>
             </div>
             {(searchTerm || filterType !== 'all' || filterCategory !== 'all' || filterPayment !== 'all' || filterMinAmount || filterMaxAmount || startDate || endDate) && (
               <button
@@ -997,7 +1138,7 @@ export default function TransactionsTab({
                   setEndDate('');
                   setSearchTerm('');
                 }}
-                className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-all cursor-pointer"
+                className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-all cursor-pointer"
               >
                 Reset All Filters
               </button>
@@ -1009,23 +1150,28 @@ export default function TransactionsTab({
       {/* --- EDIT TRANSACTION SHEET (POPUP MODAL) --- */}
       <AnimatePresence>
         {editingTx && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-2xl flex flex-col gap-4 text-white"
+              className="w-full max-w-sm p-6 border rounded-2xl flex flex-col gap-4 text-left shadow-2xl"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
-              <span className="text-base font-bold">Edit Transaction</span>
+              <span className="text-base font-bold" style={{ color: theme.textPrimary }}>Edit Transaction</span>
 
               {editError && (
-                <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-medium">
+                <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-500 text-xs font-medium">
                   {editError}
                 </div>
               )}
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Description / Note</span>
+                <span className="text-xs font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>Description / Note</span>
                 <input
                   type="text"
                   value={editNote}
@@ -1033,12 +1179,17 @@ export default function TransactionsTab({
                     setEditNote(e.target.value);
                     setEditError('');
                   }}
-                  className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
+                  className="border rounded-xl px-3 py-2 text-sm outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400">Amount ({currencySymbol})</span>
+                <span className="text-xs font-mono uppercase tracking-wider" style={{ color: theme.textSecondary }}>Amount ({currencySymbol})</span>
                 <input
                   type="number"
                   value={editAmount}
@@ -1046,7 +1197,12 @@ export default function TransactionsTab({
                     setEditAmount(e.target.value);
                     setEditError('');
                   }}
-                  className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
+                  className="border rounded-xl px-3 py-2 text-sm outline-none font-mono font-bold transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 />
               </div>
 
@@ -1056,7 +1212,12 @@ export default function TransactionsTab({
                     setEditingTx(null);
                     setEditError('');
                   }}
-                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-colors"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
                   Cancel
                 </button>
@@ -1075,7 +1236,11 @@ export default function TransactionsTab({
                     setEditError('');
                     triggerHapticFeedback();
                   }}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-xs font-bold text-white cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer shadow-md transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.primary,
+                    color: theme.primaryContent
+                  }}
                 >
                   Save Changes
                 </button>
@@ -1088,75 +1253,101 @@ export default function TransactionsTab({
       {/* --- USER STATEMENT PROFILE DETAILS PROMPT MODAL --- */}
       <AnimatePresence>
         {showProfilePromptModal && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" style={{ backgroundColor: theme.overlay }}>
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/10 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+              className="w-full max-w-sm p-6 border rounded-[28px] flex flex-col gap-4 text-left shadow-2xl"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
+              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                     <User size={16} />
                   </div>
-                  <span className="text-sm font-bold text-white">Statement Details</span>
+                  <span className="text-sm font-bold" style={{ color: theme.textPrimary }}>Statement Details</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowProfilePromptModal(false)}
-                  className="text-neutral-400 hover:text-white cursor-pointer"
+                  className="transition-colors cursor-pointer"
+                  style={{ color: theme.textMuted }}
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              <p className="text-xs text-neutral-300 leading-relaxed">
+              <p className="text-xs leading-relaxed" style={{ color: theme.textSecondary }}>
                 Add your personal or business details to generate a professional, bank-style Transaction Statement:
               </p>
 
               <div className="flex flex-col gap-2.5">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Account Holder Name</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider" style={{ color: theme.textSecondary }}>Account Holder Name</span>
                   <input
                     type="text"
                     placeholder="e.g. Mahboob Alam"
                     value={inputName}
                     onChange={(e) => setInputName(e.target.value)}
-                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50"
+                    className="border rounded-xl px-3 py-2 text-xs outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Email Address</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider" style={{ color: theme.textSecondary }}>Email Address</span>
                   <input
                     type="email"
                     placeholder="e.g. mahboobalam.dev@gmail.com"
                     value={inputEmail}
                     onChange={(e) => setInputEmail(e.target.value)}
-                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50"
+                    className="border rounded-xl px-3 py-2 text-xs outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Mobile Number</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider" style={{ color: theme.textSecondary }}>Mobile Number</span>
                   <input
                     type="tel"
                     placeholder="e.g. +92 300 1234567"
                     value={inputPhone}
                     onChange={(e) => setInputPhone(e.target.value)}
-                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50"
+                    className="border rounded-xl px-3 py-2 text-xs outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Mailing / Business Address</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider" style={{ color: theme.textSecondary }}>Mailing / Business Address</span>
                   <textarea
                     rows={2}
                     placeholder="e.g. Suite 402, Financial Tower, City"
                     value={inputAddress}
                     onChange={(e) => setInputAddress(e.target.value)}
-                    className="bg-neutral-800 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50 resize-none"
+                    className="border rounded-xl px-3 py-2 text-xs outline-none resize-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
               </div>
@@ -1168,7 +1359,12 @@ export default function TransactionsTab({
                     setShowProfilePromptModal(false);
                     setShowPdfPreviewModal(true);
                   }}
-                  className="py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-neutral-300 cursor-pointer transition-all active:scale-95"
+                  className="py-2.5 border rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
                   Skip for Now
                 </button>
@@ -1193,7 +1389,11 @@ export default function TransactionsTab({
                     setShowProfilePromptModal(false);
                     setShowPdfPreviewModal(true);
                   }}
-                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                  className="py-2.5 rounded-xl text-xs font-bold cursor-pointer shadow-md transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.primary,
+                    color: theme.primaryContent
+                  }}
                 >
                   Save & Generate
                 </button>
@@ -1206,24 +1406,35 @@ export default function TransactionsTab({
       {/* --- IN-APP PDF / PROFESSIONAL BANK-GRADE TRANSACTION STATEMENT MODAL --- */}
       <AnimatePresence>
         {showPdfPreviewModal && (
-          <div className="fixed inset-0 z-[100] bg-neutral-950/95 backdrop-blur-md flex flex-col overflow-hidden text-left">
+          <div className="fixed inset-0 z-[100] backdrop-blur-md flex flex-col overflow-hidden text-left" style={{ backgroundColor: theme.overlay }}>
             {/* Top Navigation & Action Header */}
-            <div className="p-3 sm:p-4 bg-neutral-900 border-b border-white/10 flex items-center justify-between gap-2 shrink-0">
+            <div 
+              className="p-3 sm:p-4 border-b flex items-center justify-between gap-2 shrink-0"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle
+              }}
+            >
               <button
                 type="button"
                 onClick={() => {
                   triggerHapticFeedback();
                   setShowPdfPreviewModal(false);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/15 active:bg-white/20 border border-white/10 rounded-xl text-xs font-bold text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textPrimary
+                }}
               >
-                <ArrowLeft size={15} className="text-emerald-400" />
+                <ArrowLeft size={15} className="text-emerald-500" />
                 <span>Back to Ledger</span>
               </button>
 
               <div className="flex flex-col text-center">
-                <span className="text-xs font-bold text-white tracking-tight">Transaction Statement</span>
-                <span className="text-[9px] text-neutral-400 font-mono uppercase tracking-widest">
+                <span className="text-xs font-bold tracking-tight" style={{ color: theme.textPrimary }}>Transaction Statement</span>
+                <span className="text-[9px] font-mono uppercase tracking-widest" style={{ color: theme.textSecondary }}>
                   {exportScope} Scope • {scopeFilteredTransactions.length} Entries
                 </span>
               </div>
@@ -1235,10 +1446,15 @@ export default function TransactionsTab({
                     triggerHapticFeedback();
                     handleExportCSV();
                   }}
-                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 border border-white/10 rounded-xl text-xs font-bold text-neutral-200 cursor-pointer transition-all active:scale-95"
+                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 border rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textPrimary
+                  }}
                   title="Export CSV spreadsheet"
                 >
-                  <FileSpreadsheet size={14} className="text-blue-400" />
+                  <FileSpreadsheet size={14} className="text-blue-500" />
                   <span>CSV</span>
                 </button>
 
@@ -1246,7 +1462,11 @@ export default function TransactionsTab({
                   type="button"
                   onClick={handleDownloadPDF}
                   disabled={isDownloadingPdf}
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 rounded-xl text-xs font-bold text-white cursor-pointer shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-4 py-1.5 disabled:opacity-60 rounded-xl text-xs font-bold cursor-pointer shadow-md transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.primary,
+                    color: theme.primaryContent
+                  }}
                   title="Save PDF to device"
                 >
                   {isDownloadingPdf ? (
@@ -1268,7 +1488,12 @@ export default function TransactionsTab({
                     triggerHapticFeedback();
                     setShowPdfPreviewModal(false);
                   }}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg border transition-colors cursor-pointer"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textMuted
+                  }}
                   title="Close Preview"
                 >
                   <X size={16} />

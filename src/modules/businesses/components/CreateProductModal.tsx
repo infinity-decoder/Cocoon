@@ -164,17 +164,18 @@ export function CreateProductModal({
           {/* Header */}
           <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: theme.border }}>
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono tracking-widest text-purple-400 font-bold uppercase">
+              <span className="text-[10px] font-mono tracking-widest font-bold uppercase" style={{ color: theme.primary }}>
                 {workspaceName} · Product Catalog
               </span>
-              <h2 className="text-base font-bold text-white flex items-center gap-2 mt-0.5">
-                <Package size={18} className="text-purple-400" />
+              <h2 className="text-base font-bold flex items-center gap-2 mt-0.5" style={{ color: theme.textPrimary }}>
+                <Package size={18} style={{ color: theme.primary }} />
                 Add New Retail / Mart Product
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+              style={{ color: theme.textMuted, backgroundColor: theme.surfaceMuted }}
             >
               <X size={18} />
             </button>
@@ -190,7 +191,7 @@ export function CreateProductModal({
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-y-auto pr-1 pb-4">
             {/* 1. Basic Product Identity */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-mono text-neutral-400">
+              <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>
                 Product Name <span className="text-red-400">*</span>
               </label>
               <input
@@ -199,34 +200,34 @@ export function CreateProductModal({
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. Basmati Rice 5kg, Fresh Milk 1L, Coca Cola 330ml"
-                className="w-full px-4 py-2.5 rounded-2xl border text-sm font-semibold bg-neutral-900 text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500"
-                style={{ borderColor: theme.border }}
+                className="w-full px-4 py-2.5 rounded-2xl border text-sm font-semibold focus:outline-none"
+                style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
               />
             </div>
 
             {/* SKU and Barcode */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">SKU (Unique code)</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>SKU (Unique code)</label>
                 <input
                   type="text"
                   value={sku}
                   onChange={e => setSku(e.target.value)}
                   placeholder="e.g. RICE-BAS-5K"
-                  className="w-full px-4 py-2.5 rounded-2xl border text-xs font-mono bg-neutral-900 text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-4 py-2.5 rounded-2xl border text-xs font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">Primary Barcode</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Primary Barcode</label>
                 <input
                   type="text"
                   value={barcode}
                   onChange={e => setBarcode(e.target.value)}
                   placeholder="e.g. 8901234567890"
-                  className="w-full px-4 py-2.5 rounded-2xl border text-xs font-mono bg-neutral-900 text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-4 py-2.5 rounded-2xl border text-xs font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
             </div>
@@ -234,38 +235,38 @@ export function CreateProductModal({
             {/* Category and Brand */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">Category</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Category</label>
                 <input
                   type="text"
                   value={category}
                   onChange={e => setCategory(e.target.value)}
                   placeholder="e.g. Grocery, Dairy, Beverage"
-                  className="w-full px-4 py-2.5 rounded-2xl border text-xs bg-neutral-900 text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-4 py-2.5 rounded-2xl border text-xs focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">Brand</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Brand</label>
                 <input
                   type="text"
                   value={brand}
                   onChange={e => setBrand(e.target.value)}
                   placeholder="e.g. Nestle, Unilever, Local"
-                  className="w-full px-4 py-2.5 rounded-2xl border text-xs bg-neutral-900 text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-4 py-2.5 rounded-2xl border text-xs focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
             </div>
 
             {/* 2. Unit of Measure */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-mono text-neutral-400">Canonical Stock Unit</label>
+              <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Canonical Stock Unit</label>
               <select
                 value={unit}
                 onChange={e => setUnit(e.target.value as ProductUnit)}
-                className="w-full px-4 py-2.5 rounded-2xl border text-xs font-mono bg-neutral-900 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
-                style={{ borderColor: theme.border }}
+                className="w-full px-4 py-2.5 rounded-2xl border text-xs font-mono focus:outline-none cursor-pointer"
+                style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
               >
                 <option value="pcs">Pieces (pcs) - Unit / Item</option>
                 <option value="pack">Pack (pack)</option>
@@ -283,41 +284,41 @@ export function CreateProductModal({
             {/* 3. Pricing & Tax */}
             <div className="grid grid-cols-3 gap-2">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">Cost Price ({currencySymbol})</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Cost Price ({currencySymbol})</label>
                 <input
                   type="number"
                   step="any"
                   value={costPrice}
                   onChange={e => setCostPrice(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 rounded-2xl border text-xs font-mono bg-neutral-900 text-white focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-3 py-2 rounded-2xl border text-xs font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">Sale Price ({currencySymbol})</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Sale Price ({currencySymbol})</label>
                 <input
                   type="number"
                   step="any"
                   value={salePrice}
                   onChange={e => setSalePrice(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 rounded-2xl border text-xs font-mono bg-neutral-900 text-white focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-3 py-2 rounded-2xl border text-xs font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">Tax Rate (%)</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Tax Rate (%)</label>
                 <input
                   type="number"
                   step="any"
                   value={taxRate}
                   onChange={e => setTaxRate(e.target.value)}
                   placeholder="0"
-                  className="w-full px-3 py-2 rounded-2xl border text-xs font-mono bg-neutral-900 text-white focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-3 py-2 rounded-2xl border text-xs font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
               </div>
             </div>
@@ -325,103 +326,104 @@ export function CreateProductModal({
             {/* 4. Stock & Threshold */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">Opening Stock Qty</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Opening Stock Qty</label>
                 <input
                   type="number"
                   step="any"
                   value={stock}
                   onChange={e => setStock(e.target.value)}
                   placeholder="0"
-                  className="w-full px-4 py-2 rounded-2xl border text-xs font-mono bg-neutral-900 text-white focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-4 py-2 rounded-2xl border text-xs font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
-                <span className="text-[9px] text-neutral-500 font-mono">
+                <span className="text-[9px] font-mono" style={{ color: theme.textMuted }}>
                   Recorded in stock movements ledger
                 </span>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono text-neutral-400">Reorder Threshold</label>
+                <label className="text-xs font-mono" style={{ color: theme.textSecondary }}>Reorder Threshold</label>
                 <input
                   type="number"
                   step="any"
                   value={minStock}
                   onChange={e => setMinStock(e.target.value)}
                   placeholder="5"
-                  className="w-full px-4 py-2 rounded-2xl border text-xs font-mono bg-neutral-900 text-white focus:outline-none focus:border-purple-500"
-                  style={{ borderColor: theme.border }}
+                  className="w-full px-4 py-2 rounded-2xl border text-xs font-mono focus:outline-none"
+                  style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                 />
-                <span className="text-[9px] text-neutral-500 font-mono">
+                <span className="text-[9px] font-mono" style={{ color: theme.textMuted }}>
                   Low stock alert badge
                 </span>
               </div>
             </div>
 
             {/* 5. Unit Conversion Option (e.g. 1 carton = 24 pcs) */}
-            <div className="p-3 rounded-2xl bg-white/5 border flex flex-col gap-2.5" style={{ borderColor: theme.border }}>
+            <div className="p-3 rounded-2xl border flex flex-col gap-2.5" style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}>
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Layers size={14} className="text-purple-400" /> Multi-Pack / Bulk Unit Conversion
+                <span className="text-xs font-bold flex items-center gap-1.5" style={{ color: theme.textPrimary }}>
+                  <Layers size={14} style={{ color: theme.primary }} /> Multi-Pack / Bulk Unit Conversion
                 </span>
                 <button
                   type="button"
                   onClick={() => setShowAddConversion(!showAddConversion)}
-                  className="text-[11px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                  style={{ color: theme.primary }}
                 >
                   {showAddConversion ? 'Remove' : '+ Add Pack Conversion'}
                 </button>
               </div>
 
               {showAddConversion && (
-                <div className="space-y-2 pt-1 border-t border-white/10">
+                <div className="space-y-2 pt-1 border-t" style={{ borderColor: theme.borderSubtle }}>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-mono text-neutral-400 mb-0.5 block">Pack Unit Name</label>
+                      <label className="text-[10px] font-mono mb-0.5 block" style={{ color: theme.textSecondary }}>Pack Unit Name</label>
                       <input
                         type="text"
                         placeholder="e.g. carton, box, pack"
                         value={conversionUnitName}
                         onChange={e => setConversionUnitName(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono bg-neutral-900 text-white"
-                        style={{ borderColor: theme.border }}
+                        className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono text-neutral-400 mb-0.5 block">Contains ({unit})</label>
+                      <label className="text-[10px] font-mono mb-0.5 block" style={{ color: theme.textSecondary }}>Contains ({unit})</label>
                       <input
                         type="number"
                         step="any"
                         placeholder="e.g. 24"
                         value={conversionFactor}
                         onChange={e => setConversionFactor(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono bg-neutral-900 text-white"
-                        style={{ borderColor: theme.border }}
+                        className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-mono text-neutral-400 mb-0.5 block">Pack Barcode (Optional)</label>
+                      <label className="text-[10px] font-mono mb-0.5 block" style={{ color: theme.textSecondary }}>Pack Barcode (Optional)</label>
                       <input
                         type="text"
                         placeholder="Carton barcode"
                         value={conversionBarcode}
                         onChange={e => setConversionBarcode(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono bg-neutral-900 text-white"
-                        style={{ borderColor: theme.border }}
+                        className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono text-neutral-400 mb-0.5 block">Pack Sale Price (Optional)</label>
+                      <label className="text-[10px] font-mono mb-0.5 block" style={{ color: theme.textSecondary }}>Pack Sale Price (Optional)</label>
                       <input
                         type="number"
                         step="any"
                         placeholder="e.g. 2400"
                         value={conversionPrice}
                         onChange={e => setConversionPrice(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono bg-neutral-900 text-white"
-                        style={{ borderColor: theme.border }}
+                        className="w-full px-3 py-1.5 rounded-xl border text-xs font-mono"
+                        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                       />
                     </div>
                   </div>
@@ -430,13 +432,14 @@ export function CreateProductModal({
             </div>
 
             {/* 6. Batch & Serial tracking toggles */}
-            <div className="flex gap-4 text-xs font-mono text-neutral-400 pt-1">
+            <div className="flex gap-4 text-xs font-mono pt-1" style={{ color: theme.textSecondary }}>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hasBatchTracking}
                   onChange={e => setHasBatchTracking(e.target.checked)}
-                  className="rounded text-purple-500 bg-neutral-900"
+                  className="rounded"
+                  style={{ accentColor: theme.primary }}
                 />
                 <span>Batch & Expiry Tracking</span>
               </label>
@@ -446,25 +449,28 @@ export function CreateProductModal({
                   type="checkbox"
                   checked={hasSerialTracking}
                   onChange={e => setHasSerialTracking(e.target.checked)}
-                  className="rounded text-purple-500 bg-neutral-900"
+                  className="rounded"
+                  style={{ accentColor: theme.primary }}
                 />
                 <span>Serial Number Tracking</span>
               </label>
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-3 border-t" style={{ borderColor: theme.border }}>
+            <div className="flex justify-end gap-3 pt-3 border-t" style={{ borderColor: theme.borderSubtle }}>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-2xl text-xs font-semibold text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                className="px-5 py-2.5 rounded-2xl text-xs font-semibold transition-colors cursor-pointer"
+                style={{ color: theme.textSecondary }}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-2xl text-xs font-bold bg-purple-500 text-white hover:bg-purple-400 disabled:opacity-50 transition-colors flex items-center gap-2 shadow-lg shadow-purple-500/20 cursor-pointer"
+                className="px-6 py-2.5 rounded-2xl text-xs font-bold text-white disabled:opacity-50 transition-colors flex items-center gap-2 shadow-lg cursor-pointer"
+                style={{ backgroundColor: theme.primary }}
               >
                 <CheckCircle2 size={16} />
                 {isSubmitting ? 'Saving...' : 'Create Product'}

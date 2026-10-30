@@ -14,6 +14,7 @@ import { SavingsGoal, Wallet as WalletType } from '../../../core/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { AnimatedTicker } from '../../../shared/components';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
+import { useTheme } from '../../../core/theme';
 
 interface SavingsTabProps {
   savingsGoals: SavingsGoal[];
@@ -58,6 +59,7 @@ export default function SavingsTab({
   vaultPassword,
   onSetVaultPassword
 }: SavingsTabProps) {
+  const { theme } = useTheme();
   // Vault Isolation PIN locks state
   const [vaultSessionUnlocked, setVaultSessionUnlocked] = useState(false);
   const [inputPin, setInputPin] = useState('');
@@ -359,11 +361,11 @@ export default function SavingsTab({
     return (
       <div className="w-full flex flex-col items-center justify-center py-2 select-none">
         <div 
-          className="w-full max-w-sm p-5 sm:p-6 rounded-[28px] border text-center flex flex-col items-center gap-3.5 shadow-2xl relative"
-          style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+          className="w-full max-w-sm p-5 sm:p-6 rounded-[28px] border text-center flex flex-col items-center gap-3.5 shadow-2xl relative transition-colors"
+          style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
         >
-          {/* Top navigation row with Back to Home and Red Cross close button */}
-          <div className="w-full flex items-center justify-between pb-2 border-b border-white/5">
+          {/* Top navigation row with Back to Home and close button */}
+          <div className="w-full flex items-center justify-between pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
             {onBack ? (
               <button
                 type="button"
@@ -371,14 +373,19 @@ export default function SavingsTab({
                   triggerHapticFeedback();
                   onBack();
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-xs font-bold text-neutral-200 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textPrimary
+                }}
               >
-                <ArrowLeft size={14} className="text-emerald-400" />
+                <ArrowLeft size={14} style={{ color: theme.primary }} />
                 <span>Back to Home</span>
               </button>
             ) : <div />}
 
-            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Savings Vault</span>
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold" style={{ color: theme.textSecondary }}>Savings Vault</span>
 
             {onBack && (
               <button
@@ -387,7 +394,12 @@ export default function SavingsTab({
                   triggerHapticFeedback();
                   onBack();
                 }}
-                className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 text-rose-400 cursor-pointer transition-all active:scale-90 shadow-sm"
+                className="p-1.5 rounded-xl border cursor-pointer transition-all active:scale-90 shadow-sm"
+                style={{
+                  backgroundColor: theme.dangerBg,
+                  borderColor: `${theme.danger}35`,
+                  color: theme.danger
+                }}
                 title="Close Vault"
               >
                 <X size={15} />
@@ -395,12 +407,19 @@ export default function SavingsTab({
             )}
           </div>
 
-          <div className="p-3 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 mt-1">
+          <div 
+            className="p-3 rounded-full border mt-1"
+            style={{
+              backgroundColor: `${theme.primary}18`,
+              borderColor: `${theme.primary}35`,
+              color: theme.primary
+            }}
+          >
             <Lock size={24} />
           </div>
           <div className="flex flex-col">
-            <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight">Vault Locked</h3>
-            <p className="text-xs text-neutral-400 max-w-[240px] leading-relaxed mx-auto mt-1">
+            <h3 className="text-base sm:text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>Vault Locked</h3>
+            <p className="text-xs max-w-[240px] leading-relaxed mx-auto mt-1" style={{ color: theme.textSecondary }}>
               Enter your secure 4-digit Vault passcode.
             </p>
           </div>
@@ -410,17 +429,33 @@ export default function SavingsTab({
             {[0, 1, 2, 3].map((idx) => (
               <div 
                 key={idx} 
-                className={`w-3.5 h-3.5 rounded-full border transition-all duration-150 ${
-                  idx < inputPin.length 
-                    ? 'bg-purple-500 border-purple-400 scale-110 shadow-[0_0_10px_rgba(139,92,246,0.6)]' 
-                    : 'bg-transparent border-neutral-600'
-                }`} 
+                className="w-3.5 h-3.5 rounded-full border transition-all duration-150"
+                style={
+                  idx < inputPin.length
+                    ? {
+                        backgroundColor: theme.primary,
+                        borderColor: theme.primary,
+                        transform: 'scale(1.1)',
+                        boxShadow: `0 0 10px ${theme.primary}80`
+                      }
+                    : {
+                        backgroundColor: 'transparent',
+                        borderColor: theme.borderSubtle
+                      }
+                }
               />
             ))}
           </div>
 
           {errMessage && (
-            <span className="text-[11px] text-rose-400 font-bold font-mono tracking-wide bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
+            <span 
+              className="text-[11px] font-bold font-mono tracking-wide px-3 py-1 rounded-full border"
+              style={{
+                backgroundColor: theme.dangerBg,
+                borderColor: `${theme.danger}40`,
+                color: theme.danger
+              }}
+            >
               {errMessage}
             </span>
           )}
@@ -431,7 +466,12 @@ export default function SavingsTab({
               <button
                 key={k}
                 onClick={() => handleUnlockPinPress(k)}
-                className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/10 transition-all active:scale-95 shadow-sm"
+                className="h-13 sm:h-14 rounded-2xl text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none border transition-all active:scale-95 shadow-sm"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textPrimary
+                }}
               >
                 {k}
               </button>
@@ -442,19 +482,34 @@ export default function SavingsTab({
                 setInputPin('');
                 setErrMessage('');
               }}
-              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-95"
+              className="h-13 sm:h-14 rounded-2xl text-xs font-mono flex items-center justify-center cursor-pointer font-bold select-none border transition-all active:scale-95"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.textSecondary
+              }}
             >
               CLEAR
             </button>
             <button
               onClick={() => handleUnlockPinPress('0')}
-              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/10 transition-all active:scale-95 shadow-sm"
+              className="h-13 sm:h-14 rounded-2xl text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none border transition-all active:scale-95 shadow-sm"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
               0
             </button>
             <button
               onClick={handleUnlockPinBackspace}
-              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-95"
+              className="h-13 sm:h-14 rounded-2xl text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none border transition-all active:scale-95"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.danger
+              }}
             >
               <Delete size={18} />
             </button>
@@ -470,11 +525,11 @@ export default function SavingsTab({
     return (
       <div className="w-full flex flex-col items-center justify-center py-2 select-none">
         <div 
-          className="w-full max-w-sm p-5 sm:p-6 rounded-[28px] border text-center flex flex-col items-center gap-3.5 shadow-2xl relative"
-          style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+          className="w-full max-w-sm p-5 sm:p-6 rounded-[28px] border text-center flex flex-col items-center gap-3.5 shadow-2xl relative transition-colors"
+          style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
         >
-          {/* Top navigation row with Back to Home and Red Cross close button */}
-          <div className="w-full flex items-center justify-between pb-2 border-b border-white/5">
+          {/* Top navigation row with Back to Home and close button */}
+          <div className="w-full flex items-center justify-between pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
             {onBack ? (
               <button
                 type="button"
@@ -482,14 +537,19 @@ export default function SavingsTab({
                   triggerHapticFeedback();
                   onBack();
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-xs font-bold text-neutral-200 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textPrimary
+                }}
               >
-                <ArrowLeft size={14} className="text-emerald-400" />
+                <ArrowLeft size={14} style={{ color: theme.primary }} />
                 <span>Back to Home</span>
               </button>
             ) : <div />}
 
-            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-bold">Savings Vault</span>
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold" style={{ color: theme.textSecondary }}>Savings Vault</span>
 
             {onBack && (
               <button
@@ -498,7 +558,12 @@ export default function SavingsTab({
                   triggerHapticFeedback();
                   onBack();
                 }}
-                className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 text-rose-400 cursor-pointer transition-all active:scale-90 shadow-sm"
+                className="p-1.5 rounded-xl border cursor-pointer transition-all active:scale-90 shadow-sm"
+                style={{
+                  backgroundColor: theme.dangerBg,
+                  borderColor: `${theme.danger}35`,
+                  color: theme.danger
+                }}
                 title="Close Vault"
               >
                 <X size={15} />
@@ -506,12 +571,19 @@ export default function SavingsTab({
             )}
           </div>
 
-          <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 mt-1">
+          <div 
+            className="p-3 rounded-full border mt-1"
+            style={{
+              backgroundColor: `${theme.primary}18`,
+              borderColor: `${theme.primary}35`,
+              color: theme.primary
+            }}
+          >
             <Key size={24} />
           </div>
           <div className="flex flex-col">
-            <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight">Secure Your Vault</h3>
-            <p className="text-xs text-neutral-400 max-w-[240px] leading-relaxed mx-auto mt-1">
+            <h3 className="text-base sm:text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>Secure Your Vault</h3>
+            <p className="text-xs max-w-[240px] leading-relaxed mx-auto mt-1" style={{ color: theme.textSecondary }}>
               {setupStep === 'create' 
                 ? 'Create a secure 4-digit passcode for your personal Vault.' 
                 : 'Confirm your secure 4-digit passcode.'}
@@ -523,17 +595,33 @@ export default function SavingsTab({
             {[0, 1, 2, 3].map((idx) => (
               <div 
                 key={idx} 
-                className={`w-3.5 h-3.5 rounded-full border transition-all duration-150 ${
-                  idx < currentLen 
-                    ? 'bg-emerald-500 border-emerald-400 scale-110 shadow-[0_0_10px_rgba(16,185,129,0.6)]' 
-                    : 'bg-transparent border-neutral-600'
-                }`} 
+                className="w-3.5 h-3.5 rounded-full border transition-all duration-150"
+                style={
+                  idx < currentLen
+                    ? {
+                        backgroundColor: theme.primary,
+                        borderColor: theme.primary,
+                        transform: 'scale(1.1)',
+                        boxShadow: `0 0 10px ${theme.primary}80`
+                      }
+                    : {
+                        backgroundColor: 'transparent',
+                        borderColor: theme.borderSubtle
+                      }
+                }
               />
             ))}
           </div>
 
           {errMessage && (
-            <span className="text-[11px] text-rose-400 font-bold font-mono tracking-wide bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
+            <span 
+              className="text-[11px] font-bold font-mono tracking-wide px-3 py-1 rounded-full border"
+              style={{
+                backgroundColor: theme.dangerBg,
+                borderColor: `${theme.danger}40`,
+                color: theme.danger
+              }}
+            >
               {errMessage}
             </span>
           )}
@@ -544,7 +632,12 @@ export default function SavingsTab({
               <button
                 key={k}
                 onClick={() => handleSetupPinPress(k)}
-                className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/10 transition-all active:scale-95 shadow-sm"
+                className="h-13 sm:h-14 rounded-2xl text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none border transition-all active:scale-95 shadow-sm"
+                style={{
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: theme.borderSubtle,
+                  color: theme.textPrimary
+                }}
               >
                 {k}
               </button>
@@ -557,19 +650,34 @@ export default function SavingsTab({
                 setSetupStep('create');
                 setErrMessage('');
               }}
-              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-95"
+              className="h-13 sm:h-14 rounded-2xl text-xs font-mono flex items-center justify-center cursor-pointer font-bold select-none border transition-all active:scale-95"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.textSecondary
+              }}
             >
               RESET
             </button>
             <button
               onClick={() => handleSetupPinPress('0')}
-              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none text-white border border-white/10 transition-all active:scale-95 shadow-sm"
+              className="h-13 sm:h-14 rounded-2xl text-lg font-mono flex items-center justify-center cursor-pointer font-bold select-none border transition-all active:scale-95 shadow-sm"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
               0
             </button>
             <button
               onClick={handleSetupPinBackspace}
-              className="h-13 sm:h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none text-neutral-400 border border-white/5 transition-all active:scale-95"
+              className="h-13 sm:h-14 rounded-2xl text-base font-mono flex items-center justify-center cursor-pointer font-bold select-none border transition-all active:scale-95"
+              style={{
+                backgroundColor: theme.surfaceMuted,
+                borderColor: theme.borderSubtle,
+                color: theme.danger
+              }}
             >
               <Delete size={18} />
             </button>
@@ -580,18 +688,23 @@ export default function SavingsTab({
   }
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden flex flex-col gap-4 select-none relative">
+    <div className="w-full max-w-full overflow-x-hidden flex flex-col gap-4 select-none relative" style={{ color: theme.textPrimary }}>
       {/* Top Vault Navigation & Control Header */}
-      <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/5">
+      <div className="flex items-center justify-between gap-2 pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
         <button
           type="button"
           onClick={() => {
             triggerHapticFeedback();
             if (onBack) onBack();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 border rounded-2xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
+          style={{
+            backgroundColor: theme.surfaceMuted,
+            borderColor: theme.borderSubtle,
+            color: theme.textPrimary
+          }}
         >
-          <ArrowLeft size={14} className="text-emerald-400" />
+          <ArrowLeft size={14} style={{ color: theme.primary }} />
           <span>Back to Home</span>
         </button>
 
@@ -603,10 +716,15 @@ export default function SavingsTab({
                 triggerHapticFeedback();
                 setVaultSessionUnlocked(false);
               }}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 active:bg-amber-500/35 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-300 hover:text-amber-200 cursor-pointer transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1.5 border rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm"
+              style={{
+                backgroundColor: theme.warningBg,
+                borderColor: `${theme.warning}35`,
+                color: theme.warning
+              }}
               title="Lock Vault"
             >
-              <Lock size={12} className="text-amber-400" />
+              <Lock size={12} style={{ color: theme.warning }} />
               <span>Lock</span>
             </button>
           )}
@@ -623,10 +741,15 @@ export default function SavingsTab({
                 setChangePinSuccess('');
                 setShowChangePinModal(true);
               }}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-purple-500/15 hover:bg-purple-500/25 active:bg-purple-500/35 border border-purple-500/30 rounded-xl text-xs font-bold text-purple-300 hover:text-purple-200 cursor-pointer transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1.5 border rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm"
+              style={{
+                backgroundColor: `${theme.primary}18`,
+                borderColor: `${theme.primary}35`,
+                color: theme.primary
+              }}
               title="Change Vault PIN"
             >
-              <Key size={12} className="text-purple-400" />
+              <Key size={12} style={{ color: theme.primary }} />
               <span>Change PIN</span>
             </button>
           )}
@@ -637,7 +760,12 @@ export default function SavingsTab({
               triggerHapticFeedback();
               if (onBack) onBack();
             }}
-            className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 border border-rose-500/30 text-rose-400 cursor-pointer transition-all active:scale-90 shadow-sm shrink-0"
+            className="p-1.5 rounded-xl border cursor-pointer transition-all active:scale-90 shadow-sm shrink-0"
+            style={{
+              backgroundColor: theme.dangerBg,
+              borderColor: `${theme.danger}35`,
+              color: theme.danger
+            }}
             title="Close Vault"
           >
             <X size={15} />
@@ -762,8 +890,8 @@ export default function SavingsTab({
 
       {/* --- MASTER VAULT HOLDING FUND: SAVINGS --- */}
       <div 
-        className="p-4 rounded-2xl border flex flex-col gap-3 relative overflow-hidden shadow-md"
-        style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+        className="p-4 rounded-2xl border flex flex-col gap-3 relative overflow-hidden shadow-md transition-colors"
+        style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle }}
       >
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
@@ -772,20 +900,20 @@ export default function SavingsTab({
             </div>
             <div className="flex flex-col text-left">
               <div className="flex items-center gap-2">
-                <span className="text-base font-bold text-white tracking-tight">Savings</span>
+                <span className="text-base font-bold tracking-tight" style={{ color: theme.textPrimary }}>Savings</span>
                 <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   Primary Reserve
                 </span>
               </div>
-              <span className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
+              <span className="text-[10px] mt-0.5 leading-tight" style={{ color: theme.textSecondary }}>
                 General vault reserve & preserved money from deleted goals
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-between items-baseline pt-1 border-t border-white/5">
-          <span className="text-xs text-neutral-400 font-medium">Unallocated Savings:</span>
+        <div className="flex justify-between items-baseline pt-1 border-t" style={{ borderColor: theme.borderSubtle }}>
+          <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Unallocated Savings:</span>
           <span className="text-lg font-extrabold font-mono text-emerald-400">
             {currencySymbol}{generalSavings.currentAmount.toLocaleString()}
           </span>
@@ -806,8 +934,17 @@ export default function SavingsTab({
             className={`py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 ${
               generalSavings.currentAmount > 0
                 ? 'bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 cursor-pointer'
-                : 'bg-white/5 border border-white/5 text-neutral-500 cursor-not-allowed opacity-50'
+                : 'border cursor-not-allowed opacity-50'
             }`}
+            style={
+              generalSavings.currentAmount <= 0
+                ? {
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textMuted
+                  }
+                : undefined
+            }
           >
             <ArrowDownRight size={13} /> Withdraw from Savings
           </button>
@@ -817,7 +954,7 @@ export default function SavingsTab({
       {/* --- TARGET SAVINGS GOALS SECTION --- */}
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center px-1">
-          <span className="text-xs font-semibold tracking-wider text-neutral-400 uppercase font-mono">
+          <span className="text-xs font-semibold tracking-wider uppercase font-mono" style={{ color: theme.textSecondary }}>
             Target Goals ({targetGoals.length})
           </span>
           <button
@@ -826,7 +963,8 @@ export default function SavingsTab({
               triggerHapticFeedback();
               setShowAddGoalSheet(true);
             }}
-            className="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+            style={{ color: theme.primary }}
           >
             <Plus size={14} /> New Goal
           </button>
@@ -857,15 +995,15 @@ export default function SavingsTab({
             return (
               <div 
                 key={goal.id}
-                className="p-4 rounded-2xl border border-white/5 flex flex-col gap-3 relative overflow-hidden shadow-md"
-                style={{ backgroundColor: themeCardBg }}
+                className="p-4 rounded-2xl border flex flex-col gap-3 relative overflow-hidden shadow-md transition-colors"
+                style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle }}
               >
                 {/* Header with Title and Action Buttons (Edit & Delete) */}
                 <div className="flex justify-between items-start">
                   <div className="flex flex-col text-left">
-                    <span className="text-sm font-bold tracking-tight text-white">{goal.name}</span>
+                    <span className="text-sm font-bold tracking-tight" style={{ color: theme.textPrimary }}>{goal.name}</span>
                     {goal.deadline && (
-                      <span className="text-[10px] text-neutral-400 font-mono mt-0.5">
+                      <span className="text-[10px] font-mono mt-0.5" style={{ color: theme.textSecondary }}>
                         Target deadline: {goal.deadline}
                       </span>
                     )}
@@ -880,10 +1018,15 @@ export default function SavingsTab({
                     <button
                       type="button"
                       onClick={() => handleOpenEditGoal(goal)}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg border transition-colors cursor-pointer"
+                      style={{
+                        backgroundColor: theme.surfaceMuted,
+                        borderColor: theme.borderSubtle,
+                        color: theme.textPrimary
+                      }}
                       title="Edit Goal"
                     >
-                      <Pencil size={13} />
+                      <Pencil size={13} style={{ color: theme.primary }} />
                     </button>
 
                     {/* Delete Goal Button */}
@@ -893,7 +1036,12 @@ export default function SavingsTab({
                         triggerHapticFeedback();
                         setDeletingGoal(goal);
                       }}
-                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer border border-rose-500/20"
+                      className="p-1.5 rounded-lg transition-colors cursor-pointer border"
+                      style={{
+                        backgroundColor: theme.dangerBg,
+                        borderColor: `${theme.danger}35`,
+                        color: theme.danger
+                      }}
                       title="Delete Goal"
                     >
                       <Trash2 size={13} />
@@ -903,16 +1051,16 @@ export default function SavingsTab({
 
                 {/* Amount details */}
                 <div className="flex justify-between items-baseline text-xs font-mono">
-                  <span className="text-neutral-400">
-                    Saved: <span className="font-bold text-white">{currencySymbol}{goal.currentAmount.toLocaleString()}</span>
+                  <span style={{ color: theme.textSecondary }}>
+                    Saved: <span className="font-bold" style={{ color: theme.textPrimary }}>{currencySymbol}{goal.currentAmount.toLocaleString()}</span>
                   </span>
-                  <span className="text-neutral-500">
+                  <span style={{ color: theme.textMuted }}>
                     Target: {currencySymbol}{goal.targetAmount.toLocaleString()} ({percentage}%)
                   </span>
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden relative border border-white/5">
+                <div className="w-full h-3 rounded-full overflow-hidden relative border" style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}>
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percentage}%` }}
@@ -920,13 +1068,13 @@ export default function SavingsTab({
                     className="h-full rounded-full"
                     style={{ backgroundColor: goal.color }}
                   />
-                  <div className="absolute inset-y-0 left-[25%] border-r border-white/10" />
-                  <div className="absolute inset-y-0 left-[50%] border-r border-white/10" />
-                  <div className="absolute inset-y-0 left-[75%] border-r border-white/10" />
+                  <div className="absolute inset-y-0 left-[25%] border-r" style={{ borderColor: theme.borderSubtle }} />
+                  <div className="absolute inset-y-0 left-[50%] border-r" style={{ borderColor: theme.borderSubtle }} />
+                  <div className="absolute inset-y-0 left-[75%] border-r" style={{ borderColor: theme.borderSubtle }} />
                 </div>
 
                 {/* Quick Goal Action Buttons */}
-                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: theme.borderSubtle }}>
                   <button
                     type="button"
                     onClick={() => openDepositModal(goal.id)}
@@ -941,8 +1089,17 @@ export default function SavingsTab({
                     className={`py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-colors ${
                       goal.currentAmount > 0
                         ? 'bg-rose-500/10 hover:bg-rose-500/15 text-rose-400 cursor-pointer'
-                        : 'bg-white/5 text-neutral-500 opacity-50 cursor-not-allowed'
+                        : 'border opacity-50 cursor-not-allowed'
                     }`}
+                    style={
+                      goal.currentAmount <= 0
+                        ? {
+                            backgroundColor: theme.surfaceMuted,
+                            borderColor: theme.borderSubtle,
+                            color: theme.textMuted
+                          }
+                        : undefined
+                    }
                   >
                     <ArrowDownRight size={12} /> Withdraw
                   </button>
@@ -978,18 +1135,26 @@ export default function SavingsTab({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showTransferModal && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none"
+            style={{ backgroundColor: theme.overlay }}
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+              className="w-full max-w-sm p-6 border rounded-[28px] flex flex-col gap-4 text-left shadow-2xl transition-colors"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
               {/* Header */}
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-base font-bold capitalize flex items-center gap-2">
+              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
+                <span className="text-base font-bold capitalize flex items-center gap-2" style={{ color: theme.textPrimary }}>
                   {transferType === 'deposit' ? (
-                    <ArrowUpRight size={18} className="text-emerald-400" />
+                    <ArrowUpRight size={18} style={{ color: theme.primary }} />
                   ) : (
                     <ArrowDownRight size={18} className="text-rose-400" />
                   )}
@@ -1001,7 +1166,12 @@ export default function SavingsTab({
                     setShowTransferModal(false);
                     setTransferError('');
                   }} 
-                  className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full transition-colors cursor-pointer border"
+                  style={{
+                    backgroundColor: theme.dangerBg,
+                    borderColor: `${theme.danger}35`,
+                    color: theme.danger
+                  }}
                   title="Cancel"
                 >
                   <X size={15} />
@@ -1009,7 +1179,14 @@ export default function SavingsTab({
               </div>
 
               {transferError && (
-                <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                <div 
+                  className="p-3 rounded-xl border text-xs font-medium flex items-center gap-2"
+                  style={{
+                    backgroundColor: theme.dangerBg,
+                    borderColor: `${theme.danger}40`,
+                    color: theme.danger
+                  }}
+                >
                   <ShieldAlert size={16} className="shrink-0 text-rose-400" />
                   <span>{transferError}</span>
                 </div>
@@ -1018,19 +1195,31 @@ export default function SavingsTab({
               {/* Source/Origin Information */}
               {transferType === 'deposit' ? (
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400 font-medium">Source of Funds</span>
-                  <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-neutral-200">
-                    <Wallet size={16} className="text-emerald-400 shrink-0" />
-                    <span className="font-semibold text-white">Main App Income / Balance</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Source of Funds</span>
+                  <div 
+                    className="flex items-center gap-2.5 border rounded-xl px-3.5 py-2.5 text-xs"
+                    style={{
+                      backgroundColor: theme.surfaceMuted,
+                      borderColor: theme.borderSubtle,
+                      color: theme.textPrimary
+                    }}
+                  >
+                    <Wallet size={16} style={{ color: theme.primary }} className="shrink-0" />
+                    <span className="font-semibold" style={{ color: theme.textPrimary }}>Main App Income / Balance</span>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400 font-medium">Withdraw From (Vault Source)</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Withdraw From (Vault Source)</span>
                   <select
                     value={selectedGoalId}
                     onChange={(e) => setSelectedGoalId(e.target.value)}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="border rounded-xl px-3 py-2.5 text-sm focus:outline-none cursor-pointer"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   >
                     {/* General Savings option */}
                     <option value="savings">
@@ -1049,11 +1238,16 @@ export default function SavingsTab({
               {/* Destination Information */}
               {transferType === 'deposit' ? (
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400 font-medium">Deposit Into (Vault Destination)</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Deposit Into (Vault Destination)</span>
                   <select
                     value={selectedGoalId}
                     onChange={(e) => setSelectedGoalId(e.target.value)}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="border rounded-xl px-3 py-2.5 text-sm focus:outline-none cursor-pointer"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   >
                     <option value="savings">Savings (General Vault Reserve)</option>
                     {targetGoals.map(g => (
@@ -1065,10 +1259,17 @@ export default function SavingsTab({
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400 font-medium">Destination</span>
-                  <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-neutral-200">
-                    <Wallet size={16} className="text-emerald-400 shrink-0" />
-                    <span className="font-semibold text-white">Main App Income / Balance</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Destination</span>
+                  <div 
+                    className="flex items-center gap-2.5 border rounded-xl px-3.5 py-2.5 text-xs"
+                    style={{
+                      backgroundColor: theme.surfaceMuted,
+                      borderColor: theme.borderSubtle,
+                      color: theme.textPrimary
+                    }}
+                  >
+                    <Wallet size={16} style={{ color: theme.primary }} className="shrink-0" />
+                    <span className="font-semibold" style={{ color: theme.textPrimary }}>Main App Income / Balance</span>
                   </div>
                 </div>
               )}
@@ -1076,22 +1277,29 @@ export default function SavingsTab({
               {/* Amount Entry */}
               <div className="flex flex-col gap-1">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-neutral-400 font-medium">Amount to Transfer</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Amount to Transfer</span>
                   {transferType === 'withdraw' && (() => {
                     const currentSelected = savingsGoals.find(g => g.id === selectedGoalId) || (selectedGoalId === 'savings' ? generalSavings : null);
                     return currentSelected ? (
                       <button
                         type="button"
                         onClick={() => setTransferAmount(currentSelected.currentAmount.toString())}
-                        className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 cursor-pointer"
+                        className="text-[10px] font-bold cursor-pointer"
+                        style={{ color: theme.primary }}
                       >
                         Max: {currencySymbol}{currentSelected.currentAmount.toLocaleString()}
                       </button>
                     ) : null;
                   })()}
                 </div>
-                <div className="flex items-center gap-2 bg-neutral-800 border border-white/15 rounded-xl px-3.5 py-2.5">
-                  <span className="text-neutral-400 font-mono font-bold">{currencySymbol}</span>
+                <div 
+                  className="flex items-center gap-2 border rounded-xl px-3.5 py-2.5"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder
+                  }}
+                >
+                  <span className="font-mono font-bold" style={{ color: theme.textSecondary }}>{currencySymbol}</span>
                   <input
                     type="number"
                     inputMode="decimal"
@@ -1099,36 +1307,49 @@ export default function SavingsTab({
                     placeholder="0.00"
                     value={transferAmount}
                     onChange={(e) => setTransferAmount(e.target.value)}
-                    className="bg-transparent flex-1 text-sm text-white font-mono outline-none"
+                    className="bg-transparent flex-1 text-sm font-mono outline-none"
+                    style={{ color: theme.textPrimary }}
                     autoFocus
                   />
                 </div>
               </div>
 
               {transferType === 'withdraw' && (
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-[10px] leading-relaxed flex gap-2">
+                <div 
+                  className="p-3 border rounded-xl text-[10px] leading-relaxed flex gap-2"
+                  style={{
+                    backgroundColor: theme.warningBg,
+                    borderColor: `${theme.warning}40`,
+                    color: theme.warning
+                  }}
+                >
                   <ShieldAlert size={16} className="shrink-0 text-amber-400" />
                   <span>Withdrawn funds will be immediately credited back to your Main App Income / Balance.</span>
                 </div>
               )}
 
-              {/* Buttons: Cancel (reddish) and Action */}
-              <div className="grid grid-cols-2 gap-3 mt-1 pt-2 border-t border-white/5">
+              {/* Buttons: Cancel and Action */}
+              <div className="grid grid-cols-2 gap-3 mt-1 pt-2 border-t" style={{ borderColor: theme.borderSubtle }}>
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                  className="py-2.5 border rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
-                  <X size={14} className="text-rose-400" /> Cancel
+                  <X size={14} /> Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleTransferSubmit}
-                  className={`py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md ${
-                    transferType === 'deposit'
-                      ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/25'
-                      : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/25'
-                  }`}
+                  className="py-2.5 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md"
+                  style={{
+                    backgroundColor: transferType === 'deposit' ? theme.primary : theme.danger,
+                    color: '#FFFFFF'
+                  }}
                 >
                   {transferType === 'deposit' ? (
                     <>
@@ -1151,16 +1372,24 @@ export default function SavingsTab({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showAddGoalSheet && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none"
+            style={{ backgroundColor: theme.overlay }}
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+              className="w-full max-w-sm p-6 border rounded-[28px] flex flex-col gap-4 text-left shadow-2xl transition-colors"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-sm font-bold flex items-center gap-1.5">
-                  <Plus size={16} className="text-emerald-400" /> New Vault Goal
+              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
+                <span className="text-sm font-bold flex items-center gap-1.5" style={{ color: theme.textPrimary }}>
+                  <Plus size={16} style={{ color: theme.primary }} /> New Vault Goal
                 </span>
                 <button 
                   type="button"
@@ -1168,7 +1397,12 @@ export default function SavingsTab({
                     setShowAddGoalSheet(false);
                     setAddGoalError('');
                   }} 
-                  className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full transition-colors cursor-pointer border"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                   title="Cancel"
                 >
                   <X size={15} />
@@ -1176,51 +1410,73 @@ export default function SavingsTab({
               </div>
 
               {addGoalError && (
-                <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                <div 
+                  className="p-3 border rounded-xl text-xs font-medium flex items-center gap-2"
+                  style={{
+                    backgroundColor: theme.dangerBg,
+                    borderColor: `${theme.danger}40`,
+                    color: theme.danger
+                  }}
+                >
                   <ShieldAlert size={16} className="shrink-0 text-rose-400" />
                   <span>{addGoalError}</span>
                 </div>
               )}
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400 font-medium">Goal Name</span>
+                <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Goal Name</span>
                 <input
                   type="text"
                   placeholder="e.g. Dream Electric Car, Laptop..."
                   value={goalName}
                   onChange={(e) => setGoalName(e.target.value)}
-                  className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  className="border rounded-xl px-3 py-2 text-sm focus:outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400 font-medium">Target Amount ({currencySymbol})</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Target Amount ({currencySymbol})</span>
                   <input
                     type="number"
                     inputMode="decimal"
                     placeholder="2500"
                     value={goalTarget}
                     onChange={(e) => setGoalTarget(e.target.value)}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+                    className="border rounded-xl px-3 py-2 text-sm font-mono focus:outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400 font-medium">Deadline (Optional)</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Deadline (Optional)</span>
                   <input
                     type="date"
                     value={goalDeadline}
                     onChange={(e) => setGoalDeadline(e.target.value)}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="border rounded-xl px-2.5 py-2 text-xs focus:outline-none cursor-pointer transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
               </div>
 
               {/* Theme Color selector */}
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400 font-medium">Theme Progress Color</span>
+                <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Theme Progress Color</span>
                 <div className="flex gap-2.5 flex-wrap pt-1">
                   {HARMONIOUS_GOAL_COLORS.map(color => (
                     <button
@@ -1234,18 +1490,27 @@ export default function SavingsTab({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-white/5">
+              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t" style={{ borderColor: theme.borderSubtle }}>
                 <button
                   type="button"
                   onClick={() => setShowAddGoalSheet(false)}
-                  className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="py-2.5 border rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
-                  <X size={14} className="text-rose-400" /> Cancel
+                  <X size={14} /> Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleAddGoalSubmit}
-                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                  className="py-2.5 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.primary,
+                    color: theme.textOnPrimary || '#FFFFFF'
+                  }}
                 >
                   <Check size={14} strokeWidth={3} /> Create Goal
                 </button>
@@ -1260,16 +1525,24 @@ export default function SavingsTab({
       {/* ========================================================================= */}
       <AnimatePresence>
         {editingGoal && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none"
+            style={{ backgroundColor: theme.overlay }}
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+              className="w-full max-w-sm p-6 border rounded-[28px] flex flex-col gap-4 text-left shadow-2xl transition-colors"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-sm font-bold flex items-center gap-1.5">
-                  <Pencil size={15} className="text-emerald-400" /> Edit Goal Details
+              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
+                <span className="text-sm font-bold flex items-center gap-1.5" style={{ color: theme.textPrimary }}>
+                  <Pencil size={15} style={{ color: theme.primary }} /> Edit Goal Details
                 </span>
                 <button 
                   type="button"
@@ -1277,7 +1550,12 @@ export default function SavingsTab({
                     setEditingGoal(null);
                     setEditGoalError('');
                   }} 
-                  className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full transition-colors cursor-pointer border"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                   title="Cancel"
                 >
                   <X size={15} />
@@ -1285,48 +1563,70 @@ export default function SavingsTab({
               </div>
 
               {editGoalError && (
-                <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                <div 
+                  className="p-3 border rounded-xl text-xs font-medium flex items-center gap-2"
+                  style={{
+                    backgroundColor: theme.dangerBg,
+                    borderColor: `${theme.danger}40`,
+                    color: theme.danger
+                  }}
+                >
                   <ShieldAlert size={16} className="shrink-0 text-rose-400" />
                   <span>{editGoalError}</span>
                 </div>
               )}
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400 font-medium">Goal Name</span>
+                <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Goal Name</span>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  className="border rounded-xl px-3 py-2 text-sm focus:outline-none transition-colors"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400 font-medium">Target ({currencySymbol})</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Target ({currencySymbol})</span>
                   <input
                     type="number"
                     inputMode="decimal"
                     value={editTarget}
                     onChange={(e) => setEditTarget(e.target.value)}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+                    className="border rounded-xl px-3 py-2 text-sm font-mono focus:outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-400 font-medium">Deadline (Optional)</span>
+                  <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Deadline (Optional)</span>
                   <input
                     type="date"
                     value={editDeadline}
                     onChange={(e) => setEditDeadline(e.target.value)}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="border rounded-xl px-2.5 py-2 text-xs focus:outline-none cursor-pointer transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
               </div>
 
               {/* Theme Color selector */}
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-400 font-medium">Theme Progress Color</span>
+                <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Theme Progress Color</span>
                 <div className="flex gap-2.5 flex-wrap pt-1">
                   {HARMONIOUS_GOAL_COLORS.map(color => (
                     <button
@@ -1340,18 +1640,27 @@ export default function SavingsTab({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-white/5">
+              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t" style={{ borderColor: theme.borderSubtle }}>
                 <button
                   type="button"
                   onClick={() => setEditingGoal(null)}
-                  className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="py-2.5 border rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
-                  <X size={14} className="text-rose-400" /> Cancel
+                  <X size={14} /> Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveGoalEdit}
-                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                  className="py-2.5 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.primary,
+                    color: theme.textOnPrimary || '#FFFFFF'
+                  }}
                 >
                   <Check size={14} strokeWidth={3} /> Save Changes
                 </button>
@@ -1366,31 +1675,53 @@ export default function SavingsTab({
       {/* ========================================================================= */}
       <AnimatePresence>
         {deletingGoal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-60 flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 backdrop-blur-md z-60 flex items-center justify-center p-4 select-none"
+            style={{ backgroundColor: theme.overlay }}
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+              className="w-full max-w-sm p-6 border rounded-[28px] flex flex-col gap-4 text-left shadow-2xl transition-colors"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-rose-500/15 text-rose-400 rounded-2xl border border-rose-500/30 shrink-0">
+                <div 
+                  className="p-3 rounded-2xl border shrink-0"
+                  style={{
+                    backgroundColor: theme.dangerBg,
+                    borderColor: `${theme.danger}40`,
+                    color: theme.danger
+                  }}
+                >
                   <Trash2 size={24} />
                 </div>
                 <div className="flex flex-col">
-                  <h4 className="text-base font-bold text-white">Delete Vault Goal</h4>
-                  <span className="text-xs text-neutral-400">"{deletingGoal.name}"</span>
+                  <h4 className="text-base font-bold" style={{ color: theme.textPrimary }}>Delete Vault Goal</h4>
+                  <span className="text-xs" style={{ color: theme.textSecondary }}>"{deletingGoal.name}"</span>
                 </div>
               </div>
 
               {/* Crucial Guarantee Note */}
-              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex flex-col gap-1 text-xs text-emerald-300 leading-relaxed">
-                <div className="flex items-center gap-1.5 font-bold text-emerald-400 text-xs">
+              <div 
+                className="p-3.5 border rounded-2xl flex flex-col gap-1 text-xs leading-relaxed"
+                style={{
+                  backgroundColor: `${theme.primary}12`,
+                  borderColor: `${theme.primary}30`,
+                  color: theme.textPrimary
+                }}
+              >
+                <div className="flex items-center gap-1.5 font-bold text-xs" style={{ color: theme.primary }}>
                   <ShieldCheck size={15} /> Safe Assets Guarantee
                 </div>
-                <span>
+                <span style={{ color: theme.textSecondary }}>
                   Deleting this goal will <strong>NOT</strong> delete or remove your money. Any saved funds (
-                  <strong className="text-white">{currencySymbol}{deletingGoal.currentAmount.toLocaleString()}</strong>
+                  <strong style={{ color: theme.textPrimary }}>{currencySymbol}{deletingGoal.currentAmount.toLocaleString()}</strong>
                   ) will automatically be preserved in your vault under <strong>'Savings'</strong>.
                 </span>
               </div>
@@ -1399,14 +1730,22 @@ export default function SavingsTab({
                 <button
                   type="button"
                   onClick={() => setDeletingGoal(null)}
-                  className="py-2.5 bg-white/10 hover:bg-white/15 border border-white/15 rounded-xl text-xs font-bold text-neutral-300 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="py-2.5 border rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
                   <X size={14} /> Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmDeleteGoal}
-                  className="py-2.5 bg-rose-500 hover:bg-rose-600 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-rose-500/25 transition-all active:scale-95"
+                  className="py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.danger
+                  }}
                 >
                   <Trash2 size={14} /> Delete & Keep Funds
                 </button>
@@ -1421,21 +1760,36 @@ export default function SavingsTab({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showChangePinModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[95] flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 backdrop-blur-md z-[95] flex items-center justify-center p-4 select-none"
+            style={{ backgroundColor: theme.overlay }}
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm p-6 bg-neutral-900 border border-white/15 rounded-[28px] flex flex-col gap-4 text-white text-left shadow-2xl"
+              className="w-full max-w-sm p-6 border rounded-[28px] flex flex-col gap-4 text-left shadow-2xl transition-colors"
+              style={{
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.borderSubtle,
+                color: theme.textPrimary
+              }}
             >
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
+              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: theme.borderSubtle }}>
                 <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400">
+                  <div 
+                    className="p-2 rounded-xl border"
+                    style={{
+                      backgroundColor: `${theme.primary}18`,
+                      borderColor: `${theme.primary}35`,
+                      color: theme.primary
+                    }}
+                  >
                     <Key size={18} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-white">Change Vault Passcode</span>
-                    <span className="text-[10px] text-neutral-400">Update your 4-digit security PIN</span>
+                    <span className="text-sm font-bold" style={{ color: theme.textPrimary }}>Change Vault Passcode</span>
+                    <span className="text-[10px]" style={{ color: theme.textSecondary }}>Update your 4-digit security PIN</span>
                   </div>
                 </div>
                 <button 
@@ -1444,7 +1798,12 @@ export default function SavingsTab({
                     triggerHapticFeedback();
                     setShowChangePinModal(false);
                   }} 
-                  className="p-1.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-full transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full transition-colors cursor-pointer border"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                   title="Cancel"
                 >
                   <X size={15} />
@@ -1452,20 +1811,34 @@ export default function SavingsTab({
               </div>
 
               {changePinSuccess && (
-                <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold flex items-center gap-2">
+                <div 
+                  className="p-3 border rounded-xl text-xs font-bold flex items-center gap-2"
+                  style={{
+                    backgroundColor: theme.successBg,
+                    borderColor: `${theme.success}40`,
+                    color: theme.success
+                  }}
+                >
                   <Check size={16} /> {changePinSuccess}
                 </div>
               )}
 
               {changePinError && (
-                <div className="p-3 bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+                <div 
+                  className="p-3 border rounded-xl text-xs font-medium flex items-center gap-2"
+                  style={{
+                    backgroundColor: theme.dangerBg,
+                    borderColor: `${theme.danger}40`,
+                    color: theme.danger
+                  }}
+                >
                   <ShieldAlert size={16} className="shrink-0 text-rose-400" /> {changePinError}
                 </div>
               )}
 
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-neutral-400 font-medium">Current 4-Digit Passcode</label>
+                  <label className="text-xs font-medium" style={{ color: theme.textSecondary }}>Current 4-Digit Passcode</label>
                   <input
                     type="password"
                     maxLength={4}
@@ -1475,13 +1848,18 @@ export default function SavingsTab({
                     placeholder="••••"
                     value={changePinOld}
                     onChange={(e) => setChangePinOld(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest text-white focus:outline-none focus:border-purple-500"
+                    className="border rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest focus:outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                     autoFocus
                   />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-neutral-400 font-medium">New 4-Digit Passcode</label>
+                  <label className="text-xs font-medium" style={{ color: theme.textSecondary }}>New 4-Digit Passcode</label>
                   <input
                     type="password"
                     maxLength={4}
@@ -1491,12 +1869,17 @@ export default function SavingsTab({
                     placeholder="••••"
                     value={changePinNew}
                     onChange={(e) => setChangePinNew(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest text-white focus:outline-none focus:border-purple-500"
+                    className="border rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest focus:outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-neutral-400 font-medium">Confirm New Passcode</label>
+                  <label className="text-xs font-medium" style={{ color: theme.textSecondary }}>Confirm New Passcode</label>
                   <input
                     type="password"
                     maxLength={4}
@@ -1506,26 +1889,40 @@ export default function SavingsTab({
                     placeholder="••••"
                     value={changePinConfirm}
                     onChange={(e) => setChangePinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    className="bg-neutral-800 border border-white/15 rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest text-white focus:outline-none focus:border-purple-500"
+                    className="border rounded-xl px-3.5 py-2.5 text-base text-center font-mono tracking-widest focus:outline-none transition-colors"
+                    style={{
+                      backgroundColor: theme.inputBg,
+                      borderColor: theme.inputBorder,
+                      color: theme.textPrimary
+                    }}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-white/5">
+              <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t" style={{ borderColor: theme.borderSubtle }}>
                 <button
                   type="button"
                   onClick={() => {
                     triggerHapticFeedback();
                     setShowChangePinModal(false);
                   }}
-                  className="py-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-400 cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="py-2.5 border rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textSecondary
+                  }}
                 >
-                  <X size={14} className="text-rose-400" /> Cancel
+                  <X size={14} /> Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleChangePinSubmit}
-                  className="py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold text-white cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+                  className="py-2.5 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+                  style={{
+                    backgroundColor: theme.primary,
+                    color: theme.textOnPrimary || '#FFFFFF'
+                  }}
                 >
                   <Check size={14} strokeWidth={3} /> Update PIN
                 </button>
@@ -1537,3 +1934,4 @@ export default function SavingsTab({
     </div>
   );
 }
+

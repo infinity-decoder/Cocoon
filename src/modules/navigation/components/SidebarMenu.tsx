@@ -7,10 +7,12 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Tag, ShieldCheck, HelpCircle, 
-  ChevronRight, ClipboardList, Vault, Settings, Building2
+  ChevronRight, ClipboardList, Vault, Settings, Building2, Sparkles
 } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
+import { useTheme } from '../../../core/theme';
+import AboutAuthorModal from './AboutAuthorModal';
 
 interface SidebarMenuProps {
   isOpen: boolean;
@@ -23,9 +25,9 @@ interface SidebarMenuProps {
   onOpenBusinessManagement?: () => void;
   activeWorkspaceName?: string;
   isBusinessMode?: boolean;
-  activeThemeId: string;
-  themeCardBg: string;
-  themeBorder: string;
+  activeThemeId?: string;
+  themeCardBg?: string;
+  themeBorder?: string;
 }
 
 export default function SidebarMenu({
@@ -38,10 +40,10 @@ export default function SidebarMenu({
   onOpenHelp,
   onOpenBusinessManagement,
   activeWorkspaceName,
-  isBusinessMode,
-  themeCardBg,
-  themeBorder
+  isBusinessMode
 }: SidebarMenuProps) {
+  const { theme } = useTheme();
+  const [showAboutAuthor, setShowAboutAuthor] = useState(false);
   const [appVersion, setAppVersion] = useState<string>('v 0.0.7');
 
   useEffect(() => {
@@ -85,7 +87,8 @@ export default function SidebarMenu({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer"
+            className="absolute inset-0 backdrop-blur-sm cursor-pointer"
+            style={{ backgroundColor: theme.overlay }}
           />
 
           {/* Sliding Panel Content */}
@@ -96,23 +99,24 @@ export default function SidebarMenu({
               exit={{ x: '100%' }}
               transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
               className="h-full w-full shadow-2xl flex flex-col justify-between border-l select-none text-left"
-              style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+              style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
             >
               {/* Drawer Header */}
-              <div className="p-5 border-b flex justify-between items-center" style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
+              <div className="p-5 border-b flex justify-between items-center" style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle }}>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#E74425] shadow-[0_0_6px_#E74425]" />
-                    <span className="text-[10px] font-mono tracking-widest text-[#E74425] font-bold uppercase">Cocoon Navigation</span>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: theme.primary, boxShadow: `0 0 6px ${theme.primary}` }} />
+                    <span className="text-[10px] font-mono tracking-widest font-bold uppercase" style={{ color: theme.primary }}>Cocoon Navigation</span>
                   </div>
-                  <span className="text-base font-black tracking-tight text-white mt-1">Control Menu</span>
+                  <span className="text-base font-black tracking-tight mt-1" style={{ color: theme.textPrimary }}>Control Menu</span>
                 </div>
                 <button
                   onClick={() => {
                     triggerHapticFeedback();
                     onClose();
                   }}
-                  className="p-2 min-h-[44px] min-w-[44px] rounded-xl bg-white/5 text-neutral-400 hover:text-white cursor-pointer hover:bg-white/10 active:bg-white/15 transition-colors flex items-center justify-center"
+                  className="p-2 min-h-[44px] min-w-[44px] rounded-xl cursor-pointer transition-colors flex items-center justify-center active:scale-95"
+                  style={{ backgroundColor: theme.surfaceMuted, color: theme.textSecondary }}
                   title="Close Menu"
                 >
                   <X size={20} />
@@ -120,7 +124,7 @@ export default function SidebarMenu({
               </div>
 
               {/* Navigation Items List */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-none" style={{ backgroundColor: '#0D1726' }}>
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-none" style={{ backgroundColor: theme.background }}>
                 {/* Manage Business Workspace entry */}
                 {onOpenBusinessManagement && (
                   <button
@@ -129,35 +133,50 @@ export default function SidebarMenu({
                       onClose();
                       onOpenBusinessManagement();
                     }}
-                    className={`w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border ${
-                      isBusinessMode
-                        ? 'bg-[#E74425]/15 border-[#E74425]/40 text-white shadow-sm'
-                        : 'bg-white/[0.04] border-white/5 hover:bg-[#111F49] text-neutral-200 hover:text-white'
-                    }`}
+                    className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border active:scale-98"
+                    style={{
+                      backgroundColor: isBusinessMode ? `${theme.primary}18` : theme.surfaceMuted,
+                      borderColor: isBusinessMode ? `${theme.primary}40` : theme.borderSubtle,
+                      color: isBusinessMode ? theme.primary : theme.textPrimary
+                    }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2.5 rounded-xl bg-[#E74425]/20 text-[#E74425] border border-[#E74425]/30 group-hover:scale-105 transition-transform">
+                      <div 
+                        className="p-2.5 rounded-xl border group-hover:scale-105 transition-transform"
+                        style={{
+                          backgroundColor: `${theme.primary}20`,
+                          borderColor: `${theme.primary}30`,
+                          color: theme.primary
+                        }}
+                      >
                         <Building2 size={16} />
                       </div>
                       <div className="flex flex-col text-left">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold">Manage Business</span>
+                          <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>Manage Business</span>
                           {isBusinessMode && (
-                            <span className="flex items-center gap-1 text-[8px] font-mono px-1.5 py-0.5 rounded-full bg-[#E74425]/20 text-[#E74425] border border-[#E74425]/40 font-bold">
-                              <span className="w-1 h-1 rounded-full bg-[#E74425]" />
+                            <span 
+                              className="flex items-center gap-1 text-[8px] font-mono px-1.5 py-0.5 rounded-full border font-bold"
+                              style={{
+                                backgroundColor: `${theme.primary}20`,
+                                borderColor: `${theme.primary}40`,
+                                color: theme.primary
+                              }}
+                            >
+                              <span className="w-1 h-1 rounded-full" style={{ backgroundColor: theme.primary }} />
                               Active
                             </span>
                           )}
                         </div>
-                        <span className="text-[9px] text-neutral-400">
+                        <span className="text-[9px]" style={{ color: theme.textSecondary }}>
                           {isBusinessMode ? `Active: ${activeWorkspaceName || 'Business'}` : 'Switch or create business profiles'}
                         </span>
                       </div>
                     </div>
                     {isBusinessMode ? (
-                      <div className="w-1.5 h-6 rounded-full bg-[#E74425] shadow-[0_0_8px_#E74425]" />
+                      <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: theme.primary, boxShadow: `0 0 8px ${theme.primary}` }} />
                     ) : (
-                      <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                      <ChevronRight size={14} style={{ color: theme.textMuted }} className="group-hover:translate-x-0.5 transition-transform" />
                     )}
                   </button>
                 )}
@@ -168,18 +187,30 @@ export default function SidebarMenu({
                     onClose();
                     onOpenLedger();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border active:scale-98"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textPrimary
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-[#C67764]/15 text-[#E5CFB4] border border-[#C67764]/25 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="p-2.5 rounded-xl border group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: `${theme.secondary || theme.primary}20`,
+                        borderColor: `${theme.secondary || theme.primary}30`,
+                        color: theme.secondary || theme.primary
+                      }}
+                    >
                       <ClipboardList size={16} />
                     </div>
                     <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold">Ledger Book</span>
-                      <span className="text-[9px] text-neutral-400">View transactions & filters</span>
+                      <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>Ledger Book</span>
+                      <span className="text-[9px]" style={{ color: theme.textSecondary }}>View transactions & filters</span>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight size={14} style={{ color: theme.textMuted }} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
 
                 <button
@@ -188,18 +219,30 @@ export default function SidebarMenu({
                     onClose();
                     onOpenSavings();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border active:scale-98"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textPrimary
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-[#E74425]/15 text-[#E74425] border border-[#E74425]/25 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="p-2.5 rounded-xl border group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: `${theme.primary}20`,
+                        borderColor: `${theme.primary}30`,
+                        color: theme.primary
+                      }}
+                    >
                       <Vault size={16} />
                     </div>
                     <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold">Savings Vault</span>
-                      <span className="text-[9px] text-neutral-400">Locked goal targets & piggybank</span>
+                      <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>Savings Vault</span>
+                      <span className="text-[9px]" style={{ color: theme.textSecondary }}>Locked goal targets & piggybank</span>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight size={14} style={{ color: theme.textMuted }} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
 
                 <button
@@ -208,18 +251,30 @@ export default function SidebarMenu({
                     onClose();
                     onOpenCategories();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border active:scale-98"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textPrimary
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-[#C67764]/15 text-[#C67764] border border-[#C67764]/25 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="p-2.5 rounded-xl border group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: `${theme.secondary || theme.primary}20`,
+                        borderColor: `${theme.secondary || theme.primary}30`,
+                        color: theme.secondary || theme.primary
+                      }}
+                    >
                       <Tag size={16} />
                     </div>
                     <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold">Custom Categories</span>
-                      <span className="text-[9px] text-neutral-400">Icons, tags & palette colors</span>
+                      <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>Custom Categories</span>
+                      <span className="text-[9px]" style={{ color: theme.textSecondary }}>Icons, tags & palette colors</span>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight size={14} style={{ color: theme.textMuted }} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
 
                 <button
@@ -228,18 +283,30 @@ export default function SidebarMenu({
                     onClose();
                     onOpenSettings();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border active:scale-98"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textPrimary
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-[#E5CFB4]/15 text-[#E5CFB4] border border-[#E5CFB4]/25 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="p-2.5 rounded-xl border group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: `${theme.primary}20`,
+                        borderColor: `${theme.primary}30`,
+                        color: theme.primary
+                      }}
+                    >
                       <Settings size={16} />
                     </div>
                     <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold">Settings</span>
-                      <span className="text-[9px] text-neutral-400">Security, backups & system</span>
+                      <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>Settings</span>
+                      <span className="text-[9px]" style={{ color: theme.textSecondary }}>Security, backups & system</span>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight size={14} style={{ color: theme.textMuted }} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
 
                 <button
@@ -248,33 +315,89 @@ export default function SidebarMenu({
                     onClose();
                     onOpenHelp();
                   }}
-                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl hover:bg-[#111F49] active:bg-[#111F49]/80 text-neutral-200 hover:text-white transition-all cursor-pointer group"
+                  className="w-full min-h-[48px] flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer group border active:scale-98"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textPrimary
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 group-hover:scale-105 transition-transform">
+                    <div 
+                      className="p-2.5 rounded-xl border group-hover:scale-105 transition-transform"
+                      style={{
+                        backgroundColor: `${theme.primary}20`,
+                        borderColor: `${theme.primary}30`,
+                        color: theme.primary
+                      }}
+                    >
                       <HelpCircle size={16} />
                     </div>
                     <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold">FAQ & Guide</span>
-                      <span className="text-[9px] text-neutral-400">Local-first privacy guide</span>
+                      <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>FAQ & Guide</span>
+                      <span className="text-[9px]" style={{ color: theme.textSecondary }}>Local-first privacy guide</span>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-neutral-500 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight size={14} style={{ color: theme.textMuted }} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
 
               {/* Sidebar Footer */}
-              <div className="p-4 border-t flex flex-col gap-2" style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}>
-                <div className="flex items-center gap-2 text-neutral-400 text-[10px] font-mono">
-                  <ShieldCheck size={14} className="text-[#E74425]" />
-                  <span>100% Offline Encrypted</span>
+              <div 
+                className="p-4 border-t flex flex-col gap-2.5 transition-colors" 
+                style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div 
+                    className="w-8 h-8 rounded-xl overflow-hidden border shrink-0 flex items-center justify-center p-1 bg-white shadow-sm"
+                    style={{ borderColor: `${theme.primary}40` }}
+                  >
+                    <img 
+                      src="/assets/aistudio/infinity_logo_v_01_599892f8.png" 
+                      alt="INFINITY DECODER" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex flex-col text-left leading-tight">
+                    <span className="text-[10px] font-medium" style={{ color: theme.textSecondary }}>
+                      Developed with <span className="text-red-500 animate-pulse inline-block">❤️</span> by
+                    </span>
+                    <span className="text-xs font-black tracking-tight" style={{ color: theme.primary }}>
+                      INFINITY DECODER
+                    </span>
+                  </div>
                 </div>
-                <div id="app-version" className="text-[8px] text-neutral-500 font-mono">
-                  {appVersion}
-                </div>
+
+                {/* About Author trigger */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHapticFeedback();
+                    setShowAboutAuthor(true);
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl border flex items-center justify-between text-xs font-bold transition-all cursor-pointer group active:scale-98 shadow-sm hover:translate-x-0.5"
+                  style={{
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: theme.borderSubtle,
+                    color: theme.textPrimary
+                  }}
+                >
+                  <span className="flex items-center gap-2 font-mono text-[11px] tracking-wide">
+                    <Sparkles size={14} style={{ color: theme.primary }} />
+                    About Author
+                  </span>
+                  <ChevronRight size={14} style={{ color: theme.textSecondary }} className="group-hover:translate-x-0.5 transition-transform" />
+                </button>
               </div>
             </motion.div>
           </div>
+
+          {/* Glassy About Author Modal */}
+          <AboutAuthorModal
+            isOpen={showAboutAuthor}
+            onClose={() => setShowAboutAuthor(false)}
+            theme={theme}
+          />
         </div>
       )}
     </AnimatePresence>

@@ -3,13 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { AppTheme, useTheme } from '../../core/theme';
+
 interface CocoonLogoProps {
   size?: number;
   className?: string;
   showText?: boolean;
+  theme?: AppTheme;
 }
 
-export default function CocoonLogo({ size = 40, className = '', showText = false }: CocoonLogoProps) {
+export default function CocoonLogo({ size = 40, className = '', showText = false, theme: propTheme }: CocoonLogoProps) {
+  const context = useTheme();
+  const theme = propTheme || context?.theme;
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
       {/* SVG Vector Icon rebranding with the new Cocoon signature palette */}
@@ -136,10 +141,16 @@ export default function CocoonLogo({ size = 40, className = '', showText = false
 
       {showText && (
         <div className="flex flex-col items-start leading-none select-none">
-          <span className="text-[22px] font-black tracking-tight text-white font-display">
-            cocoon
+          <span 
+            className="text-[22px] font-black tracking-tight font-display transition-colors"
+            style={{ color: theme?.primary || '#E74425' }}
+          >
+            Cocoon
           </span>
-          <span className="text-[8px] tracking-[0.25em] font-bold text-[#E74425] font-mono mt-0.5">
+          <span 
+            className="text-[8px] tracking-[0.25em] font-bold font-mono mt-0.5 transition-colors"
+            style={{ color: theme?.primary || '#E74425' }}
+          >
             PLAN. TRACK. GROW.
           </span>
         </div>

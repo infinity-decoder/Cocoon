@@ -29,7 +29,7 @@ import { DEFAULT_CATEGORIES, DEFAULT_SUBCATEGORIES, DEFAULT_WALLETS, DEFAULT_SET
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import { PREBUILT_THEMES, AppTheme } from '../theme';
+import { PREBUILT_THEMES, AppTheme, useTheme } from '../theme';
 import { triggerHapticFeedback } from '../utils/haptics';
 import { 
   computeFinancialTotals, 
@@ -44,20 +44,14 @@ export function useAppState() {
   // 1. Core local-first App State loaded from authoritative SQLite store
   const [state, setState] = useState<AppState>(() => loadAppState());
 
-  // 2. Active Theme
-  const [activeThemeId, setActiveThemeId] = useState<string>(() => {
-    return localStorage.getItem('cocoon_theme_id') || localStorage.getItem('finflow_theme_id') || 'cocoon';
-  });
-
-  const activeTheme: AppTheme = useMemo(() => {
-    return PREBUILT_THEMES.find(t => t.id === activeThemeId) || PREBUILT_THEMES[0];
-  }, [activeThemeId]);
-
-  const selectTheme = useCallback((id: string) => {
-    setActiveThemeId(id);
-    localStorage.setItem('cocoon_theme_id', id);
-    localStorage.setItem('finflow_theme_id', id);
-  }, []);
+  // 2. Authoritative Centralized Theme Context
+  const { 
+    theme: activeTheme, 
+    themeMode: activeThemeId, 
+    selectTheme, 
+    setThemeMode, 
+    isDark 
+  } = useTheme();
 
   // Note: Continuous full-state localStorage writing is eliminated.
   // Targeted SQLite writes in PersonalFinanceService guarantee atomic persistence
@@ -863,9 +857,9 @@ export function useAppState() {
 
     setState(fresh);
     setAvatar('');
-    setActiveThemeId('emerald');
-    localStorage.setItem('cocoon_theme_id', 'emerald');
-    localStorage.setItem('finflow_theme_id', 'emerald');
+    selectTheme('cocoon');
+    localStorage.setItem('cocoon_theme_id', 'cocoon');
+    localStorage.setItem('finflow_theme_id', 'cocoon');
     setIsLocked(false);
     setEnteredPin('');
     setActiveTab(0);
@@ -963,7 +957,7 @@ export function useAppState() {
       const result = await backupArchiveService.importBackupArchive(jsonStr, passphrase);
       setState(result.state);
       if (result.state.settings?.accentColor) {
-        setActiveThemeId(result.state.settings.accentColor);
+        selectTheme(result.state.settings.accentColor);
       }
       addNotification(
         'Backup Restored Successfully',
@@ -1045,6 +1039,8 @@ export function useAppState() {
     activeThemeId,
     activeTheme,
     selectTheme,
+    setThemeMode,
+    isDark,
     isLocked,
     setIsLocked,
     enteredPin,

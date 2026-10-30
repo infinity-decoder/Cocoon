@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Category } from '../../../core/types';
 import { triggerHapticFeedback } from '../../../core/utils/haptics';
+import { useTheme } from '../../../core/theme';
 
 export type CategoryIconComponent = React.ComponentType<{ size?: number; className?: string; strokeWidth?: number; style?: React.CSSProperties }>;
 
@@ -75,6 +76,7 @@ export default function CategoryManager({
   themeBorder,
   themeRadius
 }: CategoryManagerProps) {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
   const [viewMode, setViewMode] = useState<'categories' | 'subcategories'>('categories');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -163,22 +165,23 @@ export default function CategoryManager({
   const contentElement = (
     <div className={`w-full flex flex-col gap-3 select-none text-left ${isInline ? 'pb-6' : ''}`}>
       {/* Header */}
-      <div className="flex justify-between items-center pb-2.5 border-b gap-3" style={{ borderColor: themeBorder }}>
+      <div className="flex justify-between items-center pb-2.5 border-b gap-3" style={{ borderColor: theme.borderSubtle }}>
         <button
           type="button"
           onClick={() => {
             triggerHapticFeedback();
             onClose();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-2xl text-xs font-bold text-neutral-200 hover:text-white cursor-pointer transition-all active:scale-95 shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1.5 border rounded-2xl text-xs font-bold cursor-pointer transition-all active:scale-95 shadow-sm"
+          style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textPrimary }}
           title="Back to Home"
         >
           <ArrowLeft size={14} className="text-emerald-400" />
           <span>Back to Home</span>
         </button>
         <div className="flex flex-col text-right">
-          <span className="text-[10px] text-neutral-400 font-mono tracking-widest uppercase">Customization</span>
-          <h2 className="text-sm font-bold text-white">Categories</h2>
+          <span className="text-[10px] font-mono tracking-widest uppercase" style={{ color: theme.textMuted }}>Customization</span>
+          <h2 className="text-sm font-bold" style={{ color: theme.textPrimary }}>Categories</h2>
         </div>
         <button
           type="button"
@@ -194,7 +197,7 @@ export default function CategoryManager({
       </div>
 
       {/* Income vs Expense Tabs */}
-      <div className="flex p-1.5 gap-2 border-b" style={{ borderColor: themeBorder }}>
+      <div className="flex p-1.5 gap-2 border-b" style={{ borderColor: theme.borderSubtle }}>
             <button
               type="button"
               onClick={() => {
@@ -203,11 +206,11 @@ export default function CategoryManager({
                 setIsAddingCategory(false);
                 setIsAddingSubCategory(false);
               }}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeTab === 'expense' 
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' 
-                  : 'text-neutral-400 hover:text-white bg-white/5'
-              }`}
+              className="flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer border"
+              style={activeTab === 'expense' 
+                ? { backgroundColor: 'rgba(244, 63, 94, 0.15)', color: '#F43F5E', borderColor: 'rgba(244, 63, 94, 0.3)' } 
+                : { backgroundColor: theme.surfaceMuted, color: theme.textSecondary, borderColor: 'transparent' }
+              }
             >
               Expense Categories
             </button>
@@ -219,18 +222,18 @@ export default function CategoryManager({
                 setIsAddingCategory(false);
                 setIsAddingSubCategory(false);
               }}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeTab === 'income' 
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                  : 'text-neutral-400 hover:text-white bg-white/5'
-              }`}
+              className="flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer border"
+              style={activeTab === 'income' 
+                ? { backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10B981', borderColor: 'rgba(16, 185, 129, 0.3)' } 
+                : { backgroundColor: theme.surfaceMuted, color: theme.textSecondary, borderColor: 'transparent' }
+              }
             >
               Income Categories
             </button>
           </div>
 
           {/* Sub-navigation: Categories vs Sub-Categories View */}
-          <div className="flex px-4 pt-3 pb-2 gap-2 border-b border-white/5">
+          <div className="flex px-4 pt-3 pb-2 gap-2 border-b" style={{ borderColor: theme.borderSubtle }}>
             <button
               type="button"
               onClick={() => {
@@ -239,11 +242,11 @@ export default function CategoryManager({
                 setIsAddingCategory(false);
                 setIsAddingSubCategory(false);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === 'categories'
-                  ? 'bg-white/15 text-white shadow-sm'
-                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all border"
+              style={viewMode === 'categories'
+                ? { backgroundColor: theme.primary, color: theme.textOnPrimary, borderColor: 'transparent' }
+                : { backgroundColor: theme.surfaceMuted, color: theme.textSecondary, borderColor: theme.borderSubtle }
+              }
             >
               <Layers size={13} /> Main Categories ({currentCategories.length})
             </button>
@@ -255,11 +258,11 @@ export default function CategoryManager({
                 setIsAddingCategory(false);
                 setIsAddingSubCategory(false);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                viewMode === 'subcategories'
-                  ? 'bg-white/15 text-white shadow-sm'
-                  : 'text-neutral-400 hover:text-white hover:bg-white/5'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all border"
+              style={viewMode === 'subcategories'
+                ? { backgroundColor: theme.primary, color: theme.textOnPrimary, borderColor: 'transparent' }
+                : { backgroundColor: theme.surfaceMuted, color: theme.textSecondary, borderColor: theme.borderSubtle }
+              }
             >
               <Tag size={13} /> Sub-Categories ({currentSubCategories.length})
             </button>
@@ -286,14 +289,14 @@ export default function CategoryManager({
                     <SelectedIconComp size={28} />
                   </div>
                   <div className="flex-1">
-                    <label className="text-[10px] uppercase font-mono tracking-wider text-neutral-400 mb-1 block">Category Name</label>
+                    <label className="text-[10px] uppercase font-mono tracking-wider mb-1 block" style={{ color: theme.textSecondary }}>Category Name</label>
                     <input
                       type="text"
                       placeholder={activeTab === 'income' ? "e.g. Consulting, Royalties" : "e.g. Pet Care, Online Games"}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-white/5 border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-                      style={{ borderColor: themeBorder }}
+                      className="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none"
+                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                       autoFocus
                     />
                   </div>
@@ -301,7 +304,7 @@ export default function CategoryManager({
 
                 {/* Color Swatches */}
                 <div>
-                  <label className="text-[10px] uppercase font-mono tracking-wider text-neutral-400 mb-2 block">Select Color</label>
+                  <label className="text-[10px] uppercase font-mono tracking-wider mb-2 block" style={{ color: theme.textSecondary }}>Select Color</label>
                   <div className="flex flex-wrap gap-2.5">
                     {HARMONIOUS_COLORS.map(c => (
                       <button
@@ -322,8 +325,8 @@ export default function CategoryManager({
 
                 {/* Icon Grid Picker */}
                 <div>
-                  <label className="text-[10px] uppercase font-mono tracking-wider text-neutral-400 mb-2 block">Select Icon ({Object.keys(CATEGORY_ICONS_MAP).length} Available)</label>
-                  <div className="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto p-1 bg-white/2 rounded-2xl border" style={{ borderColor: themeBorder }}>
+                  <label className="text-[10px] uppercase font-mono tracking-wider mb-2 block" style={{ color: theme.textSecondary }}>Select Icon ({Object.keys(CATEGORY_ICONS_MAP).length} Available)</label>
+                  <div className="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto p-1.5 rounded-2xl border" style={{ backgroundColor: theme.inputBg, borderColor: theme.borderSubtle }}>
                     {Object.entries(CATEGORY_ICONS_MAP).map(([iconName, IconComponent]) => (
                       <button
                         key={iconName}
@@ -332,11 +335,12 @@ export default function CategoryManager({
                           triggerHapticFeedback();
                           setSelectedIcon(iconName);
                         }}
-                        className={`p-2.5 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                        className={`p-2.5 rounded-xl flex items-center justify-center transition-all cursor-pointer border ${
                           selectedIcon === iconName 
-                            ? 'bg-white/20 text-white border border-white/30 scale-105' 
-                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500 scale-105' 
+                            : 'border-transparent hover:opacity-80'
                         }`}
+                        style={{ color: selectedIcon === iconName ? undefined : theme.textSecondary }}
                       >
                         <IconComponent size={20} />
                       </button>
@@ -376,14 +380,15 @@ export default function CategoryManager({
                 )}
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-neutral-400 font-medium">Select Parent Category</label>
+                  <label className="text-xs font-medium" style={{ color: theme.textSecondary }}>Select Parent Category</label>
                   <select
                     value={selectedParentId || currentCategories[0]?.id || ''}
                     onChange={(e) => setSelectedParentId(e.target.value)}
-                    className="bg-neutral-900 border border-white/10 text-sm rounded-xl px-3 py-2.5 text-white outline-none cursor-pointer w-full"
+                    className="border text-sm rounded-xl px-3 py-2.5 outline-none cursor-pointer w-full"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                   >
                     {currentCategories.map(cat => (
-                      <option key={cat.id} value={cat.id}>
+                      <option key={cat.id} value={cat.id} style={{ backgroundColor: theme.surfaceElevated, color: theme.textPrimary }}>
                         {cat.name}
                       </option>
                     ))}
@@ -391,13 +396,14 @@ export default function CategoryManager({
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-neutral-400 font-medium">Sub-Category Name</label>
+                  <label className="text-xs font-medium" style={{ color: theme.textSecondary }}>Sub-Category Name</label>
                   <input
                     type="text"
                     placeholder={activeTab === 'income' ? "e.g. Overtime, Client Retainer, Dividends" : "e.g. Snacks, Drinks, Car Wash"}
                     value={subCatName}
                     onChange={(e) => setSubCatName(e.target.value)}
-                    className="bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.textPrimary }}
                     autoFocus
                   />
                 </div>
@@ -433,7 +439,8 @@ export default function CategoryManager({
                       triggerHapticFeedback();
                       setIsAddingCategory(true);
                     }}
-                    className="py-2.5 px-3 rounded-2xl border border-dashed border-emerald-500/30 hover:border-emerald-500/60 flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/5 transition-all cursor-pointer"
+                    className="py-2.5 px-3 rounded-2xl border border-dashed flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer"
+                    style={{ borderColor: theme.primary, color: theme.primary, backgroundColor: 'rgba(16, 185, 129, 0.05)' }}
                   >
                     <Plus size={14} /> Add Category
                   </button>
@@ -446,7 +453,8 @@ export default function CategoryManager({
                       }
                       setIsAddingSubCategory(true);
                     }}
-                    className="py-2.5 px-3 rounded-2xl border border-dashed border-blue-500/30 hover:border-blue-500/60 flex items-center justify-center gap-1.5 text-xs font-bold text-blue-400 bg-blue-500/5 transition-all cursor-pointer"
+                    className="py-2.5 px-3 rounded-2xl border border-dashed flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer"
+                    style={{ borderColor: theme.borderFocus, color: theme.borderFocus, backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
                   >
                     <Plus size={14} /> Add Sub-Category
                   </button>
@@ -460,9 +468,10 @@ export default function CategoryManager({
                   return (
                     <div
                       key={cat.id}
-                      className="flex flex-col rounded-2xl bg-white/2 border border-white/5 overflow-hidden transition-all"
+                      className="flex flex-col rounded-2xl border overflow-hidden transition-all"
+                      style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}
                     >
-                      <div className="flex items-center justify-between p-3 hover:bg-white/4 transition-colors">
+                      <div className="flex items-center justify-between p-3 transition-colors">
                         <div className="flex items-center gap-3 min-w-0">
                           <div 
                             className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
@@ -471,13 +480,13 @@ export default function CategoryManager({
                             <Icon size={18} />
                           </div>
                           <div className="flex flex-col truncate">
-                            <span className="text-xs font-bold text-white truncate">{cat.name}</span>
+                            <span className="text-xs font-bold truncate" style={{ color: theme.textPrimary }}>{cat.name}</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[10px] text-neutral-500 font-mono">
+                              <span className="text-[10px] font-mono" style={{ color: theme.textMuted }}>
                                 {cat.isCustom ? 'Custom' : 'Default'}
                               </span>
-                              <span className="text-[10px] text-neutral-500">•</span>
-                              <span className="text-[10px] text-emerald-400/90 font-mono">
+                              <span className="text-[10px]" style={{ color: theme.textMuted }}>•</span>
+                              <span className="text-[10px] font-mono" style={{ color: theme.primary }}>
                                 {catSubList.length} sub-item{catSubList.length === 1 ? '' : 's'}
                               </span>
                             </div>
@@ -493,7 +502,8 @@ export default function CategoryManager({
                               setSelectedParentId(cat.id);
                               setIsAddingSubCategory(true);
                             }}
-                            className="px-2 py-1 rounded-lg text-[10px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors cursor-pointer flex items-center gap-1"
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1 border"
+                            style={{ color: theme.primary, backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)' }}
                             title="Add subcategory for this category"
                           >
                             <Plus size={11} /> Sub
@@ -504,7 +514,8 @@ export default function CategoryManager({
                             <button
                               type="button"
                               onClick={() => toggleExpand(cat.id)}
-                              className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                              style={{ color: theme.textMuted }}
                               title="Toggle subcategories"
                             >
                               {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
@@ -531,17 +542,18 @@ export default function CategoryManager({
 
                       {/* Expandable subcategory drawer */}
                       {isExpanded && catSubList.length > 0 && (
-                        <div className="px-4 pb-3 pt-1 border-t border-white/5 bg-black/20 flex flex-col gap-1.5">
-                          <span className="text-[9px] uppercase font-mono tracking-widest text-neutral-500">
+                        <div className="px-4 pb-3 pt-1 border-t flex flex-col gap-1.5" style={{ borderColor: theme.borderSubtle, backgroundColor: theme.inputBg }}>
+                          <span className="text-[9px] uppercase font-mono tracking-widest" style={{ color: theme.textMuted }}>
                             Sub-categories of {cat.name}:
                           </span>
                           <div className="flex flex-wrap gap-1.5">
                             {catSubList.map(sc => (
                               <div
                                 key={sc.id}
-                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-neutral-300 text-xs"
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs"
+                                style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle, color: theme.textPrimary }}
                               >
-                                <Tag size={10} className="text-emerald-400" />
+                                <Tag size={10} style={{ color: theme.primary }} />
                                 <span>{sc.name}</span>
                                 {sc.isCustom && onDeleteSubCategory && (
                                   <button
@@ -579,16 +591,17 @@ export default function CategoryManager({
                     }
                     setIsAddingSubCategory(true);
                   }}
-                  className="w-full py-2.5 rounded-2xl border border-dashed border-emerald-500/30 hover:border-emerald-500/60 flex items-center justify-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-500/5 transition-all cursor-pointer mb-1"
+                  className="w-full py-2.5 rounded-2xl border border-dashed flex items-center justify-center gap-2 text-xs font-bold transition-all cursor-pointer mb-1"
+                  style={{ borderColor: theme.primary, color: theme.primary, backgroundColor: 'rgba(16, 185, 129, 0.05)' }}
                 >
                   <Plus size={16} /> Add Custom {activeTab === 'expense' ? 'Expense' : 'Income'} Sub-Category
                 </button>
 
                 {currentSubCategories.length === 0 ? (
-                  <div className="p-8 text-center flex flex-col items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/1">
-                    <Tag size={24} className="text-neutral-500 mb-2" />
-                    <span className="text-xs font-bold text-neutral-300">No Sub-Categories Yet</span>
-                    <span className="text-[10px] text-neutral-500 mt-0.5">
+                  <div className="p-8 text-center flex flex-col items-center justify-center border border-dashed rounded-2xl" style={{ borderColor: theme.borderSubtle, backgroundColor: theme.surfaceMuted }}>
+                    <Tag size={24} style={{ color: theme.textMuted }} className="mb-2" />
+                    <span className="text-xs font-bold" style={{ color: theme.textPrimary }}>No Sub-Categories Yet</span>
+                    <span className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                       Create subcategories to organize your {activeTab}s with fine detail.
                     </span>
                   </div>
@@ -598,7 +611,8 @@ export default function CategoryManager({
                     return (
                       <div
                         key={sc.id}
-                        className="flex items-center justify-between p-3 rounded-2xl bg-white/2 border border-white/5 hover:bg-white/4 transition-colors"
+                        className="flex items-center justify-between p-3 rounded-2xl border transition-colors"
+                        style={{ backgroundColor: theme.surfaceMuted, borderColor: theme.borderSubtle }}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div 
@@ -608,8 +622,8 @@ export default function CategoryManager({
                             <Tag size={13} />
                           </div>
                           <div className="flex flex-col truncate">
-                            <span className="text-xs font-bold text-white truncate">{sc.name}</span>
-                            <span className="text-[10px] text-neutral-400 font-mono mt-0.5 truncate">
+                            <span className="text-xs font-bold truncate" style={{ color: theme.textPrimary }}>{sc.name}</span>
+                            <span className="text-[10px] font-mono mt-0.5 truncate" style={{ color: theme.textSecondary }}>
                               Under: {parent?.name || 'Category'}
                             </span>
                           </div>
@@ -646,7 +660,7 @@ export default function CategoryManager({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
+      <div className="fixed inset-0 backdrop-blur-sm z-[90] flex items-center justify-center p-4" style={{ backgroundColor: theme.overlay }}>
         <div className="absolute inset-0" onClick={onClose} />
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -654,7 +668,7 @@ export default function CategoryManager({
           exit={{ opacity: 0, scale: 0.95, y: 30 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
           className={`w-full max-w-md max-h-[85vh] overflow-y-auto p-4 shadow-2xl relative z-[91] border ${themeRadius}`}
-          style={{ backgroundColor: themeCardBg, borderColor: themeBorder }}
+          style={{ backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle, color: theme.textPrimary }}
         >
           {contentElement}
         </motion.div>
